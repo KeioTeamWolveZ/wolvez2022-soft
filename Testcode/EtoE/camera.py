@@ -3,6 +3,8 @@ import cv2
 import sys
 import time
 
+
+##change camera
 def camera(cap):
     """
     引数0→写真
