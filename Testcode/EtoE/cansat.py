@@ -17,7 +17,6 @@ from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from first_spm import IntoWindow, LearnDict, EvaluateImg
 from second_spm import SPM2Open_npz,SPM2Learn,SPM2Evaluate
 
-import planning
 from bno055 import BNO055
 from motor import motor
 from gps import GPS
@@ -35,8 +34,8 @@ class Cansat():
         
         # インスタンス生成        
         self.bno055 = BNO055()
-        self.rightMotor = motor(ct.const.RIGHT_MOTOR_IN1_PIN,ct.const.RIGHT_MOTOR_IN2_PIN,ct.const.RIGHT_MOTOR_VREF_PIN)
-        self.leftMotor = motor(ct.const.LEFT_MOTOR_IN1_PIN,ct.const.LEFT_MOTOR_IN2_PIN, ct.const.LEFT_MOTOR_VREF_PIN)
+        self.MotorR = motor(ct.const.RIGHT_MOTOR_IN1_PIN,ct.const.RIGHT_MOTOR_IN2_PIN,ct.const.RIGHT_MOTOR_VREF_PIN)
+        self.MotorL = motor(ct.const.LEFT_MOTOR_IN1_PIN,ct.const.LEFT_MOTOR_IN2_PIN, ct.const.LEFT_MOTOR_VREF_PIN)
         self.gps = GPS()
         self.lora = lora()
         self.RED_LED = led(ct.const.RED_LED_PIN)
@@ -108,8 +107,8 @@ class Cansat():
                   + "ay:"+str(round(self.ay,6)).rjust(6) + ","\
                   + "az:"+str(round(self.az,6)).rjust(6) + ","\
                   + "q:" + str(self.ex).rjust(6) + ","\
-                  + "rV:" + str(round(self.rightMotor.velocity,2)).rjust(6) + ","\
-                  + "lV:" + str(round(self.leftMotor.velocity,2)).rjust(6) + ","\
+                  + "rV:" + str(round(self.MotorR.velocity,2)).rjust(6) + ","\
+                  + "lV:" + str(round(self.MotorL.velocity,2)).rjust(6) + ","\
                   + "Camera:" + str(self.camerastate)
 
         print(print_datalog)
@@ -123,8 +122,8 @@ class Cansat():
                   + "ay:"+str(self.bno055.ay).rjust(6) + ","\
                   + "az:"+str(self.bno055.az).rjust(6) + ","\
                   + "q:"+str(self.bno055.ex).rjust(6) + ","\
-                  + "rV:"+str(round(self.rightMotor.velocity,3)).rjust(6) + ","\
-                  + "lV:"+str(round(self.leftMotor.velocity,3)).rjust(6) + ","\
+                  + "rV:"+str(round(self.MotorR.velocity,3)).rjust(6) + ","\
+                  + "lV:"+str(round(self.MotorL.velocity,3)).rjust(6) + ","\
                   + "Camera:" + str(self.camerastate)
         
         with open('results/control_result.txt',"a")  as test: # [mode] x:ファイルの新規作成、r:ファイルの読み込み、w:ファイルへの書き込み、a:ファイルへの追記
@@ -144,7 +143,7 @@ class Cansat():
         elif self.state == 5:#スパースモデリング第二段階
             self.model_master,self.scaler_master,self.feature_names = self.spm_second()
         elif self.state == 6:#経路計画段階
-            self.planning(self.model_master,self.scaler_master,self.feature_names)
+            self.running(self.model_master,self.scaler_master,self.feature_names)
         # elif self.state == 7:
         #     self.re_learning()
         # elif self.state == 8:#終了
@@ -250,14 +249,14 @@ class Cansat():
             
             #分離シート離脱
             elif self.landstate == 1:
-                self.rightMotor.go(ct.const.LANDING_MOTOR_VREF)
-                self.leftMotor.go(ct.const.LANDING_MOTOR_VREF)
+                self.MotorR.go(ct.const.LANDING_MOTOR_VREF)
+                self.MotorL.go(ct.const.LANDING_MOTOR_VREF)
 
                 self.stuck_detection()
 
                 if time.time()-self.pre_motorTime > ct.const.LANDING_MOTOR_TIME_THRE: #5秒間モータ回して分離シートから十分離れる
-                    self.rightMotor.stop()
-                    self.leftMotor.stop()
+                    self.MotorR.stop()
+                    self.MotorL.stop()
                     self.state = 4
                     self.laststate = 4
 
@@ -332,7 +331,6 @@ class Cansat():
     def spm_f_eval(self, PIC_COUNT=1, now="TEST", iw_shape=(2,3),feature_names = None):
         for i in range(PIC_COUNT):
             print(i,"枚目")
-            self.cap = cv2.VideoCapture(0)
             ret,self.secondimg = self.cap.read()
             if self.state == 4:
                 save_file = f"results/camera_result/first_spm/learn{self.learncount}/evaluate/evaluateimg{i}.jpg"
@@ -343,11 +341,11 @@ class Cansat():
             self.firstevalimgcount += 1
             
             if self.state == 4:
-                self.rightMotor.go(70)#走行
-                self.leftMotor.go(50)#走行
+                self.MotorR.go(70)#走行
+                self.MotorL.go(50)#走行
                 time.sleep(0.4)
-                self.rightMotor.stop()
-                self.leftMotor.stop()
+                self.MotorR.stop()
+                self.MotorL.stop()
             
         if not PIC_COUNT == 1:
             second_img_paths = sorted(glob(f"results/camera_result/first_spm/learn{self.learncount}/evaluate/evaluateimg*.jpg"))
@@ -458,7 +456,7 @@ class Cansat():
         self.laststate = 6
         return model_master,scaler_master,feature_names
 
-    def planning(self,model_master,scaler_master,feature_names):
+    def running(self,model_master,scaler_master,feature_names):
         planning_dir = f"results/camera_result/planning/learn{self.learncount}/planning_npz/*"
         planning_npz = sorted(glob(planning_dir))
         self.spm_f_eval(now = time.time(),feature_names = feature_names)#特徴的な処理を行ってnpzを作成
@@ -476,9 +474,35 @@ class Cansat():
         risk = np.array(spm2_predict.get_score()).reshape(2,3)#win1~win6の危険度マップができる
 
         # 走行
-        planning(risk, self.rightMotor, self.leftMotor, self.bno055, self.gps)
+        self.planning(risk)
         self.stuck_detection()#ここは注意
     
+    def planning(self,risk):
+        self.gps.vincenty_inverse(self.goallat,self.goallon,self.gps.Lat,self.gps.Lon) #距離:self.gps.gpsdis 方位角:self.gps.gpsdegrees
+        self.x = self.gps.gpsdis*math.cos(math.radians(self.gps.gpsdegrees))
+        self.y = self.gps.gpsdis*math.sin(math.radians(self.gps.gpsdegrees))
+        theta_goal = self.gps.gpsdegrees
+        phi = theta_goal-self.bno055.ex
+        
+        if phi < -180:
+            phi += 360
+        elif phi > 180:
+            phi -= 360
+
+        dir_run = self.calc_dir(risk,phi)
+        if dir_run == 0:
+            self.MotorR.go(80)
+            self.MotorL.go(60)
+        elif dir_run == 1:
+            self.MotorR.go(70)
+            self.MotorL.go(70)
+        elif dir_run == 2:
+            self.MotorR.go(60)
+            self.MotorL.go(80)
+        elif dir_run == 3:
+            self.MotorR.stop()
+            self.MotorL.stop()
+            
     def sendLoRa(self):
         datalog = str(self.state) + ","\
                   + str(self.gps.Time) + ","\
@@ -494,18 +518,18 @@ class Cansat():
                 if self.stuckTime == 0:
                     self.stuckTime = time.time()#スタック検知最初の時間計測
                 #トルネード実施
-                self.rightMotor.go(ct.const.STUCK_MOTOR_VREF)
-                self.leftMotor.back(ct.const.STUCK_MOTOR_VREF)
+                self.MotorR.go(ct.const.STUCK_MOTOR_VREF)
+                self.MotorL.back(ct.const.STUCK_MOTOR_VREF)
 
                 if time.time() - self.stuckTime > ct.const.STUCK_MOTOR_TIME_THRE:#閾値以上の時間モータを回転させたら
-                    self.rightMotor.stop()
-                    self.leftMotor.stop()
+                    self.MotorR.stop()
+                    self.MotorL.stop()
                     self.stuckTime = 0
                     self.countstuckLoop = 0
 
     def keyboardinterrupt(self):
-        self.rightMotor.stop()
-        self.leftMotor.stop()
+        self.MotorR.stop()
+        self.MotorL.stop()
         self.RED_LED.led_off()
         self.BLUE_LED.led_off()
         self.GREEN_LED.led_off()
