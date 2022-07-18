@@ -27,19 +27,17 @@ class LoraSettingClass:
 
     # LoRaリセット
     def reset_lora(self):
-        pass
-#         GPIO.setmode(GPIO.BOARD)
-#         GPIO.setup(self.reset_pin, GPIO.OUT)
-#         GPIO.output(self.reset_pin, GPIO.HIGH)
-#         time.sleep(0.1)
-#         GPIO.output(self.reset_pin, GPIO.LOW)
-#         time.sleep(0.1)
-#         GPIO.cleanup()
-#         time.sleep(0.1)
+        GPIO.setmode(GPIO.BOARD)
+        GPIO.setup(self.reset_pin, GPIO.OUT)
+        GPIO.output(self.reset_pin, GPIO.HIGH)
+        time.sleep(0.1)
+        GPIO.output(self.reset_pin, GPIO.LOW)
+        time.sleep(0.1)
+        GPIO.cleanup()
+        time.sleep(0.1)
 
     def setup_lora(self, set_mode=''):
         # LoRa(ES920LR)設定
-        print("setting up lora")
         self.set_mode = set_mode
         # LoRa(ES9320LR)起動待機
         while self.device.inWaiting() > 0:
