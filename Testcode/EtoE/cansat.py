@@ -50,6 +50,7 @@ class Cansat():
         self.flyingTime = 0
         self.droppingTime = 0
         self.landingTime = 0
+        self.runningTime = 0
         self.landstate = 0
         self.firstlearnimgcount = 0
         self.firstevalimgcount = 0
@@ -301,8 +302,7 @@ class Cansat():
             processed_Dir = f"results/camera_result/first_spm/learn{self.learncount}/processed"
             iw = IntoWindow(importPath, processed_Dir, Save) #画像の特徴抽出のインスタンス生成
             # processing img
-            fmg_list = iw.feature_img(frame_num=now) #特徴抽出。リストに特徴画像が入る
-                
+            fmg_list = iw.feature_img(frame_num=now) #特徴抽出。リストに特徴画像が入る 
             for fmg in fmg_list:#それぞれの特徴画像に対して処理
                 # breakout by windows
                 iw_list, window_size = iw.breakout(iw.read_img(fmg)) #ブレイクアウト
@@ -329,6 +329,7 @@ class Cansat():
         print("Calc Time:",end_time-start_time)
 
     def spm_f_eval(self, PIC_COUNT=1, now="TEST", iw_shape=(2,3),feature_names = None):
+#         self.cap = cv2.VideoCapture(0)
         for i in range(PIC_COUNT):
             print(i,"枚目")
             ret,self.secondimg = self.cap.read()
@@ -361,47 +362,95 @@ class Cansat():
             
             iw = IntoWindow(importPath, tempDir_name, False) #画像の特徴抽出のインスタンス生成
             # processing img
-
-            fmg_list = iw.feature_img(frame_num=now,feature_names=feature_names) #特徴抽出。リストに特徴画像が入る
             
-            for fmg in fmg_list:#それぞれの特徴画像に対して処理
-                iw_list, window_size = iw.breakout(iw.read_img(fmg)) #ブレイクアウト
-                feature_name = str(re.findall(tempDir_name + f"/(.*)_.*_", fmg)[0])
-                print("FEATURED BY: ",feature_name)
-                
-                for win in range(int(np.prod(iw_shape))): #それぞれのウィンドウに対して評価を実施
-                    D, ksvd = self.dict_list[feature_name]
-                    ei = EvaluateImg(iw_list[win])
-                    img_rec = ei.reconstruct(D, ksvd, window_size)
-                    saveName = self.saveDir + f"/camera_result/first_spm/learn{self.learncount}/processed/difference"
-                    if not os.path.exists(saveName):
-                        os.mkdir(saveName)
-                    saveName = self.saveDir + f"/camera_result/first_spm/learn{self.learncount}/processed/difference/{now}"
-                    if not os.path.exists(saveName):
-                        os.mkdir(saveName)
-                    ave, med, var, mode, kurt, skew = ei.evaluate(iw_list[win], img_rec, win+1, feature_name, now, self.saveDir)
-                    
-                    # 特徴量終結/1枚
-                    if win == 0:
-                        feature_values[feature_name] = {}
+            if feature_names == None:
+                fmg_list = iw.feature_img(frame_num=now,feature_names=feature_names) #特徴抽出。リストに特徴画像が入る
 
-                    feature_values[feature_name][f'win_{win+1}'] = {}
-                    feature_values[feature_name][f'win_{win+1}']["var"] = ave  # 平均値
-                    feature_values[feature_name][f'win_{win+1}']["med"] = med  # 中央値
-                    feature_values[feature_name][f'win_{win+1}']["ave"] = var  # 分散値
-                    feature_values[feature_name][f'win_{win+1}']["mode"] = mode  # 最頻値
-                    feature_values[feature_name][f'win_{win+1}']["kurt"] = kurt  # 尖度
-                    feature_values[feature_name][f'win_{win+1}']["skew"] = skew  # 歪度
+                for fmg in fmg_list:#それぞれの特徴画像に対して処理
+                    iw_list, window_size = iw.breakout(iw.read_img(fmg)) #ブレイクアウト
+                    feature_name = str(re.findall(tempDir_name + f"/(.*)_.*_", fmg)[0])
+                    
+                    print("FEATURED BY: ",feature_name)
+                    
+                    for win in range(int(np.prod(iw_shape))): #それぞれのウィンドウに対して評価を実施
+                        D, ksvd = self.dict_list[feature_name]
+
+                        ei = EvaluateImg(iw_list[win])
+                        img_rec = ei.reconstruct(D, ksvd, window_size)
+                        saveName = self.saveDir + f"/camera_result/first_spm/learn{self.learncount}/processed/difference"
+                        if not os.path.exists(saveName):
+                            os.mkdir(saveName)
+                        saveName = self.saveDir + f"/camera_result/first_spm/learn{self.learncount}/processed/difference/{now}"
+                        if not os.path.exists(saveName):
+                            os.mkdir(saveName)
+                        ave, med, var, mode, kurt, skew = ei.evaluate(iw_list[win], img_rec, win+1, feature_name, now, self.saveDir)
+                        
+                        # 特徴量終結/1枚
+                        if win == 0:
+                            feature_values[feature_name] = {}
+
+                        feature_values[feature_name][f'win_{win+1}'] = {}
+                        feature_values[feature_name][f'win_{win+1}']["var"] = ave  # 平均値
+                        feature_values[feature_name][f'win_{win+1}']["med"] = med  # 中央値
+                        feature_values[feature_name][f'win_{win+1}']["ave"] = var  # 分散値
+                        feature_values[feature_name][f'win_{win+1}']["mode"] = mode  # 最頻値
+                        feature_values[feature_name][f'win_{win+1}']["kurt"] = kurt  # 尖度
+                        feature_values[feature_name][f'win_{win+1}']["skew"] = skew  # 歪度
                 
+            else:
+                i=0
+                for win,feature in enumerate(feature_names):#tokuchougazounoyouso
+                    fmg_list = iw.feature_img(frame_num=now,feature_names=feature) #特徴抽出。リストに特徴画像が入る
+#                     print(f"win{win},feature{feature}")
+#                     print("feature_names:",feature_names)
+#                     print("fmg_list",fmg_list)
+                    for fmg in fmg_list:#それぞれの特徴画像に対して処理
+                        if fmg !=0:
+                            iw_list, window_size = iw.breakout(iw.read_img(fmg)) #ブレイクアウト #hitotsunoshoriwojikkou
+                            feature_name = str(re.findall(tempDir_name + f"/(.*)_.*_", fmg)[0])
+                            print("FEATURED BY: ",feature_name)
+                            
+                            D, ksvd = self.dict_list[feature_name]
+                            ei = EvaluateImg(iw_list[win])
+                            img_rec = ei.reconstruct(D, ksvd, window_size)
+                            saveName = self.saveDir + f"/camera_result/first_spm/learn{self.learncount}/processed/difference"
+                            if not os.path.exists(saveName):
+                                os.mkdir(saveName)
+                            saveName = self.saveDir + f"/camera_result/first_spm/learn{self.learncount}/processed/difference/{now}"
+                            if not os.path.exists(saveName):
+                                os.mkdir(saveName)
+                            ave, med, var, mode, kurt, skew = ei.evaluate(iw_list[win], img_rec, win+1, feature_name, now, self.saveDir)
+                        
+                        else:
+                            feature_name = str(i)
+                            ave, med, var, mode, kurt, skew = [0,0,0,0,0,0]
+                            i+=1
+                        
+                        # 特徴量終結/1枚
+                        if feature_name not in feature_values:
+                            feature_values[feature_name] = {}
+
+                        feature_values[feature_name][f'win_{win+1}'] = {}
+                        feature_values[feature_name][f'win_{win+1}']["var"] = ave  # 平均値
+                        feature_values[feature_name][f'win_{win+1}']["med"] = med  # 中央値
+                        feature_values[feature_name][f'win_{win+1}']["ave"] = var  # 分散値
+                        feature_values[feature_name][f'win_{win+1}']["mode"] = mode  # 最頻値
+                        feature_values[feature_name][f'win_{win+1}']["kurt"] = kurt  # 尖度
+                        feature_values[feature_name][f'win_{win+1}']["skew"] = skew  # 歪度
+            
             #npzファイル形式で計算結果保存
             if self.state == 4:
                 self.savenpz_dir = self.saveDir + f"/camera_result/second_spm/learn{self.learncount}/"
             elif self.state == 6:
                 self.savenpz_dir = self.saveDir + f"/camera_result/planning/learn{self.learncount}/planning_npz/"
-                
-            np.savez_compressed(self.savenpz_dir + str(time.time()),array_1=np.array([feature_values]))
+            
+            #保存時のファイル名指定（現在は時間）
+            now=str(datetime.now())[:19].replace(" ","_").replace(":","-")
+#             print("feature_values:",feature_values)
+#             print("shape:",len(feature_values))
+            np.savez_compressed(self.savenpz_dir + now,array_1=np.array([feature_values]))
             self.tempDir.cleanup()
-
+    
     def spm_second(self):
         npz_dir = f"results/camera_result/second_spm/learn{self.learncount}/*"
         # wolvez2022/spmで実行してください
@@ -440,7 +489,7 @@ class Cansat():
         spm2_learn.start(data_list_all_win,label_list_all_win,fps=30,alpha=5.0,stack_appear=stack_start,stack_disappear=stack_end,stack_info=stack_info)#どっちかは外すのがいいのか
         model_master,label_list_all_win,scaler_master=spm2_learn.get_data()
         nonzero_w, nonzero_w_label, nonzero_w_num = spm2_learn.get_nonzero_w()
-        print(np.array(nonzero_w_label,dtype=object).reshape(6,1))
+        print("feature_names",np.array(nonzero_w_label,dtype=object).shape)
         feature_names = nonzero_w_label
         
 
@@ -459,23 +508,25 @@ class Cansat():
     def running(self,model_master,scaler_master,feature_names):
         planning_dir = f"results/camera_result/planning/learn{self.learncount}/planning_npz/*"
         planning_npz = sorted(glob(planning_dir))
-        self.spm_f_eval(now = time.time(),feature_names = feature_names)#特徴的な処理を行ってnpzを作成
-        SPM2_predict_prepare = SPM2Open_npz()#第一段階で作成したnpzを取得
         
-        pic = np.load(planning_npz[-1], allow_pickle=True)
-        feature_keys = list(pic.keys())
-        for f_key in feature_keys:
-            window_keys = list(pic[f_key])
-            print(window_keys)
-        test_data_list_all_win,test_label_list_all_win = SPM2_predict_prepare.unpack(planning_npz[-1])
-        print("----------b------------")
-        spm2_predict = SPM2Evaluate()
-        spm2_predict.start(model_master,test_data_list_all_win,test_label_list_all_win,scaler_master)
-        risk = np.array(spm2_predict.get_score()).reshape(2,3)#win1~win6の危険度マップができる
-
-        # 走行
-        self.planning(risk)
-        self.stuck_detection()#ここは注意
+        #保存時のファイル名指定（現在は時間）
+        now=str(datetime.now())[:19].replace(" ","_").replace(":","-")
+        
+        self.spm_f_eval(now = now)#特徴的な処理を行ってnpzを作成
+        if self.runningTime == 0:
+            self.runningTime = time.time()
+        else:
+            SPM2_predict_prepare = SPM2Open_npz()#第一段階で作成したnpzを取得
+            test_data_list_all_win,test_label_list_all_win = SPM2_predict_prepare.unpack([planning_npz[-1]])
+            spm2_predict = SPM2Evaluate()
+            spm2_predict.start(model_master,test_data_list_all_win,test_label_list_all_win,scaler_master)
+            risk = np.array(spm2_predict.get_score()).reshape(2,3)#win1~win6の危険度マップができる
+            print(risk)
+#             self.state = 8
+#             self.laststate =8
+    #         # 走行
+            self.planning(risk)
+            self.stuck_detection()#ここは注意
     
     def planning(self,risk):
         self.gps.vincenty_inverse(self.goallat,self.goallon,self.gps.Lat,self.gps.Lon) #距離:self.gps.gpsdis 方位角:self.gps.gpsdegrees
