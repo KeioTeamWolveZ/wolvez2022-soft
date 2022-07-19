@@ -20,7 +20,7 @@ class SPM2Open_npz():  # second_spm.pyとして実装済み
             data_list_all_time.append(data_per_pic)
             label_list_all_time.append(label_list_per_pic)
         data_list_all_time = np.array(data_list_all_time)
-        label_list_all_time = np.array(label_list_all_time)
+        label_list_all_time = np.array(label_list_all_time,dtype=object)
 
         print("===== windowごとに集計 =====")
         print("window数 : 6 (固定中。変更の場合はコード編集が必要）")
@@ -28,6 +28,8 @@ class SPM2Open_npz():  # second_spm.pyとして実装済み
         self.label_list_all_win = [[], [], [], [], [], []]
         for pic, lab_pic in zip(data_list_all_time, label_list_all_time):
             for win_no, (win, label_win) in enumerate(zip(pic, lab_pic)):
+                win = np.array(win)
+                label_win = np.array(label_win)
                 self.data_list_all_win[win_no].append(win.flatten())
                 self.label_list_all_win[win_no].append(label_win.flatten())
                 # print(train_X.shape)
@@ -36,9 +38,9 @@ class SPM2Open_npz():  # second_spm.pyとして実装済み
         self.data_list_all_win = np.array(self.data_list_all_win,dtype=object)
         self.label_list_all_win = np.array(self.label_list_all_win,dtype=object)
 
-        print(f"画像加工の種類 : {win.shape[0]}種類")
-        print(f"ヒストグラム特徴量の種類 : {win.shape[1]}種類")
-        print(f"--- >>  合計 : {win.flatten().shape[0]}種類")
+#         print(f"画像加工の種類 : {win.shape[0]}種類")
+#         print(f"ヒストグラム特徴量の種類 : {win.shape[1]}種類")
+#         print(f"--- >>  合計 : {win.flatten().shape[0]}種類")
         print("===== 終了 =====")
 
         return self.data_list_all_win, self.label_list_all_win
@@ -58,7 +60,7 @@ class SPM2Open_npz():  # second_spm.pyとして実装済み
 #                     labels.append(f"{w_key}-{f_key}-{feature}")
                       labels.append(f"{f_key}")
                 list_master_label[i].append(labels)
-        list_master = np.array(list_master)
+        list_master = np.array(list_master,dtype=object)
         return list_master, list_master_label
 
 

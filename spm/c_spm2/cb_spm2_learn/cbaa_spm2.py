@@ -246,8 +246,13 @@ train_mov_codes = ['a', 'b', 'c', 'd', 'e', 'f', 'g',
                    'h', 'i', 'l', 'n', 'p', ]  # 'j','k','m','o',
 test_mov_codes = ['a', 'b', 'c', 'd', 'e', 'f', 'g',
                   'h', 'i', 'l', 'n', 'p', ]  # 'j','k','m','o',
+
 stack_starts = [0., 0., 9., 20., 11., 4., 35., 58., 10., 3., 6., 12., 16., ]
 stack_ends = [4., 5., 16., 24., 13., 6., 36., 120., 11., 6., 8., 14., 19., ]
+train_mov_codes=['p']
+test_mov_codes=['p']
+stack_starts=[16.,]
+stack_ends=[19.,]
 alpha = 5.0
 spm_path = os.getcwd()
 
@@ -271,6 +276,7 @@ for train_mov_code, stack_start, stack_end in zip(train_mov_codes, stack_starts,
         test_dir_path = spm_path + \
             f"/b_spm1/b-data/bcca_secondinput/bcc{test_mov_code}"
         test_files = sorted(glob.glob(test_dir_path+"/*"))
+        test_files=sorted(glob.glob("/Users/hayashidekazuyuki/Desktop/Git_Win_Air/wolvez2022/spm/b_spm1/b-data/bcca_secondinput/bccp/2022-07-14_00-44-29.npz"))
         test_datas, test_datas_label = spm2_prep.unpack(test_files)
         spm2_2 = SPM2Evaluate()
         score_master = spm2_2.start(
