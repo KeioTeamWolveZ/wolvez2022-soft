@@ -6,13 +6,13 @@ import debug_constant as ct
 
 
 
-train_npz=sorted(glob.glob("/Users/hayashidekazuyuki/Desktop/Git_Win_Air/wolvez2022/spm/b_spm1/b-data/bcca_secondinput/bccp/*"))
+train_npz=sorted(glob.glob("/Users/hayashidekazuyuki/Desktop/Git_Win_Air/wolvez2022/spm/b_spm1/b-data/bcca_secondinput/bccp/*"))[:50]
 spm2_prepare = SPM2Open_npz()
 data_list_all_win,label_list_all_win = spm2_prepare.unpack(train_npz)
 spm2_learn = SPM2Learn()
 
-stack_start = ct.const.STUCK_START # 11
-stack_end = ct.const.STUCK_END # 13
+stack_start = 0.5# ct.const.STUCK_START # 11
+stack_end = 0.7# ct.const.STUCK_END # 13
 planning_npz=sorted(glob.glob("/Users/hayashidekazuyuki/Desktop/Git_Win_Air/wolvez2022/spm/b_spm1/b-data/bcca_secondinput/bccp/2022-07-14_00-35-35.npz"))
 stack_info = None
 spm2_learn.start(data_list_all_win,label_list_all_win,fps=30,alpha=5.0,stack_appear=stack_start,stack_disappear=stack_end,stack_info=stack_info)#どっちかは外すのがいいのか
