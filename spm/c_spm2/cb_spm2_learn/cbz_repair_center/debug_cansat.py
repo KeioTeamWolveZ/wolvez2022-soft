@@ -1,8 +1,6 @@
 #Last Update 2022/07/02
 #Author : Toshiki Fukui
-
-from tempfile import TemporaryDirectory
-import RPi.GPIO as GPIO
+import math
 import sys
 import cv2
 import time
@@ -14,33 +12,15 @@ from glob import glob
 # from math import prod
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 
-from first_spm import IntoWindow, LearnDict, EvaluateImg
+from debug_first_spm import IntoWindow, LearnDict, EvaluateImg
 from second_spm import SPM2Open_npz,SPM2Learn,SPM2Evaluate
+import debug_constant as ct
 
-from bno055 import BNO055
-from motor import motor
-from gps import GPS
-from lora import lora
-from led import led
-import constant as ct
+
 
 class Cansat():
     def __init__(self,state):
-        # GPIO設定
-        GPIO.setwarnings(False)
-        GPIO.setmode(GPIO.BCM) #GPIOの設定
-        GPIO.setup(ct.const.FLIGHTPIN_PIN,GPIO.IN,pull_up_down=GPIO.PUD_UP) #フライトピン用。プルアップを有効化
-        GPIO.setup(ct.const.SEPARATION_PIN,GPIO.OUT) #焼き切り用のピンの設定
-        
-        # インスタンス生成        
-        self.bno055 = BNO055()
-        self.MotorR = motor(ct.const.RIGHT_MOTOR_IN1_PIN,ct.const.RIGHT_MOTOR_IN2_PIN,ct.const.RIGHT_MOTOR_VREF_PIN)
-        self.MotorL = motor(ct.const.LEFT_MOTOR_IN1_PIN,ct.const.LEFT_MOTOR_IN2_PIN, ct.const.LEFT_MOTOR_VREF_PIN)
-        self.gps = GPS()
-        self.lora = lora()
-        self.RED_LED = led(ct.const.RED_LED_PIN)
-        self.BLUE_LED = led(ct.const.BLUE_LED_PIN)
-        self.GREEN_LED = led(ct.const.GREEN_LED_PIN)
+
         
         #初期パラメータ設定
         self.timer = 0
@@ -139,8 +119,8 @@ class Cansat():
             self.dropping()
         elif self.state == 3:#パラシュートから離れる。カメラでの撮影行う
             self.landing()
-        elif self.state == 4:#スパースモデリング第一段階
-            self.spm_first(ct.const.SPMFIRST_PIC_COUNT)
+        # elif self.state == 4:#スパースモデリング第一段階
+        #     self.spm_first(ct.const.SPMFIRST_PIC_COUNT)
         elif self.state == 5:#スパースモデリング第二段階
             self.model_master,self.scaler_master,self.feature_names = self.spm_second()
         elif self.state == 6:#経路計画段階
@@ -178,88 +158,88 @@ class Cansat():
 #             else:
 #                 self.switchRadio()
 
-    def preparing(self):#時間が立ったら移行
-        if self.preparingTime == 0:
-            self.preparingTime = time.time()#時刻を取得
-            self.RED_LED.led_on()
-            self.BLUE_LED.led_off()
-            self.GREEN_LED.led_off()
+    # def preparing(self):#時間が立ったら移行
+    #     if self.preparingTime == 0:
+    #         self.preparingTime = time.time()#時刻を取得
+    #         self.RED_LED.led_on()
+    #         self.BLUE_LED.led_off()
+    #         self.GREEN_LED.led_off()
 
-        #self.countPreLoop+ = 1
-        if not self.preparingTime == 0:
-            if self.gpscount <= ct.const.PREPARING_GPS_COUNT_THRE:
-                self.startgps_lon.append(float(self.gps.Lon))
-                self.startgps_lat.append(float(self.gps.Lat))
-                self.gpscount+=1
+        # #self.countPreLoop+ = 1
+        # if not self.preparingTime == 0:
+        #     if self.gpscount <= ct.const.PREPARING_GPS_COUNT_THRE:
+        #         self.startgps_lon.append(float(self.gps.Lon))
+        #         self.startgps_lat.append(float(self.gps.Lat))
+        #         self.gpscount+=1
                 
-            else:
-                print("GPS completed!!")
+        #     else:
+        #         print("GPS completed!!")
             
-            if time.time() - self.preparingTime > ct.const.PREPARING_TIME_THRE:
-                self.startlon=np.mean(self.startgps_lon)
-                self.startlat=np.mean(self.startgps_lat)
-                self.state = 1
-                self.laststate = 1
+        #     if time.time() - self.preparingTime > ct.const.PREPARING_TIME_THRE:
+        #         self.startlon=np.mean(self.startgps_lon)
+        #         self.startlat=np.mean(self.startgps_lat)
+        #         self.state = 1
+        #         self.laststate = 1
     
-    def flying(self):#フライトピンが外れる➡︎ボイド缶から放出されたことを検出するステート
-        if self.flyingTime == 0:#時刻を取得してLEDをステートに合わせて光らせる
-            self.flyingTime = time.time()
-            self.RED_LED.led_off()
-            self.BLUE_LED.led_off()
-            self.GREEN_LED.led_off()
+    # def flying(self):#フライトピンが外れる➡︎ボイド缶から放出されたことを検出するステート
+    #     if self.flyingTime == 0:#時刻を取得してLEDをステートに合わせて光らせる
+    #         self.flyingTime = time.time()
+    #         self.RED_LED.led_off()
+    #         self.BLUE_LED.led_off()
+    #         self.GREEN_LED.led_off()
 
-        if GPIO.input(ct.const.FLIGHTPIN_PIN) == GPIO.HIGH:#highかどうか＝フライトピンが外れているかチェック
-            self.countFlyLoop+=1
-            if self.countFlyLoop > ct.const.FLYING_FLIGHTPIN_COUNT_THRE:#一定時間HIGHだったらステート移行
-                self.state = 2
-                self.laststate = 2       
-        else:
-            self.countFlyLoop = 0 #何故かLOWだったときカウントをリセット
+    #     if GPIO.input(ct.const.FLIGHTPIN_PIN) == GPIO.HIGH:#highかどうか＝フライトピンが外れているかチェック
+    #         self.countFlyLoop+=1
+    #         if self.countFlyLoop > ct.const.FLYING_FLIGHTPIN_COUNT_THRE:#一定時間HIGHだったらステート移行
+    #             self.state = 2
+    #             self.laststate = 2       
+    #     else:
+    #         self.countFlyLoop = 0 #何故かLOWだったときカウントをリセット
     
-    def dropping(self): #着地判定ステート
-        if self.droppingTime == 0:#時刻を取得してLEDをステートに合わせて光らせる
-            self.droppingTime = time.time()
-            self.RED_LED.led_off()
-            self.BLUE_LED.led_on()
-            self.GREEN_LED.led_off()
+    # def dropping(self): #着地判定ステート
+    #     if self.droppingTime == 0:#時刻を取得してLEDをステートに合わせて光らせる
+    #         self.droppingTime = time.time()
+    #         self.RED_LED.led_off()
+    #         self.BLUE_LED.led_on()
+    #         self.GREEN_LED.led_off()
       
-        #加速度が小さくなったら着地判定
-        if (self.bno055.ax**2 + self.bno055.ay**2 + self.bno055.az**2) < ct.const.DROPPING_ACC_THRE**2:#加速度が閾値以下で着地判定
-            self.countDropLoop+=1            
-            if self.countDropLoop > ct.const.DROPPING_ACC_COUNT_THRE:#着地判定が複数回行われたらステート以降
-                self.state = 3
-                self.laststate = 3
-        else:
-            self.countDropLoop = 0 #初期化の必要あり
+    #     #加速度が小さくなったら着地判定
+    #     if (self.bno055.ax**2 + self.bno055.ay**2 + self.bno055.az**2) < ct.const.DROPPING_ACC_THRE**2:#加速度が閾値以下で着地判定
+    #         self.countDropLoop+=1            
+    #         if self.countDropLoop > ct.const.DROPPING_ACC_COUNT_THRE:#着地判定が複数回行われたらステート以降
+    #             self.state = 3
+    #             self.laststate = 3
+    #     else:
+    #         self.countDropLoop = 0 #初期化の必要あり
 
-    def landing(self):
-        if self.landingTime == 0:#時刻を取得してLEDをステートに合わせて光らせる
-            self.landingTime = time.time()
-            self.RED_LED.led_off()
-            self.BLUE_LED.led_off()
-            self.GREEN_LED.led_on()
+    # def landing(self):
+    #     if self.landingTime == 0:#時刻を取得してLEDをステートに合わせて光らせる
+    #         self.landingTime = time.time()
+    #         self.RED_LED.led_off()
+    #         self.BLUE_LED.led_off()
+    #         self.GREEN_LED.led_on()
             
-        if not self.landingTime == 0:
-            #焼き切りによるパラ分離
-            if self.landstate == 0:
-                GPIO.output(ct.const.SEPARATION_PIN,1) #電圧をHIGHにして焼き切りを行う
-                if time.time()-self.landingTime > ct.const.SEPARATION_TIME_THRE:
-                    GPIO.output(ct.const.SEPARATION_PIN,0) #焼き切りが危ないのでlowにしておく
-                    self.landstate = 1
-                    self.pre_motorTime = time.time()
+    #     if not self.landingTime == 0:
+    #         #焼き切りによるパラ分離
+    #         if self.landstate == 0:
+    #             GPIO.output(ct.const.SEPARATION_PIN,1) #電圧をHIGHにして焼き切りを行う
+    #             if time.time()-self.landingTime > ct.const.SEPARATION_TIME_THRE:
+    #                 GPIO.output(ct.const.SEPARATION_PIN,0) #焼き切りが危ないのでlowにしておく
+    #                 self.landstate = 1
+    #                 self.pre_motorTime = time.time()
             
-            #分離シート離脱
-            elif self.landstate == 1:
-                self.MotorR.go(ct.const.LANDING_MOTOR_VREF)
-                self.MotorL.go(ct.const.LANDING_MOTOR_VREF)
+    #         #分離シート離脱
+    #         elif self.landstate == 1:
+    #             self.MotorR.go(ct.const.LANDING_MOTOR_VREF)
+    #             self.MotorL.go(ct.const.LANDING_MOTOR_VREF)
 
-                self.stuck_detection()
+    #             self.stuck_detection()
 
-                if time.time()-self.pre_motorTime > ct.const.LANDING_MOTOR_TIME_THRE: #5秒間モータ回して分離シートから十分離れる
-                    self.MotorR.stop()
-                    self.MotorL.stop()
-                    self.state = 4
-                    self.laststate = 4
+    #             if time.time()-self.pre_motorTime > ct.const.LANDING_MOTOR_TIME_THRE: #5秒間モータ回して分離シートから十分離れる
+    #                 self.MotorR.stop()
+    #                 self.MotorL.stop()
+    #                 self.state = 4
+    #                 self.laststate = 4
 
     def spm_first(self, PIC_COUNT):
         start_time = time.time()#学習用時間計測。学習開始時間
@@ -358,7 +338,7 @@ class Cansat():
         
             feature_values = {}
             
-            self.tempDir = TemporaryDirectory()
+            # self.tempDir = TemporaryDirectory()
             tempDir_name = self.tempDir.name
             
             iw = IntoWindow(importPath, tempDir_name, False) #画像の特徴抽出のインスタンス生成
