@@ -24,6 +24,23 @@ from lora import lora
 from led import led
 import constant as ct
 
+"""
+ステート説明
+
+0. preparing()  準備ステート。センサ系の準備。一定時間以上経過したらステート移行。
+1. flying()     放出準備ステート。フライトピンが接続されている状態（＝ボイド缶に収納されている）。フライトピンが外れたらステート移行。
+2. droping()    降下&着陸判定ステート。加速度センサの値が一定値以下の状態が一定時間続いたら着陸と判定しステート移行。
+3. landing()    分離ステート。分離シートの焼ききりによる分離、モータ回転による分離シートからの離脱を行ったらステート移行。
+4. spm_first()  第1段階スパースモデリングステート。最初に撮影した画像に特徴処理(10種類:RGB,r,g,b,rb,rg,gb,edge,edge enphasis, HSV)を行い、
+                それぞれで辞書作成。再構成した際の元画像との差分のヒストグラムから特徴量（6種類: 平均,分散,中央値,最頻値,歪度,尖度）を抽出。
+5. spm_second() 第2段階スパースモデリングステート。第一段階で獲得した特徴処理に対する特徴量（1ウィンドウ60個の特徴量、全体で360個の特徴量）から
+                重要な特徴量を抽出。危険度の算出まで可能になる。
+6. running()    経路計画&走行ステート。ステート5まで獲得したモデルで危険度を逐次算出しながら経路を計画。計画した経路を走行。
+7. relearning() 再学習ステート（未実装）。スタックしたら再度学習を行いモデルを更新。
+8. finish()     終了ステート
+
+"""
+
 class Cansat():
     def __init__(self,state):
         # GPIO設定
@@ -131,19 +148,19 @@ class Cansat():
             test.write(datalog + '\n')
 
     def sequence(self):
-        if self.state == 0:#センサ系の準備を行う段階
+        if self.state == 0:#センサ系の準備を行う段階。時間経過でステート移行
             self.preparing()
-        elif self.state == 1:#放出・降下を行う段階
+        elif self.state == 1:#放出を検知する段階。フライトピンが抜けたらステート移行
             self.flying()
-        elif self.state == 2:#着陸判定、パラ分離（焼き切り）
+        elif self.state == 2:#着陸判定する段階。加速度の値が一定値以下になったら着陸したと判定してステート移行
             self.dropping()
-        elif self.state == 3:#パラシュートから離れる。カメラでの撮影行う
+        elif self.state == 3:#焼き切り&パラシュートから離脱したらステート移行
             self.landing()
         elif self.state == 4:#スパースモデリング第一段階
             self.spm_first(ct.const.SPMFIRST_PIC_COUNT)
         elif self.state == 5:#スパースモデリング第二段階
             self.model_master,self.scaler_master,self.feature_names = self.spm_second()
-        elif self.state == 6:#経路計画段階
+        elif self.state == 6:#経路計画&走行実施
             self.running(self.model_master,self.scaler_master,self.feature_names)
         # elif self.state == 7:
         #     self.re_learning()
@@ -154,7 +171,6 @@ class Cansat():
 
     def setup(self):
         self.gps.setupGps()
-        # os.system("sudo insmod LoRa_SOFT/soft_uart.ko")
         self.bno055.setupBno()
         self.lora.sendDevice.setup_lora()
         if self.bno055.begin() is not True:
@@ -173,10 +189,7 @@ class Cansat():
         self.writeData()#txtファイルへのログの保存
     
         if not self.state == 1: #preparingのときは電波を発しない
-#             if not self.state ==5:#self.sendRadio()#LoRaでログを送信
             self.sendLoRa()
-#             else:
-#                 self.switchRadio()
 
     def preparing(self):#時間が立ったら移行
         if self.preparingTime == 0:
@@ -216,7 +229,7 @@ class Cansat():
         else:
             self.countFlyLoop = 0 #何故かLOWだったときカウントをリセット
     
-    def dropping(self): #着地判定ステート
+    def dropping(self): #着陸判定ステート
         if self.droppingTime == 0:#時刻を取得してLEDをステートに合わせて光らせる
             self.droppingTime = time.time()
             self.RED_LED.led_off()
@@ -232,7 +245,7 @@ class Cansat():
         else:
             self.countDropLoop = 0 #初期化の必要あり
 
-    def landing(self):
+    def landing(self): #着陸判定ステート。焼き切り&分離シートからの離脱が必要
         if self.landingTime == 0:#時刻を取得してLEDをステートに合わせて光らせる
             self.landingTime = time.time()
             self.RED_LED.led_off()
@@ -261,8 +274,8 @@ class Cansat():
                     self.state = 4
                     self.laststate = 4
 
-    def spm_first(self, PIC_COUNT):
-        start_time = time.time()#学習用時間計測。学習開始時間
+    def spm_first(self, PIC_COUNT): #ステート4。スパースモデリング第一段階実施。
+        start_time = time.time() #学習用時間計測。学習開始時間
         
         #保存時のファイル名指定（現在は時間）
         now=str(datetime.now())[:19].replace(" ","_").replace(":","-")
@@ -328,7 +341,7 @@ class Cansat():
         end_time = time.time()#計算終了
         print("Calc Time:",end_time-start_time)
 
-    def spm_f_eval(self, PIC_COUNT=1, now="TEST", iw_shape=(2,3),feature_names = None):
+    def spm_f_eval(self, PIC_COUNT=1, now="TEST", iw_shape=(2,3),feature_names = None):#第一段階学習&評価。npzファイル作成が目的
 #         self.cap = cv2.VideoCapture(0)
         for i in range(PIC_COUNT):
             print(i,"枚目")
@@ -363,7 +376,7 @@ class Cansat():
             iw = IntoWindow(importPath, tempDir_name, False) #画像の特徴抽出のインスタンス生成
             # processing img
             
-            if feature_names == None:
+            if feature_names == None:#第一段階学習モード
                 fmg_list = iw.feature_img(frame_num=now,feature_names=feature_names) #特徴抽出。リストに特徴画像が入る
 
                 for fmg in fmg_list:#それぞれの特徴画像に対して処理
@@ -397,7 +410,7 @@ class Cansat():
                         feature_values[feature_name][f'win_{win+1}']["kurt"] = kurt  # 尖度
                         feature_values[feature_name][f'win_{win+1}']["skew"] = skew  # 歪度
                 
-            else:
+            else: #第一段階評価モード。runningで使うための部分
                 i=0
                 for win,feature in enumerate(feature_names):#tokuchougazounoyouso
                     fmg_list = iw.feature_img(frame_num=now,feature_names=feature) #特徴抽出。リストに特徴画像が入る
@@ -448,10 +461,10 @@ class Cansat():
             now=str(datetime.now())[:19].replace(" ","_").replace(":","-")
 #             print("feature_values:",feature_values)
 #             print("shape:",len(feature_values))
-            np.savez_compressed(self.savenpz_dir + now,array_1=np.array([feature_values]))
+            np.savez_compressed(self.savenpz_dir + now,array_1=np.array([feature_values]))#npzファイル作成
             self.tempDir.cleanup()
     
-    def spm_second(self):
+    def spm_second(self): #スパースモデリング第二段階実施
         npz_dir = f"results/camera_result/second_spm/learn{self.learncount}/*"
         # wolvez2022/spmで実行してください
         train_npz = sorted(glob(npz_dir))
@@ -505,30 +518,31 @@ class Cansat():
         self.laststate = 6
         return model_master,scaler_master,feature_names
 
-    def running(self,model_master,scaler_master,feature_names):
+    def running(self,model_master,scaler_master,feature_names): #経路計画&走行
         planning_dir = f"results/camera_result/planning/learn{self.learncount}/planning_npz/*"
         planning_npz = sorted(glob(planning_dir))
         
         #保存時のファイル名指定（現在は時間）
         now=str(datetime.now())[:19].replace(" ","_").replace(":","-")
         
-        self.spm_f_eval(now = now)#特徴的な処理を行ってnpzを作成
+        self.spm_f_eval(now = now)#第一段階と同様の処理実施。特徴処理を行なってnpzファイル作成
         if self.runningTime == 0:
             self.runningTime = time.time()
         else:
-            SPM2_predict_prepare = SPM2Open_npz()#第一段階で作成したnpzを取得
-            test_data_list_all_win,test_label_list_all_win = SPM2_predict_prepare.unpack([planning_npz[-1]])
+            SPM2_predict_prepare = SPM2Open_npz()
+            test_data_list_all_win,test_label_list_all_win = SPM2_predict_prepare.unpack([planning_npz[-1]])#作成したnpzファイルを取得
             spm2_predict = SPM2Evaluate()
-            spm2_predict.start(model_master,test_data_list_all_win,test_label_list_all_win,scaler_master)
-            risk = np.array(spm2_predict.get_score()).reshape(2,3)#win1~win6の危険度マップができる
-            print(risk)
+            spm2_predict.start(model_master,test_data_list_all_win,test_label_list_all_win,scaler_master)#第二段階の評価を実施
+            risk = np.array(spm2_predict.get_score()).reshape(2,3)#win1~win6の危険度マップ作成
+            print("===== 終了 =====")
+            print(np.round(risk))
 #             self.state = 8
 #             self.laststate =8
     #         # 走行
             self.planning(risk)
             self.stuck_detection()#ここは注意
     
-    def planning(self,risk):
+    def planning(self,risk): #危険度とGPS座標を用いた経路計画&走行を取り仕切る関数
         self.gps.vincenty_inverse(self.goallat,self.goallon,self.gps.Lat,self.gps.Lon) #距離:self.gps.gpsdis 方位角:self.gps.gpsdegrees
         self.x = self.gps.gpsdis*math.cos(math.radians(self.gps.gpsdegrees))
         self.y = self.gps.gpsdis*math.sin(math.radians(self.gps.gpsdegrees))
@@ -554,7 +568,7 @@ class Cansat():
             self.MotorR.stop()
             self.MotorL.stop()
             
-    def sendLoRa(self):
+    def sendLoRa(self): #通信モジュールの送信を行う関数
         datalog = str(self.state) + ","\
                   + str(self.gps.Time) + ","\
                   + str(self.gps.Lat) + ","\
@@ -562,7 +576,7 @@ class Cansat():
 
         self.lora.sendData(datalog) #データを送信
         
-    def stuck_detection(self):        
+    def stuck_detection(self): #スタック検知を行う関数   
         if (self.bno055.ax**2+self.bno055.ay**2+self.bno055.az**2) <= ct.const.STUCK_ACC_THRE**2:
             self.countstuckLoop+= 1
             if self.countstuckLoop > ct.const.STUCK_COUNT_THRE: #加速度が閾値以下になるケースがある程度続いたらスタックと判定
@@ -578,7 +592,7 @@ class Cansat():
                     self.stuckTime = 0
                     self.countstuckLoop = 0
 
-    def keyboardinterrupt(self):
+    def keyboardinterrupt(self): #キーボードインタラプト入れた場合に発動する関数
         self.MotorR.stop()
         self.MotorL.stop()
         self.RED_LED.led_off()
