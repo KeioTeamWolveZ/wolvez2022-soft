@@ -86,6 +86,9 @@ class Cansat():
         self.dict_list = {}
         self.saveDir = "results"
         self.mkdir()
+        
+        self.goallon = 139.65578
+        self.goallat = 35.55518
 
     def mkdir(self):
         #フォルダ作成部分
@@ -537,6 +540,13 @@ class Cansat():
 
 
     def planning(self,risk):
+#         self.gps.Lon = 140
+#         self.gps.Lat = 36
+        
+#         self.goallon = 139.65578
+#         self.goallat = 35.55518
+        
+
         self.gps.vincenty_inverse(self.goallat,self.goallon,self.gps.Lat,self.gps.Lon) #距離:self.gps.gpsdis 方位角:self.gps.gpsdegrees
         self.x = self.gps.gpsdis*math.cos(math.radians(self.gps.gpsdegrees))
         self.y = self.gps.gpsdis*math.sin(math.radians(self.gps.gpsdegrees))
@@ -587,6 +597,7 @@ class Cansat():
             direction_real = 3
         else:
             if lower_risk[direction_goal] <= threshold_risk:   #ゴール方向の危険度が閾値以下の場合
+                print("go for goal")
                 direction_real = direction_goal
             else:
                 print("ゴール方向が安全ではありません。別ルートを探索します。")
