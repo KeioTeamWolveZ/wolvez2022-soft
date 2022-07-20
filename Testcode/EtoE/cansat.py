@@ -66,6 +66,7 @@ class Cansat():
         self.stuckTime = 0
         self.learncount = 1
         self.learn_state = True
+        self.initplan = 0
         # self.pre_motorTime = 0
         # self.startingTime = 0
         # self.measureringTime = 0
@@ -87,8 +88,8 @@ class Cansat():
         self.saveDir = "results"
         self.mkdir()
         
-        self.goallon = 139.65578
-        self.goallat = 35.55518
+        self.goallon = 139.65442833
+        self.goallat = 35.55539167
 
     def mkdir(self):
         #フォルダ作成部分
@@ -155,6 +156,9 @@ class Cansat():
             self.model_master,self.scaler_master,self.feature_names = self.spm_second()
         elif self.state == 6:#経路計画段階
             self.running(self.model_master,self.scaler_master,self.feature_names)
+#             risk = np.array([[10,10,10],[10,10,10]])
+#             self.planning(risk)
+            
         # elif self.state == 7:
         #     self.re_learning()
         # elif self.state == 8:#終了
@@ -346,8 +350,8 @@ class Cansat():
             if self.state == 4:
                 save_file = f"results/camera_result/first_spm/learn{self.learncount}/evaluate/evaluateimg{i}.jpg"
             elif self.state == 6:
-                save_file = f"results/camera_result/planning/learn{self.learncount}/planning_pics/planningimg{i}.jpg"
-
+                save_file = f"results/camera_result/planning/learn{self.learncount}/planning_pics/planningimg{self.initplan}.jpg"
+                self.initplan += 1
             cv2.imwrite(save_file,self.secondimg)
             self.firstevalimgcount += 1
             
@@ -532,22 +536,23 @@ class Cansat():
             spm2_predict.start(model_master,test_data_list_all_win,test_label_list_all_win,scaler_master)
             risk = np.array(spm2_predict.get_score()).reshape(2,3)#win1~win6の危険度マップができる
             print(risk)
-#             self.state = 8
-#             self.laststate =8
+
+# #             self.state = 8
+# #             self.laststate =8
     #         # 走行
+        
             self.planning(risk)
             # self.stuck_detection()#ここは注意
 
 
     def planning(self,risk):
-#         self.gps.Lon = 140
-#         self.gps.Lat = 36
+#         self.gps.Lon = 139.6545268
+#         self.gps.Lat = 35.5559162
         
 #         self.goallon = 139.65578
 #         self.goallat = 35.55518
-        
-
-        self.gps.vincenty_inverse(self.goallat,self.goallon,self.gps.Lat,self.gps.Lon) #距離:self.gps.gpsdis 方位角:self.gps.gpsdegrees
+    
+        self.gps.vincenty_inverse(float(self.gps.Lat),float(self.gps.Lon),self.goallat,self.goallon) #距離:self.gps.gpsdis 方位角:self.gps.gpsdegrees
         self.x = self.gps.gpsdis*math.cos(math.radians(self.gps.gpsdegrees))
         self.y = self.gps.gpsdis*math.sin(math.radians(self.gps.gpsdegrees))
         theta_goal = self.gps.gpsdegrees
@@ -557,17 +562,19 @@ class Cansat():
             phi += 360
         elif phi > 180:
             phi -= 360
+        print("theta_goal:",theta_goal,"ex:",self.bno055.ex)
+        print("distance:", self.gps.gpsdis)
 
         dir_run = self.calc_dir(risk,phi)
         if dir_run == 0:
-            self.MotorR.go(80)
-            self.MotorL.go(60)
-        elif dir_run == 1:
-            self.MotorR.go(70)
+            self.MotorR.go(90)
             self.MotorL.go(70)
-        elif dir_run == 2:
-            self.MotorR.go(60)
+        elif dir_run == 1:
+            self.MotorR.go(80)
             self.MotorL.go(80)
+        elif dir_run == 2:
+            self.MotorR.go(70)
+            self.MotorL.go(90)
         elif dir_run == 3:
             self.MotorR.stop()
             self.MotorL.stop()
@@ -651,5 +658,6 @@ class Cansat():
         self.RED_LED.led_off()
         self.BLUE_LED.led_off()
         self.GREEN_LED.led_off()
+        time.sleep(0.5)
 #         self.cap.release()
 #         cv2.destroyAllWindows()

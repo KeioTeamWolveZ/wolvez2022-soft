@@ -197,6 +197,7 @@ class BNO055:
         self._sensorId = sensorId
         self._address = address
         self._mode = BNO055.OPERATION_MODE_NDOF
+#         self._mode = BNO055.OPERATION_MODE_COMPASS
 
 
     def begin(self, mode=None):
@@ -301,3 +302,4 @@ class BNO055:
         self.ax,self.ay,self.az = self.getVector(BNO055.VECTOR_GYROSCOPE)
         self.gx,self.gy,self.gz = self.getVector(BNO055.VECTOR_GRAVITY)
         self.ex,self.ey,self.ez = self.getVector(BNO055.VECTOR_EULER)
+        
