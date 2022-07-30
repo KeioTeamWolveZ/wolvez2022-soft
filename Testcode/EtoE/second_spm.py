@@ -151,9 +151,6 @@ class SPM2Learn():  # second_spm.pyとして実装済み
     def get_data(self):
         return self.model_master,self.label_list_all_win,self.scaler_master
 
-    def zairyo_for_saigakusyu(self):
-        
-        pass
 
 
 class SPM2Evaluate():  # 藤井さんの行動計画側に移設予定
