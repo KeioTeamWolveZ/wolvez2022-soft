@@ -9,6 +9,7 @@ import time
 import numpy as np
 import os
 import re
+import math
 from datetime import datetime
 from glob import glob
 # from math import prod
@@ -274,7 +275,23 @@ class Cansat():
                     self.state = 4
                     self.laststate = 4
 
-    def spm_first(self, PIC_COUNT): #ステート4。スパースモデリング第一段階実施。
+    def spm_first(self, PIC_COUNT:int=1, relearning:dict=dict(relearn_state=False,f1=10,f3=60)): #ステート4。スパースモデリング第一段階実施。
+        '''
+        args:
+            PIC_COUNT (int) : number of taking pics
+            relearning (dict) : dict of informations for relearning; relearn_state (bool), f1 (int) for number not should be counted as stack-pos, f3 (int) for number should be counted include f1
+        
+        flow:
+            First Learning:
+                1: PIC_COUNT=1, (global)learn_state=True
+                2: PIC_COUNT=50?, (global)learn_state=False
+            ReLearning:
+                3: PIC_COUNT=any, (global)learn_state=True, relearning={'relearn_state':True, 'f1':int, 'f3':int}\\
+                4: PIC_COUNT=any, (global)learn_state=False, relearning={'relearn_state':True, 'f1':int, 'f3':int}
+        
+        output:
+            New npzs will be in the current "learncount" folder
+        '''
         start_time = time.time() #学習用時間計測。学習開始時間
         
         #保存時のファイル名指定（現在は時間）
@@ -288,19 +305,24 @@ class Cansat():
         # This will change such as datetime
         # print("CURRENT FRAME: "+str(re.findall(".*/frame_(.*).jpg", importPath)[0]))
         
-        iw_shape = (2, 3)#ウィンドウのシェイプ
-        D, ksvd = None, None #最初に指定しないと怒られちゃうから
+        iw_shape = (2, 3)  #ウィンドウのシェイプ
+        D: any
+        ksvd: any  # 最初に指定しないと怒られちゃうから
         feature_values = {}
 
         if self.learn_state:
-            print("=====LEARNING PHASE=====")
+            print(f"=====LEARNING PHASE{self.learncount}=====")
         else:
-            print("=====EVALUATING PHASE=====")
+            print(f"=====EVALUATING PHASE{self.learncount}=====")
             
         
         if self.learn_state:#学習モデル獲得
             
             #学習用画像を一枚撮影
+            '''
+            再学習の段階でcamerafirstの値を指定することで
+            辞書再作成用の画像撮影の有無を決定
+            '''
             if self.camerafirst == 0:
                 self.cap = cv2.VideoCapture(0)
                 ret, firstimg = self.cap.read()
@@ -308,10 +330,19 @@ class Cansat():
                 self.camerastate = "captured!"
                 self.firstlearnimgcount += 1
                 self.camerafirst = 1
+            elif self.camerafirst == 2:
+                '''
+                再撮影をする場合はここに記載
+                '''
             else:
                 self.camerastate = 0
             
-            importPath = f"results/camera_result/first_spm/learn{self.learncount}/firstimg{self.firstlearnimgcount-1}.jpg"
+            if relearning['relearn_state']:  # 再学習に用いる画像パスの指定
+                # 一つ前のlearncountファイルの-f3枚目を指定
+                importPath = sorted(glob(f"results/camera_result/planning/learn{self.learncount-1}/planning_pics/planningimg*.jpg"))[-relearning['f3']]
+            else:
+                importPath = f"results/camera_result/first_spm/learn{self.learncount}/firstimg{self.firstlearnimgcount-1}.jpg"
+            
             processed_Dir = f"results/camera_result/first_spm/learn{self.learncount}/processed"
             iw = IntoWindow(importPath, processed_Dir, Save) #画像の特徴抽出のインスタンス生成
             # processing img
@@ -333,7 +364,7 @@ class Cansat():
 
         else:#20枚撮影
             self.spm_f_eval(PIC_COUNT=PIC_COUNT, now=now, iw_shape=iw_shape) #第2段階用の画像を撮影
-            if self.state == 4:
+            if self.state == 4:  # 再学習時にステート操作が必要なら追記
                 self.state = 5
                 self.laststate = 5
                     
@@ -341,15 +372,15 @@ class Cansat():
         end_time = time.time()#計算終了
         print("Calc Time:",end_time-start_time)
 
-    def spm_f_eval(self, PIC_COUNT=1, now="TEST", iw_shape=(2,3),feature_names = None):#第一段階学習&評価。npzファイル作成が目的
-#         self.cap = cv2.VideoCapture(0)
+    def spm_f_eval(self, PIC_COUNT=1, now="TEST", iw_shape=(2,3),feature_names=None, relearning:dict=dict(relearn_state=False,f1=10,f3=60)):#第一段階学習&評価。npzファイル作成が目的
+        # self.cap = cv2.VideoCapture(0)
         for i in range(PIC_COUNT):
             print(i,"枚目")
             ret,self.secondimg = self.cap.read()
             if self.state == 4:
-                save_file = f"results/camera_result/first_spm/learn{self.learncount}/evaluate/evaluateimg{i}.jpg"
+                save_file = f"results/camera_result/first_spm/learn{self.learncount}/evaluate/evaluateimg{time.time():.0f}.jpg"
             elif self.state == 6:
-                save_file = f"results/camera_result/planning/learn{self.learncount}/planning_pics/planningimg{i}.jpg"
+                save_file = f"results/camera_result/planning/learn{self.learncount}/planning_pics/planningimg{time.time():.0f}.jpg"
 
             cv2.imwrite(save_file,self.secondimg)
             self.firstevalimgcount += 1
@@ -360,11 +391,14 @@ class Cansat():
                 time.sleep(0.4)
                 self.MotorR.stop()
                 self.MotorL.stop()
-            
-        if not PIC_COUNT == 1:
-            second_img_paths = sorted(glob(f"results/camera_result/first_spm/learn{self.learncount}/evaluate/evaluateimg*.jpg"))
+        
+        if relearning['relearn_state']:
+            second_img_paths = sorted(glob(f"results/camera_result/first_spm/learn{self.learncount-1}/evaluate/evaluateimg*.jpg"))[-relearning['f3']:-relearning['f1']]
         else:
-            second_img_paths = [save_file]
+            if not PIC_COUNT == 1:
+                second_img_paths = sorted(glob(f"results/camera_result/first_spm/learn{self.learncount}/evaluate/evaluateimg*.jpg"))
+            else:
+                second_img_paths = [save_file]
         
         for importPath in second_img_paths:
         
@@ -411,6 +445,9 @@ class Cansat():
                         feature_values[feature_name][f'win_{win+1}']["skew"] = skew  # 歪度
                 
             else: #第一段階評価モード。runningで使うための部分
+                '''
+                ここは7/31時点で未着手
+                '''
                 i=0
                 for win,feature in enumerate(feature_names):#tokuchougazounoyouso
                     fmg_list = iw.feature_img(frame_num=now,feature_names=feature) #特徴抽出。リストに特徴画像が入る
@@ -451,16 +488,16 @@ class Cansat():
                         feature_values[feature_name][f'win_{win+1}']["kurt"] = kurt  # 尖度
                         feature_values[feature_name][f'win_{win+1}']["skew"] = skew  # 歪度
             
-            #npzファイル形式で計算結果保存
+            # npzファイル形式で計算結果保存
             if self.state == 4:
                 self.savenpz_dir = self.saveDir + f"/camera_result/second_spm/learn{self.learncount}/"
             elif self.state == 6:
                 self.savenpz_dir = self.saveDir + f"/camera_result/planning/learn{self.learncount}/planning_npz/"
             
-            #保存時のファイル名指定（現在は時間）
+            # 保存時のファイル名指定（現在は時間）
             now=str(datetime.now())[:19].replace(" ","_").replace(":","-")
-#             print("feature_values:",feature_values)
-#             print("shape:",len(feature_values))
+            # print("feature_values:",feature_values)
+            # print("shape:",len(feature_values))
             np.savez_compressed(self.savenpz_dir + now,array_1=np.array([feature_values]))#npzファイル作成
             self.tempDir.cleanup()
     
@@ -473,16 +510,13 @@ class Cansat():
         spm2_learn = SPM2Learn()
 
         #ウィンドウによってスタックと教示する時間帯を変えず、一括とする場合
-        f1 = ct.const.f1
-        f2 = ct.const.f2
-        ########################################################################################
-        ############  To福井さん  上記の変数を「f1」および「f2」に書き換えてください by林出　　############
-        ########################################################################################
+        stack_start = ct.const.STUCK_START
+        stack_end = ct.const.STUCK_END
 
         #ウィンドウによってスタックすると教示する時間帯を変える場合はnp.arrayを定義
-        f1f2_array_window_custom = None
+        stack_info = None
         """
-            f1f2_array_window_custom=np.array([[12., 18.],
+            stack_info=np.array([[12., 18.],
                 [12., 18.],
                 [12., 18.],
                 [12., 18.],
@@ -492,17 +526,17 @@ class Cansat():
             1. 全ウィンドウで一斉にラベリングする場合
                 Learnの引数でstack_appearおよびstack_disappearを[s]で指定する。
             2. ウィンドウごとに個別にラベリングする場合
-            f1f2_array_window_custom=np.array(
+            stack_info=np.array(
                 [
-                    [win_1_f1,win_1_stack_f2],
-                    [win_2_f1,win_2_stack_f2],
+                    [win_1_stack_start,win_1_stack_end],
+                    [win_2_stack_start,win_2_stack_end],
                     ...
-                    [win_6_f1,win_6_stack_f2],
+                    [win_6_stack_start,win_6_stack_end],
                 ]
             )
             t[s]で入力すること。
         """
-        spm2_learn.start(data_list_all_win,label_list_all_win,f1, f2,alpha=5.0,f1f2_array_window_custom=f1f2_array_window_custom)#どっちかは外すのがいいのか
+        spm2_learn.start(data_list_all_win,label_list_all_win,fps=30,alpha=5.0,stack_appear=stack_start,stack_disappear=stack_end,stack_info=stack_info)#どっちかは外すのがいいのか
         model_master,label_list_all_win,scaler_master=spm2_learn.get_data()
         nonzero_w, nonzero_w_label, nonzero_w_num = spm2_learn.get_nonzero_w()
         print("feature_names",np.array(nonzero_w_label,dtype=object).shape)
