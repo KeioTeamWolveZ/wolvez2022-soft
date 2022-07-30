@@ -131,10 +131,14 @@ class SPM2Learn():  # second_spm.pyとして実装済み
             labels = labels[0]
             for (w, label) in zip(weight, labels):
                 if w > 1:
-#                     print("weight: \n", weight.shape)
-#                     print("labels: \n", labels.shape)
                     self.nonzero_w[win_no].append(w)
                     self.nonzero_w_label[win_no].append(label)
+            
+            num_error = 10-len(self.nonzero_w_label[win_no])
+            if num_error !=0:
+                for i in range(num_error):
+                    self.nonzero_w_label[win_no].append(str(i))
+                    
         self.nonzero_w_num = np.array([
             [len(self.nonzero_w_label[0]), len(
                 self.nonzero_w_label[1]), len(self.nonzero_w_label[2])],
@@ -158,11 +162,9 @@ class SPM2Evaluate():  # 藤井さんの行動計画側に移設予定
             print("学習済みモデルのウィンドウ数と、テストデータのウィンドウ数が一致しません")
             return None
         self.test()
-        print(len(self.score_master))
         return self.score_master
 
     def test(self):
-        # print(self.test_data_list_all_win)
         self.score_master = []
         for win_no in range(np.array(self.test_data_list_all_win).shape[0]):
             self.score_master.append([])
@@ -175,11 +177,11 @@ class SPM2Evaluate():  # 藤井さんの行動計画側に移設予定
                     test_X.reshape(1, -1))
                 self.score_master[win_no].append(score)
                 weight = self.model_master[win_no].coef_
-    """        
+     
     def get_score(self):
         return self.score_master
         # pprint(self.score_master[0])
-    """
+
 
     def plot(self, save_dir):
         for i, win_score in enumerate(self.score_master):

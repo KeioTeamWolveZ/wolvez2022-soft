@@ -26,7 +26,6 @@ class ReadFeaturedImg():
             feature_name(str):
         '''
         self.treat = Feature_img(self.imp_p, frame_num, self.sav_d)
-        
         if feature_names == None:
             self.treat.normalRGB()
             #self.treat.vari()
@@ -44,6 +43,7 @@ class ReadFeaturedImg():
             self.treat.rg()
             
         else:
+            print("feature_names:",feature_names)
             for feature_name in feature_names:
                 if feature_name == "normalRGB":
                     self.treat.normalRGB()
@@ -61,20 +61,22 @@ class ReadFeaturedImg():
                     self.treat.edge()
                 elif feature_name == "hsv":
                     self.treat.hsv()
-                elif feature_name == "r":
+                elif feature_name == "red":
                     self.treat.r()
-                elif feature_name == "b":
+                elif feature_name == "blue":
                     self.treat.b()
-                elif feature_name == "g":
+                elif feature_name == "geen":
                     self.treat.g()
-                elif feature_name == "rb":
+                elif feature_name == "purple":
                     self.treat.rb()
-                elif feature_name == "rg":
-                    self.treat.rg()
-                elif feature_name == "gb":
+                elif feature_name == "hsv":
+                    self.treat.hsv()
+                elif feature_name == "emerald":
                     self.treat.gb()
-            
-        
+                elif feature_name == "yellow":
+                    self.treat.rg()
+                else:
+                    self.treat.other()
         fmg_list = self.treat.output()
         
         return fmg_list
@@ -311,6 +313,10 @@ class Feature_img():
         cv2.imwrite(self.save_name,self.img_hsv)
         self.output_img_list.append(self.save_name)
     
+    def other(self):
+        self.save_name = "0"
+        self.output_img_list.append(self.save_name)
+        
     # 特徴抽出済画像パス引き渡し
     def output(self):
         return self.output_img_list
@@ -331,6 +337,6 @@ class Feature_img():
 
 
 
-if __name__ == "__main__":
-    feat = Feature_img(["img_data/data_old/img_train_RPC.jpg"])
-    train_img_path = feat.vari()
+# if __name__ == "__main__":
+#     feat = Feature_img(["img_data/data_old/img_train_RPC.jpg"])
+#     train_img_path = feat.vari()
