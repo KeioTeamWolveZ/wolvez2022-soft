@@ -4,6 +4,7 @@ from cv2 import aruco
 import sys
 import time
 
+
 def main(args):
     """
     引数0→写真
