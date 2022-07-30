@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 from sklearn.linear_model import Lasso
 import os
 
+# これめっちゃ昔のコードなのになんでここにあるんだ？？？
+
 path=os.getcwd()
 train_X=np.load(path+"/second_input_data/2022-06-09_18-44-40.npz")["array_1"]
 
