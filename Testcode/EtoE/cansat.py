@@ -2,6 +2,9 @@
 #Author : Toshiki Fukui
 
 from tempfile import TemporaryDirectory
+
+from pandas import IndexSlice
+from sympy import Indexed
 import RPi.GPIO as GPIO
 import sys
 import cv2
@@ -277,6 +280,15 @@ class Cansat():
 
     def spm_first(self, PIC_COUNT:int=1, relearning:dict=dict(relearn_state=False,f1=10,f3=60)): #ステート4。スパースモデリング第一段階実施。
         '''
+        CHECK POINT
+        ---
+        MUST READ:
+            1: This IntelliSence
+            2: line 331~359 for learn state
+            3: line 393=425 for evaluate state
+        ------
+        EXPLANATION
+        ---
         args:
             PIC_COUNT (int) : number of taking pics
             relearning (dict) : dict of informations for relearning; relearn_state (bool), f1 (int) for number not should be counted as stack-pos, f3 (int) for number should be counted include f1
@@ -286,8 +298,8 @@ class Cansat():
                 1: PIC_COUNT=1, (global)learn_state=True
                 2: PIC_COUNT=50?, (global)learn_state=False
             ReLearning:
-                3: PIC_COUNT=any, (global)learn_state=True, relearning={'relearn_state':True, 'f1':int, 'f3':int}\\
-                4: PIC_COUNT=any, (global)learn_state=False, relearning={'relearn_state':True, 'f1':int, 'f3':int}
+                3: PIC_COUNT=1, (global)learn_state=True, relearning={'relearn_state':True, 'f1':int, 'f3':int}\\
+                4: PIC_COUNT=50?, (global)learn_state=False, relearning={'relearn_state':True, 'f1':int, 'f3':int}
         
         output:
             New npzs will be in the current "learncount" folder
@@ -318,29 +330,35 @@ class Cansat():
         
         if self.learn_state:#学習モデル獲得
             
-            #学習用画像を一枚撮影
-            '''
-            再学習の段階でcamerafirstの値を指定することで
-            辞書再作成用の画像撮影の有無を決定
-            '''
-            if self.camerafirst == 0:
-                self.cap = cv2.VideoCapture(0)
-                ret, firstimg = self.cap.read()
-                cv2.imwrite(f"results/camera_result/first_spm/learn{self.learncount}/firstimg{self.firstlearnimgcount}.jpg",firstimg)
-                self.camerastate = "captured!"
-                self.firstlearnimgcount += 1
-                self.camerafirst = 1
-            elif self.camerafirst == 2:
-                '''
-                再撮影をする場合はここに記載
-                '''
-            else:
-                self.camerastate = 0
-            
             if relearning['relearn_state']:  # 再学習に用いる画像パスの指定
                 # 一つ前のlearncountファイルの-f3枚目を指定
-                importPath = sorted(glob(f"results/camera_result/planning/learn{self.learncount-1}/planning_pics/planningimg*.jpg"))[-relearning['f3']]
-            else:
+                try:
+                    importPath = sorted(glob(f"results/camera_result/planning/learn{self.learncount-1}/planning_pics/planningimg*.jpg"))[-relearning['f3']]
+                except IndexError:
+                    # ここで学習枚数足りなかったら動作指定（あきらめて１回目と同じ動きするのか、再学習をあきらめるか）
+                    print('There are not enough number of pics for ReLearning.')
+                    # relearning['relearn_state'] = False  # 再学習用に画像を1枚
+            
+            if not relearning['relean_state']:
+                #学習用画像を一枚撮影
+                '''
+                再学習の段階でcamerafirstの値を指定することで
+                辞書再作成用の画像撮影の有無を決定
+                '''
+                if self.camerafirst == 0:
+                    self.cap = cv2.VideoCapture(0)
+                    ret, firstimg = self.cap.read()
+                    cv2.imwrite(f"results/camera_result/first_spm/learn{self.learncount}/firstimg{self.firstlearnimgcount}.jpg",firstimg)
+                    self.camerastate = "captured!"
+                    self.firstlearnimgcount += 1
+                    self.camerafirst = 1
+                elif self.camerafirst == 2:
+                    '''
+                    再撮影をする場合はここに記載
+                    '''
+                else:
+                    self.camerastate = 0
+                
                 importPath = f"results/camera_result/first_spm/learn{self.learncount}/firstimg{self.firstlearnimgcount-1}.jpg"
             
             processed_Dir = f"results/camera_result/first_spm/learn{self.learncount}/processed"
@@ -373,28 +391,35 @@ class Cansat():
         print("Calc Time:",end_time-start_time)
 
     def spm_f_eval(self, PIC_COUNT=1, now="TEST", iw_shape=(2,3),feature_names=None, relearning:dict=dict(relearn_state=False,f1=10,f3=60)):#第一段階学習&評価。npzファイル作成が目的
-        # self.cap = cv2.VideoCapture(0)
-        for i in range(PIC_COUNT):
-            print(i,"枚目")
-            ret,self.secondimg = self.cap.read()
-            if self.state == 4:
-                save_file = f"results/camera_result/first_spm/learn{self.learncount}/evaluate/evaluateimg{time.time():.0f}.jpg"
-            elif self.state == 6:
-                save_file = f"results/camera_result/planning/learn{self.learncount}/planning_pics/planningimg{time.time():.0f}.jpg"
-
-            cv2.imwrite(save_file,self.secondimg)
-            self.firstevalimgcount += 1
-            
-            if self.state == 4:
-                self.MotorR.go(70)#走行
-                self.MotorL.go(50)#走行
-                time.sleep(0.4)
-                self.MotorR.stop()
-                self.MotorL.stop()
         
         if relearning['relearn_state']:
-            second_img_paths = sorted(glob(f"results/camera_result/first_spm/learn{self.learncount-1}/evaluate/evaluateimg*.jpg"))[-relearning['f3']:-relearning['f1']]
-        else:
+            try:
+                second_img_paths = sorted(glob(f"results/camera_result/first_spm/learn{self.learncount-1}/evaluate/evaluateimg*.jpg"))[-relearning['f3']+1:-relearning['f1']]
+            except IndexError:
+                # ここで学習枚数足りなかったら動作指定（あきらめて１回目と同じ動きするのか、再学習をあきらめるか）
+                print('There are not enough number of pics for ReLearning.')
+                # relearning['relearn_state'] = False  # 再学習用に画像を1枚
+        
+        if not relearning['relearn_state']:
+        # self.cap = cv2.VideoCapture(0)
+            for i in range(PIC_COUNT):
+                print(i,"枚目")
+                ret,self.secondimg = self.cap.read()
+                if self.state == 4:
+                    save_file = f"results/camera_result/first_spm/learn{self.learncount}/evaluate/evaluateimg{time.time():.0f}.jpg"
+                elif self.state == 6:
+                    save_file = f"results/camera_result/planning/learn{self.learncount}/planning_pics/planningimg{time.time():.0f}.jpg"
+
+                cv2.imwrite(save_file,self.secondimg)
+                self.firstevalimgcount += 1
+                
+                if self.state == 4:
+                    self.MotorR.go(70)#走行
+                    self.MotorL.go(50)#走行
+                    time.sleep(0.4)
+                    self.MotorR.stop()
+                    self.MotorL.stop()
+            
             if not PIC_COUNT == 1:
                 second_img_paths = sorted(glob(f"results/camera_result/first_spm/learn{self.learncount}/evaluate/evaluateimg*.jpg"))
             else:
