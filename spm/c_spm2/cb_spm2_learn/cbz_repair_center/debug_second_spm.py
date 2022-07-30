@@ -76,23 +76,20 @@ class SPM2Learn():  # second_spm.pyとして実装済み
     dataからmodelを作る。
     """
 
-    def start(self, data_list_all_win, label_list_all_win, alpha=1.0, fps=30, stack_appear=23, stack_disappear=27, stack_info=None) -> None:
-        self.fps = fps
+    def start(self, data_list_all_win, label_list_all_win, f1, f2, alpha=1.0, f1f2_array_window_custom=None) -> None:
         self.data_list_all_win = data_list_all_win
         self.label_list_all_win = label_list_all_win
         self.alpha = alpha
         # print(data_list_all_win.shape)#(win,pic_num,feature)=(6,886,30)
-        if stack_info == None:
-            self.stack_appear = stack_appear
-            self.stack_disappear = stack_disappear
-            self.stack_appear_frame = stack_appear*fps
-            self.stack_disappear_frame = stack_disappear*fps
-            self.stack_info = np.zeros((self.data_list_all_win.shape[0], 2))
-            self.stack_info[:, 0] = int(self.stack_appear_frame)
-            self.stack_info[:, 1] = int(self.stack_disappear_frame)
-            # pprint(self.stack_info)
+        if f1f2_array_window_custom == None:
+            self.f1 = f1
+            self.f2 = f2
+            self.f1f2_array_window_custom = np.zeros((self.data_list_all_win.shape[0], 2))
+            self.f1f2_array_window_custom[:, 0] = int(self.f1)
+            self.f1f2_array_window_custom[:, 1] = int(self.f2)
+            # pprint(self.f1f2_array_window_custom)
         else:
-            self.stack_info = stack_info*self.fps
+            self.f1f2_array_window_custom = f1f2_array_window_custom
             pass
         self.initialize_model()
         self.fit()
@@ -114,9 +111,9 @@ class SPM2Learn():  # second_spm.pyとして実装済み
                 train_X)
             train_X = self.scaler_master[win_no].transform(train_X)
             train_y = np.full((train_X.shape[0], 1), -100)
-            # print(self.stack_info[win_no][0])
-            train_y[int(self.stack_info[win_no][0]):int(
-                self.stack_info[win_no][1])] = 100
+            # print(self.f1f2_array_window_custom[win_no][0])
+            train_y[-int(self.f1f2_array_window_custom[win_no][1]):int(
+                -self.f1f2_array_window_custom[win_no][0])] = 100
             # print(train_X.shape, train_y.shape)
             self.model_master[win_no].fit(train_X, train_y)
             pass
@@ -131,10 +128,14 @@ class SPM2Learn():  # second_spm.pyとして実装済み
             labels = labels[0]
             for (w, label) in zip(weight, labels):
                 if w > 1:
-#                     print("weight: \n", weight.shape)
-#                     print("labels: \n", labels.shape)
                     self.nonzero_w[win_no].append(w)
                     self.nonzero_w_label[win_no].append(label)
+            
+            # num_error = 10-len(self.nonzero_w_label[win_no])
+            # if num_error !=0:
+            #     for i in range(num_error):
+            #         self.nonzero_w_label[win_no].append(str(i))
+                    
         self.nonzero_w_num = np.array([
             [len(self.nonzero_w_label[0]), len(
                 self.nonzero_w_label[1]), len(self.nonzero_w_label[2])],
@@ -158,11 +159,9 @@ class SPM2Evaluate():  # 藤井さんの行動計画側に移設予定
             print("学習済みモデルのウィンドウ数と、テストデータのウィンドウ数が一致しません")
             return None
         self.test()
-        print(len(self.score_master))
         return self.score_master
 
     def test(self):
-        # print(self.test_data_list_all_win)
         self.score_master = []
         for win_no in range(np.array(self.test_data_list_all_win).shape[0]):
             self.score_master.append([])
@@ -175,11 +174,11 @@ class SPM2Evaluate():  # 藤井さんの行動計画側に移設予定
                     test_X.reshape(1, -1))
                 self.score_master[win_no].append(score)
                 weight = self.model_master[win_no].coef_
-    """        
+     
     def get_score(self):
         return self.score_master
         # pprint(self.score_master[0])
-    """
+
 
     def plot(self, save_dir):
         for i, win_score in enumerate(self.score_master):

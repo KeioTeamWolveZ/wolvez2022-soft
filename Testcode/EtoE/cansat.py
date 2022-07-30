@@ -473,13 +473,16 @@ class Cansat():
         spm2_learn = SPM2Learn()
 
         #ウィンドウによってスタックと教示する時間帯を変えず、一括とする場合
-        stack_start = ct.const.STUCK_START
-        stack_end = ct.const.STUCK_END
+        f1 = ct.const.f1
+        f2 = ct.const.f2
+        ########################################################################################
+        ############  To福井さん  上記の変数を「f1」および「f2」に書き換えてください by林出　　############
+        ########################################################################################
 
         #ウィンドウによってスタックすると教示する時間帯を変える場合はnp.arrayを定義
-        stack_info = None
+        f1f2_array_window_custom = None
         """
-            stack_info=np.array([[12., 18.],
+            f1f2_array_window_custom=np.array([[12., 18.],
                 [12., 18.],
                 [12., 18.],
                 [12., 18.],
@@ -489,17 +492,17 @@ class Cansat():
             1. 全ウィンドウで一斉にラベリングする場合
                 Learnの引数でstack_appearおよびstack_disappearを[s]で指定する。
             2. ウィンドウごとに個別にラベリングする場合
-            stack_info=np.array(
+            f1f2_array_window_custom=np.array(
                 [
-                    [win_1_stack_start,win_1_stack_end],
-                    [win_2_stack_start,win_2_stack_end],
+                    [win_1_f1,win_1_stack_f2],
+                    [win_2_f1,win_2_stack_f2],
                     ...
-                    [win_6_stack_start,win_6_stack_end],
+                    [win_6_f1,win_6_stack_f2],
                 ]
             )
             t[s]で入力すること。
         """
-        spm2_learn.start(data_list_all_win,label_list_all_win,fps=30,alpha=5.0,stack_appear=stack_start,stack_disappear=stack_end,stack_info=stack_info)#どっちかは外すのがいいのか
+        spm2_learn.start(data_list_all_win,label_list_all_win,f1, f2,alpha=5.0,f1f2_array_window_custom=f1f2_array_window_custom)#どっちかは外すのがいいのか
         model_master,label_list_all_win,scaler_master=spm2_learn.get_data()
         nonzero_w, nonzero_w_label, nonzero_w_num = spm2_learn.get_nonzero_w()
         print("feature_names",np.array(nonzero_w_label,dtype=object).shape)

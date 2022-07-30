@@ -9,16 +9,14 @@ from pprint import pprint
 from sklearn.preprocessing import StandardScaler
 
 
-
-
 class SPM2Open_npz():
 
-    def unpack(self,files):
+    def unpack(self, files):
         # self.data_list_all_win,self.label_list_all_win=self.unpack(files)
         data_list_all_time = []
         label_list_all_time = []
         for file in files:
-            data_per_pic, label_list_per_pic=self.load(file)
+            data_per_pic, label_list_per_pic = self.load(file)
             data_list_all_time.append(data_per_pic)
             label_list_all_time.append(label_list_per_pic)
         data_list_all_time = np.array(data_list_all_time)
@@ -35,9 +33,9 @@ class SPM2Open_npz():
                 pass
         self.data_list_all_win = np.array(self.data_list_all_win)
         self.label_list_all_win = np.array(self.label_list_all_win)
-        return self.data_list_all_win,self.label_list_all_win
-    
-    def load(self,file):
+        return self.data_list_all_win, self.label_list_all_win
+
+    def load(self, file):
         pic = np.load(file, allow_pickle=True)['array_1'][0]
         # pprint(pic)
         feature_keys = list(pic.keys())
@@ -49,114 +47,121 @@ class SPM2Open_npz():
                 # print(list(pic[f_key][w_key].values()))
                 list_master[i].append(list(pic[f_key][w_key].values()))
                 labels = [f"{w_key}-{f_key}-{list(pic[f_key][w_key].keys())[0]}", f"{w_key}-{f_key}-{list(pic[f_key][w_key].keys())[1]}",
-                        f"{w_key}-{f_key}-{list(pic[f_key][w_key].keys())[2]}"]
+                          f"{w_key}-{f_key}-{list(pic[f_key][w_key].keys())[2]}"]
                 list_master_label[i].append(labels)
         list_master = np.array(list_master)
         return list_master, list_master_label
 
     def get_data(self):
-        return self.data_list_all_win,self.label_list_all_win
+        return self.data_list_all_win, self.label_list_all_win
+
 
 class SPM2Learn():
     """
     dataからmodelを作る。
     """
-    def start(self,data_list_all_win,label_list_all_win,alpha,fps=30,stack_appear=23,stack_disappear=27,stack_info=None) -> None:
+
+    def start(self, data_list_all_win, label_list_all_win, alpha, fps=30, stack_appear=23, stack_disappear=27, stack_info=None) -> None:
         self.fps = fps
-        self.alpha=alpha
-        self.data_list_all_win=data_list_all_win
-        self.label_list_all_win=label_list_all_win
+        self.alpha = alpha
+        self.data_list_all_win = data_list_all_win
+        self.label_list_all_win = label_list_all_win
         # print(data_list_all_win.shape)#(win,pic_num,feature)=(6,886,30)
-        if stack_info==None:
+        if stack_info == None:
             self.stack_appear = stack_appear
             self.stack_disappear = stack_disappear
             self.stack_appear_frame = stack_appear*fps
             self.stack_disappear_frame = stack_disappear*fps
-            self.stack_info=np.zeros((self.data_list_all_win.shape[0],2))
-            self.stack_info[:,0]=int(self.stack_appear_frame)
-            self.stack_info[:,1]=int(self.stack_disappear_frame)
+            self.stack_info = np.zeros((self.data_list_all_win.shape[0], 2))
+            self.stack_info[:, 0] = int(self.stack_appear_frame)
+            self.stack_info[:, 1] = int(self.stack_disappear_frame)
             # pprint(self.stack_info)
         else:
-            self.stack_info=stack_info*self.fps
+            self.stack_info = stack_info*self.fps
             pass
         self.initialize_model()
         self.fit()
 
-
     def initialize_model(self):
-        self.model_master=[]
-        self.standardization_master=[]
-        self.scaler_master=[]
+        self.model_master = []
+        self.standardization_master = []
+        self.scaler_master = []
         for i in range(self.data_list_all_win.shape[0]):
-            self.model_master.append(Lasso(alpha=self.alpha,max_iter=100000))
+            self.model_master.append(Lasso(alpha=self.alpha, max_iter=100000))
             self.standardization_master.append(StandardScaler())
             self.scaler_master.append("")
-    
+
     def fit(self):
         for win_no, win in enumerate(self.data_list_all_win):
             train_X = win
-            self.scaler_master[win_no]=self.standardization_master[win_no].fit(train_X)
-            train_X=self.scaler_master[win_no].transform(train_X)
-            train_y = np.full((train_X.shape[0], 1),-100)
+            self.scaler_master[win_no] = self.standardization_master[win_no].fit(
+                train_X)
+            train_X = self.scaler_master[win_no].transform(train_X)
+            train_y = np.full((train_X.shape[0], 1), -100)
             # print(self.stack_info[win_no][0])
-            train_y[int(self.stack_info[win_no][0]):int(self.stack_info[win_no][1])] = 100
+            train_y[int(self.stack_info[win_no][0]):int(
+                self.stack_info[win_no][1])] = 100
             # print(train_X.shape, train_y.shape)
             self.model_master[win_no].fit(train_X, train_y)
             pass
         pass
-    
+
     def get_data(self):
-        return self.model_master,self.label_list_all_win,self.scaler_master
+        return self.model_master, self.label_list_all_win, self.scaler_master
 
 
 class SPM2Evaluate():
-    def start(self,model_master,test_data_list_all_win,test_label_list_all_win,scaler_master):#,train_code,test_code):
-        self.model_master=model_master
-        self.test_data_list_all_win=test_data_list_all_win
-        self.test_label_list_all_win=test_label_list_all_win
-        self.scaler_master=scaler_master
+    # ,train_code,test_code):
+    def start(self, model_master, test_data_list_all_win, test_label_list_all_win, scaler_master):
+        self.model_master = model_master
+        self.test_data_list_all_win = test_data_list_all_win
+        self.test_label_list_all_win = test_label_list_all_win
+        self.scaler_master = scaler_master
         # self.train_code=train_code
         # self.test_code=test_code
-        if len(self.model_master)!=len(self.test_data_list_all_win):
+        if len(self.model_master) != len(self.test_data_list_all_win):
             print("学習済みモデルのウィンドウ数と、テストデータのウィンドウ数が一致しません")
             return None
         self.test()
         self.plot()
 
-
     def test(self):
         # print(self.test_data_list_all_win)
-        self.score_master=[]
+        self.score_master = []
         for win_no in range(np.array(self.test_data_list_all_win).shape[0]):
             self.score_master.append([])
         for test_no in range(np.array(self.test_data_list_all_win).shape[1]):
             for win_no, win in enumerate(self.test_data_list_all_win):
                 test_X = win[test_no]
                 # print(f"test_X win_no\n: {win_no}",test_X)
-                test_X=self.scaler_master[win_no].transform(test_X.reshape(1, -1))
-                score = self.model_master[win_no].predict(test_X.reshape(1, -1))
+                test_X = self.scaler_master[win_no].transform(
+                    test_X.reshape(1, -1))
+                score = self.model_master[win_no].predict(
+                    test_X.reshape(1, -1))
                 # print(score)
                 self.score_master[win_no].append(score)
-                weight=self.model_master[win_no].coef_
+                weight = self.model_master[win_no].coef_
                 # print(weight)
                 pass
 
     def get_score(self):
         return self.score_master
         # pprint(self.score_master[0])
-    
+
     def plot(self):
         for i, win_score in enumerate(self.score_master):
             plt.plot(np.arange(len(win_score)), win_score, label=f"win_{i+1}")
         plt.xlabel("time")
         plt.ylabel("degree of risk")
-        plt.title(f"Learn from mov bcc{self.train_code}, Predict mov bcc{self.test_code}")
+        plt.title(
+            f"Learn from mov bcc{self.train_code}, Predict mov bcc{self.test_code}")
         plt.legend()
-        plt.savefig(f"c_spm2/cc_spm2_after/ccb_-100_100/ccb{self.train_code}{self.test_code}_L-bcc{self.train_code}_P-bcc{self.test_code}.png")
+        plt.savefig(
+            f"c_spm2/cc_spm2_after/ccb_-100_100/ccb{self.train_code}{self.test_code}_L-bcc{self.train_code}_P-bcc{self.test_code}.png")
         plt.cla()
-        
+
         # plt.show()
-    
+
     def get_score(self):
         return self.score_master
 
@@ -231,46 +236,54 @@ for train_code,stack_start,stack_end in zip(train_codes,stack_starts,stack_ends)
 """
 
 
-for alpha in np.arange(0,10,0.1):
-    stack_start=9
-    stack_end=16
+for alpha in np.arange(0, 10, 0.1):
+    stack_start = 9
+    stack_end = 16
 
     spm_path = os.getcwd()
-    train_files = sorted(glob.glob(spm_path+f"/b_spm1/b-data/bcca_secondinput/bccc/*"))
+    train_files = sorted(
+        glob.glob(spm_path+f"/b_spm1/b-data/bcca_secondinput/bccc/*"))
 
-    seq1=SPM2Open_npz()
+    seq1 = SPM2Open_npz()
     seq1.unpack(train_files)
-    data_list_all_win,label_list_all_win=seq1.get_data()
+    data_list_all_win, label_list_all_win = seq1.get_data()
 
-    seq2=SPM2Learn()
-    seq2.start(data_list_all_win,label_list_all_win,alpha=alpha,fps=30,stack_appear=stack_start,stack_disappear=stack_end,stack_info=None)
-    model_master,label_list_all_win,scaler_master=seq2.get_data()
+    seq2 = SPM2Learn()
+    seq2.start(data_list_all_win, label_list_all_win, alpha=alpha, fps=30,
+               stack_appear=stack_start, stack_disappear=stack_end, stack_info=None)
+    model_master, label_list_all_win, scaler_master = seq2.get_data()
 
-    end_flg=False
-    for patch in range(60,101,10):
-        for n_components in range(1,patch+1,4):
-            for transform_n_nonzero_coefs in range(1,n_components+1,4):
-                patch=str(patch).zfill(3)
-                n_components=str(n_components).zfill(3)
-                transform_n_nonzero_coefs=str(transform_n_nonzero_coefs).zfill(3)
-                filepath=spm_path+f"/b_spm1/b-data/bczz_h_param/psize_('{patch}', '{patch}')-ncom_{n_components}-tcoef_{transform_n_nonzero_coefs}-mxiter_001.npz"
+    end_flg = False
+    for patch in range(60, 101, 10):
+        for n_components in range(1, patch+1, 4):
+            for transform_n_nonzero_coefs in range(1, n_components+1, 4):
+                patch = str(patch).zfill(3)
+                n_components = str(n_components).zfill(3)
+                transform_n_nonzero_coefs = str(
+                    transform_n_nonzero_coefs).zfill(3)
+                filepath = spm_path + \
+                    f"/b_spm1/b-data/bczz_h_param/psize_('{patch}', '{patch}')-ncom_{n_components}-tcoef_{transform_n_nonzero_coefs}-mxiter_001.npz"
                 print(filepath)
-                test_files=[filepath]
+                test_files = [filepath]
                 try:
-                    seq3=SPM2Open_npz()
+                    seq3 = SPM2Open_npz()
                     seq3.unpack(test_files)
                 except FileNotFoundError:
-                    end_flg=True
+                    end_flg = True
                     print("here")
                     break
-                test_data_list_all_win,test_label_list_all_win=seq3.get_data()
-        
-                seq4=SPM2Evaluate()
-                seq4.start(model_master,test_data_list_all_win,test_label_list_all_win,scaler_master)#,train_code,test_code)
-                scores=seq4.get_score()
-                print(f"patch : {patch}  n_components : {n_components}  transform_n_nonzero_coefs : {transform_n_nonzero_coefs}   alpha : {alpha}")
-                plt.bar(np.arange(6),np.array(scores).reshape(-1))
-                plt.title(f"patch : {patch}  n_components : {n_components}    alpha : {alpha}")
+                test_data_list_all_win, test_label_list_all_win = seq3.get_data()
+
+                seq4 = SPM2Evaluate()
+                # ,train_code,test_code)
+                seq4.start(model_master, test_data_list_all_win,
+                           test_label_list_all_win, scaler_master)
+                scores = seq4.get_score()
+                print(
+                    f"patch : {patch}  n_components : {n_components}  transform_n_nonzero_coefs : {transform_n_nonzero_coefs}   alpha : {alpha}")
+                plt.bar(np.arange(6), np.array(scores).reshape(-1))
+                plt.title(
+                    f"patch : {patch}  n_components : {n_components}    alpha : {alpha}")
                 # plt.title(f"patch : {patch}  n_components : {n_components}  transform_n_nonzero_coefs : {transform_n_nonzero_coefs}   alpha : {alpha}")
                 plt.draw()
                 plt.pause(0.0001)
@@ -278,13 +291,12 @@ for alpha in np.arange(0,10,0.1):
                 del seq3
                 del seq4
         #     if end_flg:
-        #         break    
+        #         break
         # if end_flg:
-        #     break    
+        #     break
 
 
 plt.cla()
-
 
 
 print("###########################  HERE 1  ###########################")
@@ -299,11 +311,6 @@ print("###########################  HERE 2  ###########################")
 """
 
 
-
-
-
-
-
 # import numpy as np
 # import matplotlib.pyplot as plt
 # from skSPM2learn.linear_model import Lasso
@@ -312,7 +319,6 @@ print("###########################  HERE 2  ###########################")
 # import pickle
 # from pprint import pprint
 # from skSPM2learn.preprocessing import StandardScaler
-
 
 
 # def unpack(npz_path):
@@ -434,25 +440,25 @@ print("###########################  HERE 2  ###########################")
 # array(
 #     [
 #         {
-#             'normalRGB': 
+#             'normalRGB':
 #             {
-#                 'win_1': {'var': 198.5714006259781, 'med': 242.0, 'ave': 8349.509847177527}, 
-#                 'win_2': {'var': 138.55516431924883, 'med': 231.0, 'ave': 13560.616909949526}, 
-#                 'win_3': {'var': 164.68951486697966, 'med': 240.0, 'ave': 12550.98544561754}, 
-#                 'win_4': {'var': 185.2595461658842, 'med': 237.0, 'ave': 9515.470976945833}, 
-#                 'win_5': {'var': 188.0658841940532, 'med': 236.0, 'ave': 8919.395346283929}, 
+#                 'win_1': {'var': 198.5714006259781, 'med': 242.0, 'ave': 8349.509847177527},
+#                 'win_2': {'var': 138.55516431924883, 'med': 231.0, 'ave': 13560.616909949526},
+#                 'win_3': {'var': 164.68951486697966, 'med': 240.0, 'ave': 12550.98544561754},
+#                 'win_4': {'var': 185.2595461658842, 'med': 237.0, 'ave': 9515.470976945833},
+#                 'win_5': {'var': 188.0658841940532, 'med': 236.0, 'ave': 8919.395346283929},
 #                 'win_6': {'var': 214.89233176838812, 'med': 236.0, 'ave': 4407.548423201353}
-#             }, 
-#             'enphasis': 
+#             },
+#             'enphasis':
 #             {
-#                 'win_1': {'var': 144.23415492957747, 'med': 139.0, 'ave': 1054.3623467428201}, 
-#                 'win_2': {'var': 147.34287949921753, 'med': 141.0, 'ave': 2041.7802427256984}, 
-#                 'win_3': {'var': 148.43485915492957, 'med': 142.0, 'ave': 1708.3702480631046}, 
-#                 'win_4': {'var': 147.291744913928, 'med': 142.0, 'ave': 2110.4347988332097}, 
-#                 'win_5': {'var': 145.8273082942097, 'med': 142.0, 'ave': 2391.6417738188825}, 
+#                 'win_1': {'var': 144.23415492957747, 'med': 139.0, 'ave': 1054.3623467428201},
+#                 'win_2': {'var': 147.34287949921753, 'med': 141.0, 'ave': 2041.7802427256984},
+#                 'win_3': {'var': 148.43485915492957, 'med': 142.0, 'ave': 1708.3702480631046},
+#                 'win_4': {'var': 147.291744913928, 'med': 142.0, 'ave': 2110.4347988332097},
+#                 'win_5': {'var': 145.8273082942097, 'med': 142.0, 'ave': 2391.6417738188825},
 #                 'win_6': {'var': 147.90790297339592, 'med': 142.0, 'ave': 1627.7706261189114}
-#             }, 
-#             'edge': 
+#             },
+#             'edge':
 #             {
 #                 'win_1': {'var': 127.77691705790298, 'med': 137.0, 'ave': 699.0108756284884}, 'win_2': {'var': 128.13270735524256, 'med': 132.0, 'ave': 777.6750335152981}, 'win_3': {'var': 128.0511345852895, 'med': 133.0, 'ave': 750.8916340804784}, 'win_4': {'var': 128.2794992175274, 'med': 130.0, 'ave': 619.540737777386}, 'win_5': {'var': 127.95156494522692, 'med': 131.0, 'ave': 784.3300484116663}, 'win_6': {'var': 128.1994522691706, 'med': 130.0, 'ave': 657.8328322508515}}, 'hsv': {'win_1': {'var': 187.78748043818467, 'med': 200.0, 'ave': 3148.890046703452}, 'win_2': {'var': 201.05066510172145, 'med': 215.0, 'ave': 2933.7095222493454}, 'win_3': {'var': 215.22535211267606, 'med': 224.0, 'ave': 1541.848433952699}, 'win_4': {'var': 217.35966353677622, 'med': 227.0, 'ave': 1705.3529191356192}, 'win_5': {'var': 223.4076682316119, 'med': 232.0, 'ave': 1364.1589239838263}, 'win_6': {'var': 222.2679186228482, 'med': 226.0, 'ave': 656.0300975458034}}, 'red': {'win_1': {'var': 161.20528169014085, 'med': 170.0, 'ave': 1151.2600894746415}, 'win_2': {'var': 161.3956572769953, 'med': 168.0, 'ave': 808.351319168926}, 'win_3': {'var': 160.36874021909233, 'med': 163.0, 'ave': 507.72471140199735}, 'win_4': {'var': 159.6904538341158, 'med': 161.0, 'ave': 664.9101279630486}, 'win_5': {'var': 158.12719092331767, 'med': 160.0, 'ave': 760.0379304502462}, 'win_6': {'var': 155.25426447574335, 'med': 157.0, 'ave': 757.7365624089257}}, 'blue': {'win_1': {'var': 138.91220657276995, 'med': 151.0, 'ave': 1586.6412750997379}, 'win_2': {'var': 138.76862284820032, 'med': 149.0, 'ave': 1246.1235381660508}, 'win_3': {'var': 137.6596635367762, 'med': 141.0, 'ave': 613.2421131888269}, 'win_4': {'var': 136.65336463223787, 'med': 138.0, 'ave': 806.932895565009}, 'win_5': {'var': 136.46784037558686, 'med': 139.0, 'ave': 1107.6047560558973}, 'win_6': {'var': 136.49096244131457, 'med': 139.0, 'ave': 939.0661155056316}}, 'green': {'win_1': {'var': 200.95062597809076, 'med': 205.0, 'ave': 426.81203794930946}, 'win_2': {'var': 206.75387323943661, 'med': 211.0, 'ave': 449.41207419989416}, 'win_3': {'var': 205.92214397496087, 'med': 208.0, 'ave': 376.0210902390522}, 'win_4': {'var': 201.28501564945228, 'med': 203.0, 'ave': 515.0839069246377}, 'win_5': {'var': 201.65007824726135, 'med': 204.0, 'ave': 467.57403364019973}, 'win_6': {'var': 199.75762910798122, 'med': 201.0, 'ave': 391.34020001267385}}, 'purple': {'win_1': {'var': 172.99949139280125, 'med': 181.0, 'ave': 960.1941703203483}, 'win_2': {'var': 173.02910798122065, 'med': 180.0, 'ave': 761.807446935132}, 'win_3': {'var': 170.90958528951487, 'med': 174.0, 'ave': 408.04741985931406}, 'win_4': {'var': 169.1106807511737, 'med': 170.0, 'ave': 485.44592661013024}, 'win_5': {'var': 167.56412363067292, 'med': 170.0, 'ave': 682.9769523227436}, 'win_6': {'var': 164.56905320813772, 'med': 167.0, 'ave': 545.7310689001423}}, 'emerald': {'win_1': {'var': 211.76036776212834, 'med': 215.0, 'ave': 423.85450909792786}, 'win_2': {'var': 217.54573552425666, 'med': 221.0, 'ave': 478.95002093787724}, 'win_3': {'var': 216.45989827856025, 'med': 218.0, 'ave': 311.79408825256354}, 'win_4': {'var': 210.14115805946793, 'med': 212.0, 'ave': 559.7842215070987}, 'win_5': {'var': 210.58348982785603, 'med': 213.0, 'ave': 545.3585224063911}, 'win_6': {'var': 209.0109546165884, 'med': 211.0, 'ave': 384.8271100433237}}, 'yellow': {'win_1': {'var': 223.54859154929576, 'med': 235.0, 'ave': 2460.552803180586}, 'win_2': {'var': 204.16694053208138, 'med': 239.0, 'ave': 6859.470683284411}, 'win_3': {'var': 218.91451486697966, 'med': 239.0, 'ave': 4210.439914514254}, 'win_4': {'var': 215.16694053208138, 'med': 233.0, 'ave': 3839.3939227210326}, 'win_5': {'var': 214.97781690140846, 'med': 232.0, 'ave': 3599.095321681655}, 'win_6': {'var': 222.97132237871674, 'med': 229.0, 'ave': 1209.0354451996714}}}],
 #       dtype=object)

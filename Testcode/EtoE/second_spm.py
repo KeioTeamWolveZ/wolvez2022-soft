@@ -76,23 +76,20 @@ class SPM2Learn():  # second_spm.pyとして実装済み
     dataからmodelを作る。
     """
 
-    def start(self, data_list_all_win, label_list_all_win, alpha=1.0, fps=30, stack_appear=23, stack_disappear=27, stack_info=None) -> None:
-        self.fps = fps
+    def start(self, data_list_all_win, label_list_all_win, f1, f2, alpha=1.0, f1f2_array_window_custom=None) -> None:
         self.data_list_all_win = data_list_all_win
         self.label_list_all_win = label_list_all_win
         self.alpha = alpha
         # print(data_list_all_win.shape)#(win,pic_num,feature)=(6,886,30)
-        if stack_info == None:
-            self.stack_appear = stack_appear
-            self.stack_disappear = stack_disappear
-            self.stack_appear_frame = stack_appear*fps
-            self.stack_disappear_frame = stack_disappear*fps
-            self.stack_info = np.zeros((self.data_list_all_win.shape[0], 2))
-            self.stack_info[:, 0] = int(self.stack_appear_frame)
-            self.stack_info[:, 1] = int(self.stack_disappear_frame)
-            # pprint(self.stack_info)
+        if f1f2_array_window_custom == None:
+            self.f1 = f1
+            self.f2 = f2
+            self.f1f2_array_window_custom = np.zeros((self.data_list_all_win.shape[0], 2))
+            self.f1f2_array_window_custom[:, 0] = int(self.f1)
+            self.f1f2_array_window_custom[:, 1] = int(self.f2)
+            # pprint(self.f1f2_array_window_custom)
         else:
-            self.stack_info = stack_info*self.fps
+            self.f1f2_array_window_custom = f1f2_array_window_custom
             pass
         self.initialize_model()
         self.fit()
@@ -114,9 +111,9 @@ class SPM2Learn():  # second_spm.pyとして実装済み
                 train_X)
             train_X = self.scaler_master[win_no].transform(train_X)
             train_y = np.full((train_X.shape[0], 1), -100)
-            # print(self.stack_info[win_no][0])
-            train_y[int(self.stack_info[win_no][0]):int(
-                self.stack_info[win_no][1])] = 100
+            # print(self.f1f2_array_window_custom[win_no][0])
+            train_y[-int(self.f1f2_array_window_custom[win_no][1]):int(
+                -self.f1f2_array_window_custom[win_no][0])] = 100
             # print(train_X.shape, train_y.shape)
             self.model_master[win_no].fit(train_X, train_y)
             pass
