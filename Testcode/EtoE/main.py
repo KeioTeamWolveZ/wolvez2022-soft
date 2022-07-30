@@ -1,6 +1,7 @@
 #Last Update 2022/07/02
 #Author : Toshiki Fukui
 
+
 import RPi.GPIO as GPIO
 from cansat import Cansat
 import time
