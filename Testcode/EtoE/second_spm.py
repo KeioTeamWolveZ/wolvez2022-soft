@@ -107,8 +107,7 @@ class SPM2Learn():  # second_spm.pyとして実装済み
     def fit(self):
         for win_no, win in enumerate(self.data_list_all_win):
             train_X = win
-            self.scaler_master[win_no] = self.standardization_master[win_no].fit(
-                train_X)
+            self.scaler_master[win_no] = self.standardization_master[win_no].fit(train_X)
             train_X = self.scaler_master[win_no].transform(train_X)
             train_y = np.full((train_X.shape[0], 1), -100)
             # print(self.f1f2_array_window_custom[win_no][0])
@@ -137,10 +136,8 @@ class SPM2Learn():  # second_spm.pyとして実装済み
                     self.nonzero_w_label[win_no].append(str(i))
                     
         self.nonzero_w_num = np.array([
-            [len(self.nonzero_w_label[0]), len(
-                self.nonzero_w_label[1]), len(self.nonzero_w_label[2])],
-            [len(self.nonzero_w_label[3]), len(
-                self.nonzero_w_label[4]), len(self.nonzero_w_label[5])]
+            [len(self.nonzero_w_label[0]), len(self.nonzero_w_label[1]), len(self.nonzero_w_label[2])],
+            [len(self.nonzero_w_label[3]), len(self.nonzero_w_label[4]), len(self.nonzero_w_label[5])]
         ])
         return self.nonzero_w, self.nonzero_w_label, self.nonzero_w_num
 
@@ -194,8 +191,7 @@ class SPM2Evaluate():  # 藤井さんの行動計画側に移設予定
         global train_mov_code, test_mov_code, alpha
         plt.title(f"{train_mov_code} -->> {test_mov_code}  alpha={alpha}")
         plt.legend()
-        name = str(datetime.now()).replace(" ", "").replace(
-            ":", "").replace("-", "").replace(".", "")[:16]
+        name = str(datetime.now()).replace(" ", "").replace(":", "").replace("-", "").replace(".", "")[:16]
         plt.savefig(save_dir+f"/cca{train_mov_code}{test_mov_code}_{name}.jpg")
         plt.cla()
 
@@ -229,9 +225,7 @@ class SPM2Evaluate():  # 藤井さんの行動計画側に移設予定
                     self.nonzero_w[win_no].append(w)
                     self.nonzero_w_label[win_no].append(label)
         self.nonzero_w_num = np.array([
-            [len(self.nonzero_w_label[0]), len(
-                self.nonzero_w_label[1]), len(self.nonzero_w_label[2])],
-            [len(self.nonzero_w_label[3]), len(
-                self.nonzero_w_label[4]), len(self.nonzero_w_label[5])]
+            [len(self.nonzero_w_label[0]), len(self.nonzero_w_label[1]), len(self.nonzero_w_label[2])],
+            [len(self.nonzero_w_label[3]), len(self.nonzero_w_label[4]), len(self.nonzero_w_label[5])]
         ])
         return self.nonzero_w, self.nonzero_w_label, self.nonzero_w_num
