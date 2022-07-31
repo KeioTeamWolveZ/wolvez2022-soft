@@ -523,7 +523,7 @@ class Cansat():
     
     def stuck_detection2(self):
         self.camerastate = 0
-        label = []
+        self.label = []
         if self.camerastate == 0:
             self.cap = cv2.VideoCapture(0)
             img_pre = self.cap.read()
@@ -540,7 +540,7 @@ class Cansat():
                 if img_now[i][j]-img_pre[i][j] > ct.const.PIC_THRE:
                     self.label.append(1)
                 else:
-                    pass
+                    self.label.append(0)
         
         #値がある一定以上変化してたらスタックカウント増やす
         if np.all(self.label  == 0):
@@ -558,6 +558,7 @@ class Cansat():
             self.leftMotor.stop()
             self.countstuckLoop = 0
             self.stuckTime = 0
+            self.label = []
 
         else:
             print("not stuck")
