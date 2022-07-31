@@ -98,6 +98,8 @@ class Cansat():
         self.countstuckLoop = 0
 
         self.dict_list = {}
+        self.goallat = 135.111111111
+        self.goallng = 39.222221111
         self.saveDir = "results"
         self.mkdir()
 
