@@ -99,7 +99,7 @@ class Cansat():
 
         self.dict_list = {}
         self.goallat = 135.111111111
-        self.goallng = 39.222221111
+        self.goallon = 39.222221111
         self.saveDir = "results"
         self.mkdir()
 
@@ -600,6 +600,12 @@ class Cansat():
             spm2_predict.start(model_master,test_data_list_all_win,test_label_list_all_win,scaler_master)#第二段階の評価を実施
             risk = np.array(spm2_predict.get_score()).reshape(2,3)#win1~win6の危険度マップ作成
             print("===== 終了 =====")
+            for i in range(risk.shape[0]):
+                for j in range(risk.shape[1]):
+                    if risk[i][j] >= 100:
+                        risk[i][j] = 100
+                    elif risk[i][j] <= 0:
+                        risk[i][j] = 0
             print(np.round(risk))
 #             self.state = 8
 #             self.laststate =8
