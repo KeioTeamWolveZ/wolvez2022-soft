@@ -77,6 +77,8 @@ class Cansat():
         self.countstuckLoop = 0
         self.stuckTime = 0
 
+        self.goallat = 135.111111111
+        self.goallng = 39.222221111
         self.dict_list = {}
         self.saveDir = "results"
         self.mkdir()
@@ -521,7 +523,7 @@ class Cansat():
     
     def stuck_detection2(self):
         self.camerastate = 0
-        self.label = []
+        label = []
         if self.camerastate == 0:
             self.cap = cv2.VideoCapture(0)
             img_pre = self.cap.read()
@@ -537,7 +539,11 @@ class Cansat():
         #スタック検知部分
         for i in range(img_now.shape[0]):
             for j in range(img_now.shape[1]):
-                if img_now[i][j]-img_pre[i][j] > ct.const.PIC_
+                if img_now[i][j]-img_pre[i][j] > ct.const.PIC_THRE:
+                    self.label.append(1)
+                else:
+                    pass
+
 
 
         if (self.bno055.ax**2+self.bno055.ay**2+self.bno055.az**2) <= ct.const.STUCK_ACC_THRE**2:
