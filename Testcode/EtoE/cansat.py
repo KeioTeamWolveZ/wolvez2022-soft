@@ -339,7 +339,7 @@ class Cansat():
                     print('There are not enough number of pics for ReLearning.')
                     # relearning['relearn_state'] = False  # 再学習用に画像を1枚
             
-            if not relearning['relean_state']:
+            if not relearning['relearn_state']:
                 #学習用画像を一枚撮影
                 '''
                 再学習の段階でcamerafirstの値を指定することで
@@ -391,7 +391,7 @@ class Cansat():
         print("Calc Time:",end_time-start_time)
 
     def spm_f_eval(self, PIC_COUNT=1, now="TEST", iw_shape=(2,3),feature_names=None, relearning:dict=dict(relearn_state=False,f1=10,f3=60)):#第一段階学習&評価。npzファイル作成が目的
-        
+        # def of f1 conflicts with def in spm2. by kazu
         if relearning['relearn_state']:
             try:
                 second_img_paths = sorted(glob(f"results/camera_result/first_spm/learn{self.learncount-1}/evaluate/evaluateimg*.jpg"))[-relearning['f3']+1:-relearning['f1']]
