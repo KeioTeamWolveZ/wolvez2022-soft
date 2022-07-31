@@ -339,7 +339,7 @@ class Cansat():
                     print('There are not enough number of pics for ReLearning.')
                     # relearning['relearn_state'] = False  # 再学習用に画像を1枚
             
-            if not relearning['relean_state']:
+            if not relearning['relearn_state']:
                 #学習用画像を一枚撮影
                 '''
                 再学習の段階でcamerafirstの値を指定することで
