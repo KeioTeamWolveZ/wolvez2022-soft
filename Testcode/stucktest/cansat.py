@@ -506,11 +506,11 @@ class Cansat():
                 print("stuck")
                 self.rightMotor.go(70)
                 self.leftMotor.back(70)
-                if time.time() - self.stuckTime > ct.const.STUCK_MOTOR_TIME_THRE:#閾値以上の時間モータを回転させたら
-                    self.rightMotor.stop()
-                    self.leftMotor.stop()
-                    self.countstuckLoop = 0
-                    self.stuckTime = 0
+                time.sleep(5)
+                self.rightMotor.stop()
+                self.leftMotor.stop()
+                self.countstuckLoop = 0
+                self.stuckTime = 0
 
             self.countstuckLoop+= 1
 
@@ -533,8 +533,6 @@ class Cansat():
         self.leftMotor.go(70)
 
         ret,img_now = self.cap.read()
-        count.STUCK_PIC_THRE = 20
-        count.STUCK_PIC_COUNT_THRE = 20
 
         #スタック検知部分
         for i in range(img_now.shape[0]):
@@ -543,26 +541,23 @@ class Cansat():
                     self.label.append(1)
                 else:
                     pass
+        
+        #値がある一定以上変化してたらスタックカウント増やす
+        if np.all(self.label  == 0):
+            pass
+        else:
+            self.countstuckLoop += 1
 
-
-
-        if (self.bno055.ax**2+self.bno055.ay**2+self.bno055.az**2) <= ct.const.STUCK_ACC_THRE**2:
-            if self.stuckTime == 0:
-                self.stuckTime = time.time()
-            print("acceralation:",self.bno055.ax**2+self.bno055.ay**2+self.bno055.az**2)
-            
-            if self.countstuckLoop > ct.const.STUCK_COUNT_THRE: #加速度が閾値以下になるケースがある程度続いたらスタックと判定
-                #トルネード実施
-                print("stuck")
-                self.rightMotor.go(70)
-                self.leftMotor.back(70)
-                if time.time() - self.stuckTime > ct.const.STUCK_MOTOR_TIME_THRE:#閾値以上の時間モータを回転させたら
-                    self.rightMotor.stop()
-                    self.leftMotor.stop()
-                    self.countstuckLoop = 0
-                    self.stuckTime = 0
-
-            self.countstuckLoop+= 1
+        if self.countstuckLoop > ct.const.STUCK_COUNT_THRE: #加速度が閾値以下になるケースがある程度続いたらスタックと判定
+            #トルネード実施
+            print("stuck")
+            self.rightMotor.go(70)
+            self.leftMotor.back(70)
+            time.sleep(5)
+            self.rightMotor.stop()
+            self.leftMotor.stop()
+            self.countstuckLoop = 0
+            self.stuckTime = 0
 
         else:
             print("not stuck")
