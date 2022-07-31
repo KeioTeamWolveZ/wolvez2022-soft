@@ -56,7 +56,7 @@ class Cansat():
         self.firstevalimgcount = 0
         self.camerastate = 0
         self.camerafirst = 0
-        self.stuckTime = 0
+        self.stuckstate = 0
         self.learncount = 1
         self.learn_state = True
         # self.pre_motorTime = 0
@@ -490,39 +490,58 @@ class Cansat():
 
         self.lora.sendData(datalog) #データを送信
         
-    def stuck_detection(self):
-        print("acceralation:",self.bno055.ax**2+self.bno055.ay**2+self.bno055.az**2," const:",ct.const.STUCK_ACC_THRE**2*1000)
-        if self.stuckTime > 0:
-            print("Stuck!!")
-            if time.time() - self.stuckTime > ct.const.STUCK_MOTOR_TIME_THRE:#閾値以上の時間モータを回転させたら
-                self.rightMotor.stop()
-                self.leftMotor.stop()
-                self.stuckTime = 0
-                self.countstuckLoop = 0
-            else:
-                #トルネード実施
-                self.rightMotor.go(ct.const.STUCK_MOTOR_VREF)
-                self.leftMotor.back(ct.const.STUCK_MOTOR_VREF)
+    def stuck_detection1(self):
+        # print("acceralation:",self.bno055.ax**2+self.bno055.ay**2+self.bno055.az**2," const:",ct.const.STUCK_ACC_THRE**2)
+        # if self.stuckTime > 0:
+        #     print("Stuck!!")
+        #     if time.time() - self.stuckTime > ct.const.STUCK_MOTOR_TIME_THRE:#閾値以上の時間モータを回転させたら
+        #         self.rightMotor.stop()
+        #         self.leftMotor.stop()
+        #         self.stuckTime = 0
+        #         self.countstuckLoop = 0
+        #     else:
+        #         #トルネード実施
+        #         self.rightMotor.go(ct.const.STUCK_MOTOR_VREF)
+        #         self.leftMotor.back(ct.const.STUCK_MOTOR_VREF)
             
-        elif (self.bno055.ax**2+self.bno055.ay**2+self.bno055.az**2) >= ct.const.STUCK_ACC_THRE**2*1000:
-            print("stuck count +1")
+        # elif (self.bno055.ax**2+self.bno055.ay**2+self.bno055.az**2) >= ct.const.STUCK_ACC_THRE**2*1000:
+        #     print("acceralation:",self.bno055.ax**2+self.bno055.ay**2+self.bno055.az**2)
+        #     if self.countstuckLoop > ct.const.STUCK_COUNT_THRE: #加速度が閾値以下になるケースがある程度続いたらスタックと判定
+        #         print("stuck")
+        #         self.stuckTime = time.time()#スタック検知最初の時間計測
+        #         self.rightMotor.stop()
+        #         self.leftMotor.stop()
+        #     else:
+        #         self.rightMotor.go(70)
+        #         self.leftMotor.go(70)
+
+        #     self.countstuckLoop+= 1
+        # else: #実際のミッションコード内ではいらない
+        #     print("not stuck")
+        #     self.rightMotor.go(70)
+        #     self.leftMotor.go(70)
+        self.rightMotor.go(70)
+        self.leftMotor.go(70)
+
+        if (self.bno055.ax**2+self.bno055.ay**2+self.bno055.az**2) <= ct.const.STUCK_ACC_THRE**2:
+            if self.stuckTime == 0:
+                self.stuckTime = time.time()
             print("acceralation:",self.bno055.ax**2+self.bno055.ay**2+self.bno055.az**2)
-            
-            self.countstuckLoop+= 1
-            
             if self.countstuckLoop > ct.const.STUCK_COUNT_THRE: #加速度が閾値以下になるケースがある程度続いたらスタックと判定
-                print("stuck")
-                self.stuckTime = time.time()#スタック検知最初の時間計測
-                self.rightMotor.stop()
-                self.leftMotor.stop()
-            else:
-                self.rightMotor.go(70)
-                self.leftMotor.go(70)
+                if time.time() - self.stuckTime > ct.const.STUCK_MOTOR_TIME_THRE:#閾値以上の時間モータを回転させたら
+                    print("stuck")
+                    self.rightMotor.go(70)
+                    self.leftMotor.back(70)
+            self.countstuckLoop+= 1
+
         else:
             print("not stuck")
             self.rightMotor.go(70)
             self.leftMotor.go(70)
-        
+            self.stuckTime = 0
+    
+    def stuck_detection2(self):
+        return 0
         
     def keyboardinterrupt(self):
         self.rightMotor.stop()
