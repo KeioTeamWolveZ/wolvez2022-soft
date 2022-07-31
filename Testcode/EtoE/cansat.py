@@ -341,7 +341,7 @@ class Cansat():
                     print('There are not enough number of pics for ReLearning.')
                     # relearning['relearn_state'] = False  # 再学習用に画像を1枚
             
-            if not relearning['relean_state']:
+            if not relearning['relearn_state']:
                 #学習用画像を一枚撮影
                 '''
                 再学習の段階でcamerafirstの値を指定することで
@@ -383,7 +383,7 @@ class Cansat():
             self.learn_state = False
 
         else:#20枚撮影
-            self.spm_f_eval(PIC_COUNT=PIC_COUNT, now=now, iw_shape=iw_shape) #第2段階用の画像を撮影
+            self.spm_f_eval(PIC_COUNT=PIC_COUNT, now=now, iw_shape=iw_shape, relearning=relearning) #第2段階用の画像を撮影
             if self.state == 4:  # 再学習時にステート操作が必要なら追記
                 self.state = 5
                 self.laststate = 5
@@ -393,7 +393,7 @@ class Cansat():
         print("Calc Time:",end_time-start_time)
 
     def spm_f_eval(self, PIC_COUNT=1, now="TEST", iw_shape=(2,3),feature_names=None, relearning:dict=dict(relearn_state=False,f1=10,f3=60)):#第一段階学習&評価。npzファイル作成が目的
-        
+        # def of f1 conflicts with def in spm2. by kazu
         if relearning['relearn_state']:
             try:
                 second_img_paths = sorted(glob(f"results/camera_result/first_spm/learn{self.learncount-1}/evaluate/evaluateimg*.jpg"))[-relearning['f3']+1:-relearning['f1']]
@@ -537,13 +537,13 @@ class Cansat():
         spm2_learn = SPM2Learn()
 
         #ウィンドウによってスタックと教示する時間帯を変えず、一括とする場合
-        stack_start = ct.const.STUCK_START
-        stack_end = ct.const.STUCK_END
+        f1 = ct.const.f1
+        f2 = ct.const.f2
 
         #ウィンドウによってスタックすると教示する時間帯を変える場合はnp.arrayを定義
-        stack_info = None
+        f1f2_array_window_custom = None
         """
-            stack_info=np.array([[12., 18.],
+            f1f2_array_window_custom=np.array([[12., 18.],
                 [12., 18.],
                 [12., 18.],
                 [12., 18.],
@@ -553,17 +553,17 @@ class Cansat():
             1. 全ウィンドウで一斉にラベリングする場合
                 Learnの引数でstack_appearおよびstack_disappearを[s]で指定する。
             2. ウィンドウごとに個別にラベリングする場合
-            stack_info=np.array(
+            f1f2_array_window_custom=np.array(
                 [
-                    [win_1_stack_start,win_1_stack_end],
-                    [win_2_stack_start,win_2_stack_end],
+                    [win_1_f1,win_1_stack_f2],
+                    [win_2_f1,win_2_stack_f2],
                     ...
-                    [win_6_stack_start,win_6_stack_end],
+                    [win_6_f1,win_6_stack_f2],
                 ]
             )
             t[s]で入力すること。
         """
-        spm2_learn.start(data_list_all_win,label_list_all_win,fps=30,alpha=5.0,stack_appear=stack_start,stack_disappear=stack_end,stack_info=stack_info)#どっちかは外すのがいいのか
+        spm2_learn.start(data_list_all_win,label_list_all_win,f1, f2,alpha=5.0,f1f2_array_window_custom=f1f2_array_window_custom)#どっちかは外すのがいいのか
         model_master,label_list_all_win,scaler_master=spm2_learn.get_data()
         nonzero_w, nonzero_w_label, nonzero_w_num = spm2_learn.get_nonzero_w()
         print("feature_names",np.array(nonzero_w_label,dtype=object).shape)
@@ -581,6 +581,7 @@ class Cansat():
         self.state = 6
         self.laststate = 6
         return model_master,scaler_master,feature_names
+
 
     def running(self,model_master,scaler_master,feature_names): #経路計画&走行
         planning_dir = f"results/camera_result/planning/learn{self.learncount}/planning_npz/*"
