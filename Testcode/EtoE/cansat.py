@@ -607,8 +607,9 @@ class Cansat():
             self.planning(risk)
             self.stuck_detection()#ここは注意
     
-    def planning(self,risk): #危険度とGPS座標を用いた経路計画&走行を取り仕切る関数
-        self.gps.vincenty_inverse(self.goallat,self.goallon,self.gps.Lat,self.gps.Lon) #距離:self.gps.gpsdis 方位角:self.gps.gpsdegrees
+    def planning(self,risk):
+   
+        self.gps.vincenty_inverse(float(self.gps.Lat),float(self.gps.Lon),self.goallat,self.goallon) #距離:self.gps.gpsdis 方位角:self.gps.gpsdegrees
         self.x = self.gps.gpsdis*math.cos(math.radians(self.gps.gpsdegrees))
         self.y = self.gps.gpsdis*math.sin(math.radians(self.gps.gpsdegrees))
         theta_goal = self.gps.gpsdegrees
@@ -618,20 +619,73 @@ class Cansat():
             phi += 360
         elif phi > 180:
             phi -= 360
+        print("theta_goal:",theta_goal,"ex:",self.bno055.ex)
+        print("distance:", self.gps.gpsdis)
 
         dir_run = self.calc_dir(risk,phi)
         if dir_run == 0:
+            print("Left")
             self.MotorR.go(80)
             self.MotorL.go(60)
         elif dir_run == 1:
+            print("Straight")
             self.MotorR.go(70)
             self.MotorL.go(70)
         elif dir_run == 2:
+            print("Right")
             self.MotorR.go(60)
             self.MotorL.go(80)
         elif dir_run == 3:
+            print("Stop")
             self.MotorR.stop()
             self.MotorL.stop()
+
+
+    def decide_direction(self,phi):
+        if phi >= 20:
+            direction_goal = 2
+            print("ゴール方向："+str(direction_goal)+" -> 右に曲がりたい")
+        elif phi > -20 and phi < 20:
+            direction_goal = 1
+            print("ゴール方向："+str(direction_goal)+" -> 直進したい")
+        else:
+            direction_goal = 0
+            print("ゴール方向："+str(direction_goal)+" -> 左に曲がりたい")
+        return direction_goal
+
+
+    def calc_dir(self,risk,phi):
+        # 危険度の閾値を決定
+        threshold_risk = 70
+        lower_risk = risk[1,:]
+        direction_goal = self.decide_direction(phi)
+        
+        if np.amin(lower_risk) >= threshold_risk:
+            print("前方に安全なルートはありません。90度回転して新たな経路を探索します。")
+            direction_real = 3
+        else:
+            if lower_risk[direction_goal] <= threshold_risk:   #ゴール方向の危険度が閾値以下の場合
+                print("go for goal")
+                direction_real = direction_goal
+            else:
+                print("ゴール方向が安全ではありません。別ルートを探索します。")
+                if direction_goal == 0:
+                    if lower_risk[1] <= lower_risk[2]:
+                        direction_real = 1
+                    else:
+                        direction_real = 2
+                elif direction_goal == 1:
+                    if lower_risk[0] <= lower_risk[2]:
+                        direction_real = 0
+                    else:
+                        direction_real = 2
+                elif direction_goal == 2:
+                    if lower_risk[0] <= lower_risk[1]:
+                        direction_real = 0
+                    else:
+                        direction_real = 1
+                        
+        return direction_real
             
     def sendLoRa(self): #通信モジュールの送信を行う関数
         datalog = str(self.state) + ","\
