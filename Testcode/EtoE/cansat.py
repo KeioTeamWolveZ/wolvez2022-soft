@@ -381,7 +381,7 @@ class Cansat():
             self.learn_state = False
 
         else:#20枚撮影
-            self.spm_f_eval(PIC_COUNT=PIC_COUNT, now=now, iw_shape=iw_shape) #第2段階用の画像を撮影
+            self.spm_f_eval(PIC_COUNT=PIC_COUNT, now=now, iw_shape=iw_shape, relearning=relearning) #第2段階用の画像を撮影
             if self.state == 4:  # 再学習時にステート操作が必要なら追記
                 self.state = 5
                 self.laststate = 5
