@@ -53,7 +53,7 @@ class Cansat():
         GPIO.setup(ct.const.FLIGHTPIN_PIN,GPIO.IN,pull_up_down=GPIO.PUD_UP) #フライトピン用。プルアップを有効化
         GPIO.setup(ct.const.SEPARATION_PIN,GPIO.OUT) #焼き切り用のピンの設定
         
-        # インスタンス生成        
+        # インスタンス生成用      
         self.bno055 = BNO055()
         self.MotorR = motor(ct.const.RIGHT_MOTOR_IN1_PIN,ct.const.RIGHT_MOTOR_IN2_PIN,ct.const.RIGHT_MOTOR_VREF_PIN)
         self.MotorL = motor(ct.const.LEFT_MOTOR_IN1_PIN,ct.const.LEFT_MOTOR_IN2_PIN, ct.const.LEFT_MOTOR_VREF_PIN)
@@ -63,7 +63,7 @@ class Cansat():
         self.BLUE_LED = led(ct.const.BLUE_LED_PIN)
         self.GREEN_LED = led(ct.const.GREEN_LED_PIN)
         
-        #初期パラメータ設定
+        #ステート設定用
         self.timer = 0
         self.state = state
         self.landstate = 0
@@ -71,11 +71,14 @@ class Cansat():
         self.camerafirst = 0
         self.learn_state = True
         
+        #初期パラメータ設定
         self.startTime = time.time()
         self.preparingTime = 0
         self.flyingTime = 0
         self.droppingTime = 0
         self.landingTime = 0
+        self.spmfirstTime = 0
+        self.spmsecondTime = 0
         self.runningTime = 0
         self.stuckTime = 0
         # self.finishTime = 0
@@ -85,7 +88,7 @@ class Cansat():
         self.startgps_lon=[]
         self.startgps_lat=[]
         
-        #count
+        #ステート管理用変数設定
         self.countFlyLoop = 0
         self.countDropLoop = 0
         self.learncount = 1
@@ -99,8 +102,7 @@ class Cansat():
         self.saveDir = "results"
         self.mkdir()
 
-    def mkdir(self):
-        #フォルダ作成部分
+    def mkdir(self): #フォルダ作成部分
         folder_paths =[f"results/camera_result/first_spm",
                        f"results/camera_result/first_spm/learn{self.learncount}",
                        f"results/camera_result/first_spm/learn{self.learncount}/evaluate",
@@ -116,8 +118,7 @@ class Cansat():
             if not os.path.exists(folder_path):
                 os.mkdir(folder_path)
     
-    def writeData(self):
-        #ログデータ作成。\マークを入れることで改行してもコードを続けて書くことができる
+    def writeData(self): #ログデータ作成。\マークを入れることで改行してもコードを続けて書くことができる
         print_datalog = str(self.timer) + ","\
                   + "state:"+str(self.state)+ ","\
                   + "Time:"+str(self.gps.Time) + ","\
@@ -150,19 +151,19 @@ class Cansat():
             test.write(datalog + '\n')
 
     def sequence(self):
-        if self.state == 0:#センサ系の準備を行う段階。時間経過でステート移行
+        if self.state == 0: #センサ系の準備を行う段階。時間経過でステート移行
             self.preparing()
-        elif self.state == 1:#放出を検知する段階。フライトピンが抜けたらステート移行
+        elif self.state == 1: #放出を検知する段階。フライトピンが抜けたらステート移行
             self.flying()
-        elif self.state == 2:#着陸判定する段階。加速度の値が一定値以下になったら着陸したと判定してステート移行
+        elif self.state == 2: #着陸判定する段階。加速度の値が一定値以下になったら着陸したと判定してステート移行
             self.dropping()
-        elif self.state == 3:#焼き切り&パラシュートから離脱したらステート移行
+        elif self.state == 3: #焼き切り&パラシュートから離脱したらステート移行
             self.landing()
-        elif self.state == 4:#スパースモデリング第一段階
+        elif self.state == 4: #スパースモデリング第一段階
             self.spm_first(ct.const.SPMFIRST_PIC_COUNT)
-        elif self.state == 5:#スパースモデリング第二段階
+        elif self.state == 5: #スパースモデリング第二段階
             self.model_master,self.scaler_master,self.feature_names = self.spm_second()
-        elif self.state == 6:#経路計画&走行実施
+        elif self.state == 6: #経路計画&走行実施
             self.running(self.model_master,self.scaler_master,self.feature_names)
         # elif self.state == 7:
         #     self.re_learning()
@@ -179,7 +180,7 @@ class Cansat():
             print("Error initializing device")
             exit()    
 
-    def sensor(self):#セットアップ終了後
+    def sensor(self): #セットアップ終了後
         self.timer = int(1000*(time.time() - self.startTime)) #経過時間 (ms)
         self.gps.gpsread()
         self.bno055.bnoread()
@@ -188,12 +189,12 @@ class Cansat():
         self.az=round(self.bno055.az,3)
         self.ex=round(self.bno055.ex,3)
         
-        self.writeData()#txtファイルへのログの保存
+        self.writeData() #txtファイルへのログの保存
     
         if not self.state == 1: #preparingのときは電波を発しない
             self.sendLoRa()
 
-    def preparing(self):#時間が立ったら移行
+    def preparing(self): #時間が立ったら移行
         if self.preparingTime == 0:
             self.preparingTime = time.time()#時刻を取得
             self.RED_LED.led_on()
@@ -215,39 +216,39 @@ class Cansat():
                 self.state = 1
                 self.laststate = 1
     
-    def flying(self):#フライトピンが外れる➡︎ボイド缶から放出されたことを検出するステート
+    def flying(self): #フライトピンが外れる➡︎ボイド缶から放出されたことを検出するステート
         if self.flyingTime == 0:#時刻を取得してLEDをステートに合わせて光らせる
             self.flyingTime = time.time()
             self.RED_LED.led_off()
             self.BLUE_LED.led_off()
             self.GREEN_LED.led_off()
 
-        if GPIO.input(ct.const.FLIGHTPIN_PIN) == GPIO.HIGH:#highかどうか＝フライトピンが外れているかチェック
+        if GPIO.input(ct.const.FLIGHTPIN_PIN) == GPIO.HIGH: #highかどうか＝フライトピンが外れているかチェック
             self.countFlyLoop+=1
-            if self.countFlyLoop > ct.const.FLYING_FLIGHTPIN_COUNT_THRE:#一定時間HIGHだったらステート移行
+            if self.countFlyLoop > ct.const.FLYING_FLIGHTPIN_COUNT_THRE: #一定時間HIGHだったらステート移行
                 self.state = 2
                 self.laststate = 2       
         else:
             self.countFlyLoop = 0 #何故かLOWだったときカウントをリセット
     
     def dropping(self): #着陸判定ステート
-        if self.droppingTime == 0:#時刻を取得してLEDをステートに合わせて光らせる
+        if self.droppingTime == 0: #時刻を取得してLEDをステートに合わせて光らせる
             self.droppingTime = time.time()
             self.RED_LED.led_off()
             self.BLUE_LED.led_on()
             self.GREEN_LED.led_off()
       
         #加速度が小さくなったら着地判定
-        if (self.bno055.ax**2 + self.bno055.ay**2 + self.bno055.az**2) < ct.const.DROPPING_ACC_THRE**2:#加速度が閾値以下で着地判定
+        if (self.bno055.ax**2 + self.bno055.ay**2 + self.bno055.az**2) < ct.const.DROPPING_ACC_THRE**2: #加速度が閾値以下で着地判定
             self.countDropLoop+=1            
-            if self.countDropLoop > ct.const.DROPPING_ACC_COUNT_THRE:#着地判定が複数回行われたらステート以降
+            if self.countDropLoop > ct.const.DROPPING_ACC_COUNT_THRE: #着地判定が複数回行われたらステート以降
                 self.state = 3
                 self.laststate = 3
         else:
             self.countDropLoop = 0 #初期化の必要あり
 
     def landing(self): #着陸判定ステート。焼き切り&分離シートからの離脱が必要
-        if self.landingTime == 0:#時刻を取得してLEDをステートに合わせて光らせる
+        if self.landingTime == 0: #時刻を取得してLEDをステートに合わせて光らせる
             self.landingTime = time.time()
             self.RED_LED.led_off()
             self.BLUE_LED.led_off()
@@ -276,6 +277,11 @@ class Cansat():
                     self.laststate = 4
 
     def spm_first(self, PIC_COUNT:int=1, relearning:dict=dict(relearn_state=False,f1=ct.const.f1,f3=ct.const.f3)): #ステート4。スパースモデリング第一段階実施。
+        if self.spmfirstTime == 0: #時刻を取得してLEDをステートに合わせて光らせる
+            self.spmfirstTime = time.time()
+            self.RED_LED.led_on()
+            self.BLUE_LED.led_on()
+            self.GREEN_LED.led_off()
         '''
         CHECK POINT
         ---
@@ -382,9 +388,6 @@ class Cansat():
             if self.state == 4:  # 再学習時にステート操作が必要なら追記
                 self.state = 5
                 self.laststate = 5
-                     
-#         end_time = time.time()#計算終了
-#         print("Calc Time:",end_time-start_time)
 
     def spm_f_eval(self, PIC_COUNT=1, now="TEST", iw_shape=(2,3),feature_names=None, relearning:dict=dict(relearn_state=False,f1=ct.const.f1,f3=ct.const.f3)):#第一段階学習&評価。npzファイル作成が目的
         # def of f1 conflicts with def in spm2. by kazu
@@ -477,7 +480,7 @@ class Cansat():
 #                     print(f"win{win},feature{feature}")
 #                     print("feature_names:",feature_names)
 #                     print("fmg_list",fmg_list)
-                    for fmg in fmg_list:#それぞれの特徴画像に対して処理
+                    for fmg in fmg_list: #それぞれの特徴画像に対して処理
                         if fmg !=0:
                             iw_list, window_size = iw.breakout(iw.read_img(fmg)) #ブレイクアウト #hitotsunoshoriwojikkou
                             feature_name = str(re.findall(tempDir_name + f"/(.*)_.*_", fmg)[0])
@@ -522,21 +525,26 @@ class Cansat():
             now=str(datetime.now())[:19].replace(" ","_").replace(":","-")
             # print("feature_values:",feature_values)
             # print("shape:",len(feature_values))
-            np.savez_compressed(self.savenpz_dir + now,array_1=np.array([feature_values]))#npzファイル作成
+            np.savez_compressed(self.savenpz_dir + now,array_1=np.array([feature_values])) #npzファイル作成
             self.tempDir.cleanup()
     
     def spm_second(self): #スパースモデリング第二段階実施
+        if self.spmsecondTime == 0: #時刻を取得してLEDをステートに合わせて光らせる
+            self.spmfirstTime = time.time()
+            self.RED_LED.led_off()
+            self.BLUE_LED.led_on()
+            self.GREEN_LED.led_on()
         npz_dir = f"results/camera_result/second_spm/learn{self.learncount}/*"
         train_npz = sorted(glob(npz_dir))
         spm2_prepare = SPM2Open_npz()
         data_list_all_win,label_list_all_win = spm2_prepare.unpack(train_npz)
         spm2_learn = SPM2Learn()
 
-        #ウィンドウによってスタックと教示する時間帯を変えず、一括とする場合
+        # ウィンドウによってスタックと教示する時間帯を変えず、一括とする場合
         f1 = ct.const.f1
         f2 = ct.const.f2
 
-        #ウィンドウによってスタックすると教示する時間帯を変える場合はnp.arrayを定義
+        # ウィンドウによってスタックすると教示する時間帯を変える場合はnp.arrayを定義
         f1f2_array_window_custom = None
         """
             f1f2_array_window_custom=np.array([[12., 18.],
@@ -559,7 +567,7 @@ class Cansat():
             )
             t[s]で入力すること。
         """
-        spm2_learn.start(data_list_all_win,label_list_all_win,f1, f2,alpha=5.0,f1f2_array_window_custom=f1f2_array_window_custom)#どっちかは外すのがいいのか
+        spm2_learn.start(data_list_all_win,label_list_all_win,f1, f2,alpha=5.0,f1f2_array_window_custom=f1f2_array_window_custom) #どっちかは外すのがいいのか
         model_master,label_list_all_win,scaler_master=spm2_learn.get_data()
         nonzero_w, nonzero_w_label, nonzero_w_num = spm2_learn.get_nonzero_w()
         print("feature_names",np.array(nonzero_w_label,dtype=object).shape)
@@ -578,23 +586,29 @@ class Cansat():
         self.laststate = 6
         return model_master,scaler_master,feature_names
 
-
     def running(self,model_master,scaler_master,feature_names): #経路計画&走行
+        if self.runningTime == 0: #時刻を取得してLEDをステートに合わせて光らせる
+            self.runningTime = time.time()
+            self.RED_LED.led_on()
+            self.BLUE_LED.led_off()
+            self.GREEN_LED.led_on()
+
         planning_dir = f"results/camera_result/planning/learn{self.learncount}/planning_npz/*"
         planning_npz = sorted(glob(planning_dir))
         
         #保存時のファイル名指定（現在は時間）
         now=str(datetime.now())[:19].replace(" ","_").replace(":","-")
         
-        self.spm_f_eval(now = now)#第一段階と同様の処理実施。特徴処理を行なってnpzファイル作成
+        self.spm_f_eval(now = now) #第一段階と同様の処理実施。特徴処理を行なってnpzファイル作成
         if self.runningTime == 0:
             self.runningTime = time.time()
         else:
             SPM2_predict_prepare = SPM2Open_npz()
-            test_data_list_all_win,test_label_list_all_win = SPM2_predict_prepare.unpack([planning_npz[-1]])#作成したnpzファイルを取得
+            test_data_list_all_win,test_label_list_all_win = SPM2_predict_prepare.unpack([planning_npz[-1]]) #作成したnpzファイルを取得
             spm2_predict = SPM2Evaluate()
-            spm2_predict.start(model_master,test_data_list_all_win,test_label_list_all_win,scaler_master)#第二段階の評価を実施
-            risk = np.array(spm2_predict.get_score()).reshape(2,3)#win1~win6の危険度マップ作成
+            spm2_predict.start(model_master,test_data_list_all_win,test_label_list_all_win,scaler_master) #第二段階の評価を実施
+            risk = np.array(spm2_predict.get_score()).reshape(2,3) #win1~win6の危険度マップ作成
+            
             print("===== Risk Map =====")
             for i in range(risk.shape[0]):
                 for j in range(risk.shape[1]):
@@ -602,8 +616,6 @@ class Cansat():
                         risk[i][j] = 100
                     elif risk[i][j] <= -100:
                         risk[i][j] = -100
-#             risk =risk/2+100
-#             risk = np.array([[0,0,0],[0,0,0]])  #if you want to run GPS only
             print(np.round(risk))
 #             self.state = 8
 #             self.laststate =8
@@ -642,7 +654,6 @@ class Cansat():
 #             print("Stop")
             self.MotorR.stop()
             self.MotorL.stop()
-
 
     def decide_direction(self,phi):
         if phi >= 20:
@@ -725,5 +736,5 @@ class Cansat():
         self.RED_LED.led_off()
         self.BLUE_LED.led_off()
         self.GREEN_LED.led_off()
-#         self.cap.release()
-#         cv2.destroyAllWindows()
+        self.cap.release()
+        cv2.destroyAllWindows()
