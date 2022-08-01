@@ -327,10 +327,8 @@ class Cansat():
 
         if self.learn_state:
             print(f"=====LEARNING PHASE{self.learncount}=====")
-            self.sensor()
         else:
             print(f"=====EVALUATING PHASE{self.learncount}=====")
-            self.sensor()    
         
         if self.learn_state: #学習モデル獲得     
             if relearning['relearn_state']:  # 再学習に用いる画像パスの指定
@@ -353,14 +351,14 @@ class Cansat():
                     ret, firstimg = self.cap.read()
                     cv2.imwrite(f"results/camera_result/first_spm/learn{self.learncount}/firstimg{self.firstlearnimgcount}.jpg",firstimg)
                     self.camerastate = "captured!"
+                    self.sensor()
+                    self.camerastate = 0
                     self.firstlearnimgcount += 1
                     self.camerafirst = 1
                 elif self.camerafirst == 2:
                     '''
                     再撮影をする場合はここに記載
                     '''
-                else:
-                    self.camerastate = 0
                 
                 importPath = f"results/camera_result/first_spm/learn{self.learncount}/firstimg{self.firstlearnimgcount-1}.jpg"
             
@@ -433,7 +431,9 @@ class Cansat():
             tempDir_name = self.tempDir.name
             
             iw = IntoWindow(importPath, tempDir_name, False) #画像の特徴抽出のインスタンス生成
-            # processing img
+            
+            if self.state == 4:
+                self.sensor()
             
             if feature_names == None:#第一段階学習モード
                 fmg_list = iw.feature_img(frame_num=now,feature_names=feature_names) #特徴抽出。リストに特徴画像が入る
@@ -468,12 +468,13 @@ class Cansat():
                         feature_values[feature_name][f'win_{win+1}']["mode"] = mode  # 最頻値
                         feature_values[feature_name][f'win_{win+1}']["kurt"] = kurt  # 尖度
                         feature_values[feature_name][f'win_{win+1}']["skew"] = skew  # 歪度
-                self.sensor()
+                
                 
             else: #第一段階評価モード。runningで使うための部分
                 '''
                 ここは7/31時点で未着手
                 '''
+                self.camerastate = "captured!"
                 i=0
                 for win,feature in enumerate(feature_names):#tokuchougazounoyouso
                     fmg_list = iw.feature_img(frame_num=now,feature_names=feature) #特徴抽出。リストに特徴画像が入る
@@ -534,6 +535,7 @@ class Cansat():
             self.RED_LED.led_off()
             self.BLUE_LED.led_on()
             self.GREEN_LED.led_on()
+            
         npz_dir = f"results/camera_result/second_spm/learn{self.learncount}/*"
         train_npz = sorted(glob(npz_dir))
         spm2_prepare = SPM2Open_npz()
@@ -570,10 +572,8 @@ class Cansat():
         spm2_learn.start(data_list_all_win,label_list_all_win,f1, f2,alpha=5.0,f1f2_array_window_custom=f1f2_array_window_custom) #どっちかは外すのがいいのか
         model_master,label_list_all_win,scaler_master=spm2_learn.get_data()
         nonzero_w, nonzero_w_label, nonzero_w_num = spm2_learn.get_nonzero_w()
-        print("feature_names",np.array(nonzero_w_label,dtype=object).shape)
+#         print("feature_names",np.array(nonzero_w_label,dtype=object).shape)
         feature_names = nonzero_w_label
-        
-
         
         """
             model_master: 各ウィンドウを学習したモデル（俗にいう"model.predict()"とかの"model.predict()"とかのmodelに相当するのがリストで入ってる）
@@ -587,12 +587,6 @@ class Cansat():
         return model_master,scaler_master,feature_names
 
     def running(self,model_master,scaler_master,feature_names): #経路計画&走行
-        if self.runningTime == 0: #時刻を取得してLEDをステートに合わせて光らせる
-            self.runningTime = time.time()
-            self.RED_LED.led_on()
-            self.BLUE_LED.led_off()
-            self.GREEN_LED.led_on()
-
         planning_dir = f"results/camera_result/planning/learn{self.learncount}/planning_npz/*"
         planning_npz = sorted(glob(planning_dir))
         
@@ -600,8 +594,12 @@ class Cansat():
         now=str(datetime.now())[:19].replace(" ","_").replace(":","-")
         
         self.spm_f_eval(now = now) #第一段階と同様の処理実施。特徴処理を行なってnpzファイル作成
+        
         if self.runningTime == 0:
             self.runningTime = time.time()
+            self.RED_LED.led_on()
+            self.BLUE_LED.led_off()
+            self.GREEN_LED.led_on()
         else:
             SPM2_predict_prepare = SPM2Open_npz()
             test_data_list_all_win,test_label_list_all_win = SPM2_predict_prepare.unpack([planning_npz[-1]]) #作成したnpzファイルを取得

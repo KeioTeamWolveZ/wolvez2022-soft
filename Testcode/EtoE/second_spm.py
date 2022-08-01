@@ -11,7 +11,7 @@ from datetime import datetime
 
 class SPM2Open_npz():  # second_spm.pyとして実装済み
     def unpack(self, files):
-        print("===== npzファイルの解体 =====")
+#         print("===== npzファイルの解体 =====")
 #         print("読み込むフレーム数 : ", len(files))
         data_list_all_time = []
         label_list_all_time = []
@@ -22,7 +22,7 @@ class SPM2Open_npz():  # second_spm.pyとして実装済み
         data_list_all_time = np.array(data_list_all_time)
         label_list_all_time = np.array(label_list_all_time,dtype=object)
 
-        print("===== windowごとに集計 =====")
+#         print("===== windowごとに集計 =====")
 #         print("window数 : 6 (固定中。変更の場合はコード編集が必要）")
         self.data_list_all_win = [[], [], [], [], [], []]
         self.label_list_all_win = [[], [], [], [], [], []]
@@ -41,7 +41,7 @@ class SPM2Open_npz():  # second_spm.pyとして実装済み
 #         print(f"画像加工の種類 : {win.shape[0]}種類")
 #         print(f"ヒストグラム特徴量の種類 : {win.shape[1]}種類")
 #         print(f"--- >>  合計 : {win.flatten().shape[0]}種類")
-        print("===== 終了 =====")
+#         print("===== 終了 =====")
 
         return self.data_list_all_win, self.label_list_all_win
 

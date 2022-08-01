@@ -18,4 +18,4 @@ class lora:
         
     def sendData(self, datalog):
         self.sendDevice.cmd_lora("00010002{}".format(datalog))
-        print("send:{}".format(datalog))
+#         print("send:{}".format(datalog))

@@ -38,7 +38,7 @@ class LoraSettingClass:
 
     def setup_lora(self, set_mode=''):
         # LoRa(ES920LR)設定
-        print("setting up lora")
+#         print("setting up lora")
         self.set_mode = set_mode
         # LoRa(ES9320LR)起動待機
         while self.device.inWaiting() > 0:
