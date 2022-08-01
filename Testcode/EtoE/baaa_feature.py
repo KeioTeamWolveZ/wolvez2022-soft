@@ -43,7 +43,6 @@ class ReadFeaturedImg():
             self.treat.rg()
             
         else:
-            print("feature_names:",feature_names)
             for feature_name in feature_names:
                 if feature_name == "normalRGB":
                     self.treat.normalRGB()
@@ -65,12 +64,10 @@ class ReadFeaturedImg():
                     self.treat.r()
                 elif feature_name == "blue":
                     self.treat.b()
-                elif feature_name == "geen":
+                elif feature_name == "green":
                     self.treat.g()
                 elif feature_name == "purple":
                     self.treat.rb()
-                elif feature_name == "hsv":
-                    self.treat.hsv()
                 elif feature_name == "emerald":
                     self.treat.gb()
                 elif feature_name == "yellow":

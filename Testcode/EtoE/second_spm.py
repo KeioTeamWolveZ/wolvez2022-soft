@@ -131,9 +131,6 @@ class SPM2Learn():  # second_spm.pyとして実装済み
                     self.nonzero_w_label[win_no].append(label)
             
             num_error = 10-len(self.nonzero_w_label[win_no])
-            if num_error !=0:
-                for i in range(num_error):
-                    self.nonzero_w_label[win_no].append(str(i))
                     
         self.nonzero_w_num = np.array([
             [len(self.nonzero_w_label[0]), len(self.nonzero_w_label[1]), len(self.nonzero_w_label[2])],

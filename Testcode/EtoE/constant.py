@@ -56,7 +56,7 @@ const.SEPARATION_TIME_THRE = 10 #焼き切り時間
 const.LANDING_CAMERA_TIME_THRE = 2
 const.LANDING_MOTOR_TIME_THRE = 5 #分離シートから離れるためにモータを回転させる時間
 
-const.SPMFIRST_PIC_COUNT = 10
+const.SPMFIRST_PIC_COUNT = 1
 
 const.STUCK_ACC_THRE = 0.1
 const.STUCK_COUNT_THRE = 30
