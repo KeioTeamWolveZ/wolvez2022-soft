@@ -415,8 +415,8 @@ class Cansat():
                     time.sleep(0.4)
                     self.MotorR.stop()
                     self.MotorL.stop()
-                    if i%10 == 0:
-                        self.sensor() #
+                    if i%10 == 0: #10枚撮影する毎にセンサの値取得
+                        self.sensor() 
                 
             if not PIC_COUNT == 1:
                 second_img_paths = sorted(glob(f"results/camera_result/first_spm/learn{self.learncount}/evaluate/evaluateimg*.jpg"))
@@ -432,7 +432,7 @@ class Cansat():
             
             iw = IntoWindow(importPath, tempDir_name, False) #画像の特徴抽出のインスタンス生成
             
-            if self.state == 4:
+            if self.state == 4: #ステートが4の場合はセンサの値取得
                 self.sensor()
             
             if feature_names == None:#第一段階学習モード
