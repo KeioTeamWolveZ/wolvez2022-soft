@@ -30,7 +30,7 @@ cansat.setup()
 
 try:
     while True:
-        if cansat.state != 4: #
+        if cansat.state != 4: #ステート4の時はセンサの値はcansat.py側で取得する
             cansat.sensor()
         time.sleep(0.03)
         cansat.sequence()
