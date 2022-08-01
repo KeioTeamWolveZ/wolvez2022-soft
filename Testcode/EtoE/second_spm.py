@@ -12,7 +12,7 @@ from datetime import datetime
 class SPM2Open_npz():  # second_spm.pyとして実装済み
     def unpack(self, files):
         print("===== npzファイルの解体 =====")
-        print("読み込むフレーム数 : ", len(files))
+#         print("読み込むフレーム数 : ", len(files))
         data_list_all_time = []
         label_list_all_time = []
         for file in files:
@@ -23,7 +23,7 @@ class SPM2Open_npz():  # second_spm.pyとして実装済み
         label_list_all_time = np.array(label_list_all_time,dtype=object)
 
         print("===== windowごとに集計 =====")
-        print("window数 : 6 (固定中。変更の場合はコード編集が必要）")
+#         print("window数 : 6 (固定中。変更の場合はコード編集が必要）")
         self.data_list_all_win = [[], [], [], [], [], []]
         self.label_list_all_win = [[], [], [], [], [], []]
         for pic, lab_pic in zip(data_list_all_time, label_list_all_time):

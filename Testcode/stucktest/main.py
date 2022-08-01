@@ -1,4 +1,4 @@
-#Last Update 2022/07/02
+#Last Update 2022/07/31
 #Author : Toshiki Fukui
 
 import RPi.GPIO as GPIO
@@ -13,7 +13,7 @@ cansat.setup()
 try:
     while True:
         cansat.sensor()
-        time.sleep(0.3)
+        time.sleep(0.03)
         cansat.sequence()
         if cansat.state >= 10:
             print("Finished")

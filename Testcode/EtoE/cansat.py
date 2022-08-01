@@ -66,25 +66,18 @@ class Cansat():
         #初期パラメータ設定
         self.timer = 0
         self.state = state
+        self.landstate = 0
+        self.camerastate = 0
+        self.camerafirst = 0
+        self.learn_state = True
+        
         self.startTime = time.time()
         self.preparingTime = 0
         self.flyingTime = 0
         self.droppingTime = 0
         self.landingTime = 0
         self.runningTime = 0
-        self.landstate = 0
-        self.firstlearnimgcount = 0
-        self.firstevalimgcount = 0
-        self.camerastate = 0
-        self.camerafirst = 0
         self.stuckTime = 0
-        self.learncount = 1
-        self.learn_state = True
-        # self.pre_motorTime = 0
-        # self.startingTime = 0
-        # self.measureringTime = 0
-        # self.runningTime = 0
-        # self.positioningTime = 0
         # self.finishTime = 0
         
         #state管理用変数初期化
@@ -92,14 +85,17 @@ class Cansat():
         self.startgps_lon=[]
         self.startgps_lat=[]
         
-        self.countPreLoop = 0
+        #count
         self.countFlyLoop = 0
         self.countDropLoop = 0
+        self.learncount = 1
+        self.firstlearnimgcount = 0
+        self.firstevalimgcount = 0
         self.countstuckLoop = 0
 
         self.dict_list = {}
-        self.goallat = 135.111111111
-        self.goallon = 39.222221111
+        self.goallat = ct.const.GPS_GOAL_LAT
+        self.goallon = ct.const.GPS_GOAL_LON
         self.saveDir = "results"
         self.mkdir()
 
@@ -131,8 +127,8 @@ class Cansat():
                   + "ay:"+str(round(self.ay,6)).rjust(6) + ","\
                   + "az:"+str(round(self.az,6)).rjust(6) + ","\
                   + "q:" + str(self.ex).rjust(6) + ","\
-                  + "rV:" + str(round(self.MotorR.velocity,2)).rjust(6) + ","\
-                  + "lV:" + str(round(self.MotorL.velocity,2)).rjust(6) + ","\
+                  + "rV:" + str(round(self.MotorR.velocity,2)).rjust(4) + ","\
+                  + "lV:" + str(round(self.MotorL.velocity,2)).rjust(4) + ","\
                   + "Camera:" + str(self.camerastate)
 
         print(print_datalog)
@@ -204,7 +200,6 @@ class Cansat():
             self.BLUE_LED.led_off()
             self.GREEN_LED.led_off()
 
-        #self.countPreLoop+ = 1
         if not self.preparingTime == 0:
             if self.gpscount <= ct.const.PREPARING_GPS_COUNT_THRE:
                 self.startgps_lon.append(float(self.gps.Lon))
@@ -280,7 +275,7 @@ class Cansat():
                     self.state = 4
                     self.laststate = 4
 
-    def spm_first(self, PIC_COUNT:int=1, relearning:dict=dict(relearn_state=False,f1=10,f3=60)): #ステート4。スパースモデリング第一段階実施。
+    def spm_first(self, PIC_COUNT:int=1, relearning:dict=dict(relearn_state=False,f1=ct.const.f1,f3=ct.const.f3)): #ステート4。スパースモデリング第一段階実施。
         '''
         CHECK POINT
         ---
@@ -326,12 +321,12 @@ class Cansat():
 
         if self.learn_state:
             print(f"=====LEARNING PHASE{self.learncount}=====")
+            self.sensor()
         else:
             print(f"=====EVALUATING PHASE{self.learncount}=====")
-            
+            self.sensor()    
         
-        if self.learn_state:#学習モデル獲得
-            
+        if self.learn_state: #学習モデル獲得     
             if relearning['relearn_state']:  # 再学習に用いる画像パスの指定
                 # 一つ前のlearncountファイルの-f3枚目を指定
                 try:
@@ -387,12 +382,11 @@ class Cansat():
             if self.state == 4:  # 再学習時にステート操作が必要なら追記
                 self.state = 5
                 self.laststate = 5
-                    
-        
-        end_time = time.time()#計算終了
-        print("Calc Time:",end_time-start_time)
+                     
+#         end_time = time.time()#計算終了
+#         print("Calc Time:",end_time-start_time)
 
-    def spm_f_eval(self, PIC_COUNT=1, now="TEST", iw_shape=(2,3),feature_names=None, relearning:dict=dict(relearn_state=False,f1=10,f3=60)):#第一段階学習&評価。npzファイル作成が目的
+    def spm_f_eval(self, PIC_COUNT=1, now="TEST", iw_shape=(2,3),feature_names=None, relearning:dict=dict(relearn_state=False,f1=ct.const.f1,f3=ct.const.f3)):#第一段階学習&評価。npzファイル作成が目的
         # def of f1 conflicts with def in spm2. by kazu
         if relearning['relearn_state']:
             try:
@@ -405,7 +399,6 @@ class Cansat():
         if not relearning['relearn_state']:
         # self.cap = cv2.VideoCapture(0)
             for i in range(PIC_COUNT):
-                print(i,"枚目")
                 ret,self.secondimg = self.cap.read()
                 if self.state == 4:
                     save_file = f"results/camera_result/first_spm/learn{self.learncount}/evaluate/evaluateimg{time.time():.0f}.jpg"
@@ -417,11 +410,13 @@ class Cansat():
                 
                 if self.state == 4:
                     self.MotorR.go(70)#走行
-                    self.MotorL.go(50)#走行
+                    self.MotorL.go(70)#走行
                     time.sleep(0.4)
                     self.MotorR.stop()
                     self.MotorL.stop()
-            
+                    if i%10 == 0:
+                        self.sensor() #
+                
             if not PIC_COUNT == 1:
                 second_img_paths = sorted(glob(f"results/camera_result/first_spm/learn{self.learncount}/evaluate/evaluateimg*.jpg"))
             else:
@@ -439,7 +434,7 @@ class Cansat():
             
             if feature_names == None:#第一段階学習モード
                 fmg_list = iw.feature_img(frame_num=now,feature_names=feature_names) #特徴抽出。リストに特徴画像が入る
-
+                
                 for fmg in fmg_list:#それぞれの特徴画像に対して処理
                     iw_list, window_size = iw.breakout(iw.read_img(fmg)) #ブレイクアウト
                     feature_name = str(re.findall(tempDir_name + f"/(.*)_.*_", fmg)[0])
@@ -470,6 +465,7 @@ class Cansat():
                         feature_values[feature_name][f'win_{win+1}']["mode"] = mode  # 最頻値
                         feature_values[feature_name][f'win_{win+1}']["kurt"] = kurt  # 尖度
                         feature_values[feature_name][f'win_{win+1}']["skew"] = skew  # 歪度
+                self.sensor()
                 
             else: #第一段階評価モード。runningで使うための部分
                 '''
@@ -514,6 +510,7 @@ class Cansat():
                         feature_values[feature_name][f'win_{win+1}']["mode"] = mode  # 最頻値
                         feature_values[feature_name][f'win_{win+1}']["kurt"] = kurt  # 尖度
                         feature_values[feature_name][f'win_{win+1}']["skew"] = skew  # 歪度
+
             
             # npzファイル形式で計算結果保存
             if self.state == 4:
@@ -530,7 +527,6 @@ class Cansat():
     
     def spm_second(self): #スパースモデリング第二段階実施
         npz_dir = f"results/camera_result/second_spm/learn{self.learncount}/*"
-        # wolvez2022/spmで実行してください
         train_npz = sorted(glob(npz_dir))
         spm2_prepare = SPM2Open_npz()
         data_list_all_win,label_list_all_win = spm2_prepare.unpack(train_npz)
@@ -599,13 +595,15 @@ class Cansat():
             spm2_predict = SPM2Evaluate()
             spm2_predict.start(model_master,test_data_list_all_win,test_label_list_all_win,scaler_master)#第二段階の評価を実施
             risk = np.array(spm2_predict.get_score()).reshape(2,3)#win1~win6の危険度マップ作成
-            print("===== 終了 =====")
+            print("===== Risk Map =====")
             for i in range(risk.shape[0]):
                 for j in range(risk.shape[1]):
                     if risk[i][j] >= 100:
                         risk[i][j] = 100
-                    elif risk[i][j] <= 0:
-                        risk[i][j] = 0
+                    elif risk[i][j] <= -100:
+                        risk[i][j] = -100
+#             risk =risk/2+100
+#             risk = np.array([[0,0,0],[0,0,0]])  #if you want to run GPS only
             print(np.round(risk))
 #             self.state = 8
 #             self.laststate =8
@@ -614,7 +612,6 @@ class Cansat():
             self.stuck_detection()#ここは注意
     
     def planning(self,risk):
-   
         self.gps.vincenty_inverse(float(self.gps.Lat),float(self.gps.Lon),self.goallat,self.goallon) #距離:self.gps.gpsdis 方位角:self.gps.gpsdegrees
         self.x = self.gps.gpsdis*math.cos(math.radians(self.gps.gpsdegrees))
         self.y = self.gps.gpsdis*math.sin(math.radians(self.gps.gpsdegrees))
@@ -625,24 +622,24 @@ class Cansat():
             phi += 360
         elif phi > 180:
             phi -= 360
-        print("theta_goal:",theta_goal,"ex:",self.bno055.ex)
-        print("distance:", self.gps.gpsdis)
+#         print("theta_goal:",theta_goal,"ex:",self.bno055.ex)
+#         print("distance:", self.gps.gpsdis)
 
         dir_run = self.calc_dir(risk,phi)
         if dir_run == 0:
-            print("Left")
+#             print("Left")
             self.MotorR.go(80)
             self.MotorL.go(60)
         elif dir_run == 1:
-            print("Straight")
+#             print("Straight")
             self.MotorR.go(70)
             self.MotorL.go(70)
         elif dir_run == 2:
-            print("Right")
+#             print("Right")
             self.MotorR.go(60)
             self.MotorL.go(80)
         elif dir_run == 3:
-            print("Stop")
+#             print("Stop")
             self.MotorR.stop()
             self.MotorL.stop()
 
@@ -650,19 +647,18 @@ class Cansat():
     def decide_direction(self,phi):
         if phi >= 20:
             direction_goal = 2
-            print("ゴール方向："+str(direction_goal)+" -> 右に曲がりたい")
+#             print("ゴール方向："+str(direction_goal)+" -> 右に曲がりたい")
         elif phi > -20 and phi < 20:
             direction_goal = 1
-            print("ゴール方向："+str(direction_goal)+" -> 直進したい")
+#             print("ゴール方向："+str(direction_goal)+" -> 直進したい")
         else:
             direction_goal = 0
-            print("ゴール方向："+str(direction_goal)+" -> 左に曲がりたい")
+#             print("ゴール方向："+str(direction_goal)+" -> 左に曲がりたい")
         return direction_goal
-
 
     def calc_dir(self,risk,phi):
         # 危険度の閾値を決定
-        threshold_risk = 70
+        threshold_risk = 10
         lower_risk = risk[1,:]
         direction_goal = self.decide_direction(phi)
         
@@ -701,21 +697,27 @@ class Cansat():
 
         self.lora.sendData(datalog) #データを送信
         
-    def stuck_detection(self): #スタック検知を行う関数   
-        if (self.bno055.ax**2+self.bno055.ay**2+self.bno055.az**2) <= ct.const.STUCK_ACC_THRE**2:
-            self.countstuckLoop+= 1
+    def stuck_detection(self):
+        if (self.bno055.ax**2+self.bno055.ay**2) <= ct.const.STUCK_ACC_THRE**2:
+            if self.stuckTime == 0:
+                self.stuckTime = time.time()
+            
             if self.countstuckLoop > ct.const.STUCK_COUNT_THRE: #加速度が閾値以下になるケースがある程度続いたらスタックと判定
-                if self.stuckTime == 0:
-                    self.stuckTime = time.time()#スタック検知最初の時間計測
                 #トルネード実施
+                print("stuck")
                 self.MotorR.go(ct.const.STUCK_MOTOR_VREF)
                 self.MotorL.back(ct.const.STUCK_MOTOR_VREF)
+                time.sleep(2)
+                self.MotorR.stop()
+                self.MotorL.stop()
+                self.countstuckLoop = 0
+                self.stuckTime = 0
 
-                if time.time() - self.stuckTime > ct.const.STUCK_MOTOR_TIME_THRE:#閾値以上の時間モータを回転させたら
-                    self.MotorR.stop()
-                    self.MotorL.stop()
-                    self.stuckTime = 0
-                    self.countstuckLoop = 0
+            self.countstuckLoop+= 1
+
+        else:
+            self.countstuckLoop = 0
+            self.stuckTime = 0
 
     def keyboardinterrupt(self): #キーボードインタラプト入れた場合に発動する関数
         self.MotorR.stop()

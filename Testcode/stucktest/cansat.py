@@ -59,6 +59,7 @@ class Cansat():
         self.stuckstate = 0
         self.learncount = 1
         self.learn_state = True
+        self.camerastuck = 0
         # self.pre_motorTime = 0
         # self.startingTime = 0
         # self.measureringTime = 0
@@ -115,7 +116,7 @@ class Cansat():
                   + "lV:" + str(round(self.leftMotor.velocity,2)).rjust(6) + ","\
                   + "Camera:" + str(self.camerastate)
 
-        print(print_datalog)
+#         print(print_datalog)
         
         datalog = str(self.timer) + ","\
                   + "state:"+str(self.state) + ","\
@@ -153,7 +154,7 @@ class Cansat():
         # elif self.state == 8:#終了
         #     self.finish()
         elif self.state == 9:# detect stack
-            self.stuck_detection()
+            self.stuck_detection2()
         else:
             self.state = self.laststate #どこにも引っかからない場合何かがおかしいのでlaststateに戻してあげる
 
@@ -496,17 +497,17 @@ class Cansat():
         self.rightMotor.go(70)
         self.leftMotor.go(70)
 
-        if (self.bno055.ax**2+self.bno055.ay**2+self.bno055.az**2) <= ct.const.STUCK_ACC_THRE**2:
+        if (self.bno055.ax**2+self.bno055.ay**2) <= ct.const.STUCK_ACC_THRE**2:
             if self.stuckTime == 0:
+#                 print("near stuck")
                 self.stuckTime = time.time()
-            print("acceralation:",self.bno055.ax**2+self.bno055.ay**2+self.bno055.az**2)
             
             if self.countstuckLoop > ct.const.STUCK_COUNT_THRE: #加速度が閾値以下になるケースがある程度続いたらスタックと判定
                 #トルネード実施
                 print("stuck")
-                self.rightMotor.go(70)
-                self.leftMotor.back(70)
-                time.sleep(5)
+                self.rightMotor.go(100)
+                self.leftMotor.back(100)
+                time.sleep(2)
                 self.rightMotor.stop()
                 self.leftMotor.stop()
                 self.countstuckLoop = 0
@@ -516,56 +517,112 @@ class Cansat():
 
         else:
             print("not stuck")
+#             print("acceralation:",self.bno055.ax**2+self.bno055.ay**2)
             self.rightMotor.go(70)
             self.leftMotor.go(70)
-            self.stuckTime = 0
             self.countstuckLoop = 0
+            self.stuckTime = 0
     
+#     def stuck_detection2(self):
+#         self.label = []
+#         if self.camerastuck == 0:
+#             self.cap = cv2.VideoCapture(0)
+#             ret,self.img_pre = self.cap.read()
+#             self.camerastuck = 1
+#         
+#         self.rightMotor.go(70)
+#         self.leftMotor.go(70)
+# 
+#         ret,img_now = self.cap.read()
+# 
+#         #スタック検知部分
+#         for i in range(img_now.shape[0]):
+#             for j in range(img_now.shape[1]):
+#                     if int(img_now[i][j][0])-int(self.img_pre[i][j][0]) > ct.const.STUCK_PIC_THRE: # if change is small => stuck
+#                         self.label.append(1)
+#                     else:
+#                         self.label.append(0) # if change is big => not stuck
+#         
+#         #値がある一定以上変化してたらスタックカウント増やす
+#         if np.all(self.label  == 0):
+#             print("not stuck")
+#             self.rightMotor.go(70)
+#             self.leftMotor.go(70)
+#             self.stuckTime = 0
+#             self.countstuckLoop = 0
+#             
+#         else:
+#             print("near stuck")
+#             
+#             if self.countstuckLoop > ct.const.STUCK_COUNT_THRE: #加速度が閾値以下になるケースがある程度続いたらスタックと判定
+#                 #トルネード実施
+#                 print("stuck")
+#                 self.rightMotor.go(100)
+#                 self.leftMotor.back(100)
+#                 time.sleep(2)
+#                 self.rightMotor.stop()
+#                 self.leftMotor.stop()
+#                 self.countstuckLoop = 0
+#                 self.stuckTime = 0
+#                 self.label = []
+#                 
+#             self.countstuckLoop += 1
+#         
+#         self.img_pre = img_now
+        
     def stuck_detection2(self):
-        self.camerastate = 0
         self.label = []
-        if self.camerastate == 0:
+        if self.camerastuck == 0:
             self.cap = cv2.VideoCapture(0)
-            img_pre = self.cap.read()
-            self.camerastate = 1
+            ret,self.img_pre = self.cap.read()
+            self.img_pre = cv2.cvtColor(self.img_pre, cv2.COLOR_BGR2GRAY)
+            self.camerastuck = 1
         
         self.rightMotor.go(70)
         self.leftMotor.go(70)
 
         ret,img_now = self.cap.read()
+        img_now = cv2.cvtColor(img_now, cv2.COLOR_BGR2GRAY)
 
         #スタック検知部分
         for i in range(img_now.shape[0]):
             for j in range(img_now.shape[1]):
-                if img_now[i][j]-img_pre[i][j] > ct.const.PIC_THRE:
+                if int(img_now[i][j])-int(self.img_pre[i][j]) <= ct.const.STUCK_PIC_THRE: # if change is small => stuck
                     self.label.append(1)
                 else:
-                    self.label.append(0)
-        
+                    self.label.append(0) # if change is big => not stuck
+        self.label = np.array(self.label)       
+        print(self.label)
+        print(np.count_nonzero(self.label  == 1))
         #値がある一定以上変化してたらスタックカウント増やす
-        if np.all(self.label  == 0):
-            pass
-        else:
-            self.countstuckLoop += 1
-
-        if self.countstuckLoop > ct.const.STUCK_COUNT_THRE: #加速度が閾値以下になるケースがある程度続いたらスタックと判定
-            #トルネード実施
-            print("stuck")
-            self.rightMotor.go(70)
-            self.leftMotor.back(70)
-            time.sleep(5)
-            self.rightMotor.stop()
-            self.leftMotor.stop()
-            self.countstuckLoop = 0
-            self.stuckTime = 0
-            self.label = []
-
-        else:
+        # if np.count_nonzero(self.label == 0) < 153600:
+        if np.count_nonzero(self.label  == 1) < 290000:
             print("not stuck")
             self.rightMotor.go(70)
             self.leftMotor.go(70)
             self.stuckTime = 0
             self.countstuckLoop = 0
+            
+        else:
+#         if np.all(self.label  == 1) == True:
+            print("near stuck")
+            
+            if self.countstuckLoop > ct.const.STUCK_COUNT_CAMERA_THRE: #加速度が閾値以下になるケースがある程度続いたらスタックと判定
+                #トルネード実施
+                print("stuck")
+                self.rightMotor.go(100)
+                self.leftMotor.back(100)
+                time.sleep(2)
+                self.rightMotor.stop()
+                self.leftMotor.stop()
+                self.countstuckLoop = 0
+                self.stuckTime = 0
+                self.label = []
+                
+            self.countstuckLoop += 1
+
+        self.img_pre = img_now
+
         
     def keyboardinterrupt(self):
         self.rightMotor.stop()

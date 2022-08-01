@@ -37,11 +37,8 @@ const.STUCK_MOTOR_VREF = 100
 
 
 ##Variable Threshold
-const.ANGLE_THRE = 10
-const.SHADOW_EDGE_LENGTH = 15
-const.CASE_DISCRIMINATION = 1 #Case判定における許容誤差
-const.START_CONST_SHORT = 0.5 #Startingステートにおける帯の幅　±0.5
-const.START_CONST_LONG = 5 #Startingステートにおける帯の幅　±5
+const.GPS_GOAL_LAT = 35.5559391
+const.GPS_GOAL_LON = 139.6525889
 
 
 ##State Threshold
@@ -58,9 +55,10 @@ const.STUCK_ACC_THRE = 0.1
 const.STUCK_COUNT_THRE = 30
 const.STUCK_MOTOR_TIME_THRE = 5 #分離シートから離れるためにモータを回転させる時間
 const.LANDING_PRE_MOTOR_TIME_THRE = 5 #分離シートから離れるためにモータを回転させる時間
-const.SPMFIRST_PIC_COUNT = 5
-const.f1 = 10
-const.f2 = 30
+const.SPMFIRST_PIC_COUNT = 10
+const.f1 = 136
+const.f2 = 196
+const.f3 = 776
 const.STARTING_TIME_THRE = 60
 const.MEASURING_SWITCH_COUNT_THRE = 20 #1地点での測位回数
 const.MEASURING_MAX_MEASURING_COUNT_THRE = 6 #最大測位点
