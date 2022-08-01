@@ -34,8 +34,6 @@ const.SPM_MOTOR_VREF = 70
 const.RUNNING_MOTOR_VREF = 70
 const.STUCK_MOTOR_VREF = 100
 
-
-
 ##Variable Threshold
 const.GPS_GOAL_LAT = 35.5559391
 const.GPS_GOAL_LON = 139.6525889
