@@ -61,7 +61,7 @@ class Cansat():
         self.gps.gpsread() #GPS取得
 #         self.LoRa.sensor()　#LoRa通信
         self.rightMotor.go(ct.const.MOTOR_VREF) #モータ回転
-        self.leftMotor.go(ct.const.MOTOR_VREF)　#モータ回転
+        self.leftMotor.go(ct.const.MOTOR_VREF) #モータ回転
         self.img = self.camera(self.cap) #カメラ撮影
         if self.img != 0:
             self.self.cameradata = self.img.shape
