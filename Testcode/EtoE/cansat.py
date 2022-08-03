@@ -618,8 +618,8 @@ class Cansat():
             test_data_list_all_win,test_label_list_all_win = SPM2_predict_prepare.unpack([planning_npz[-1]]) #作成したnpzファイルを取得
             spm2_predict = SPM2Evaluate()
             spm2_predict.start(model_master,test_data_list_all_win,test_label_list_all_win,scaler_master,self.risk_list) #第二段階の評価を実施
-            risk = np.array(spm2_predict.get_score()).reshape(2,3) #win1~win6の危険度マップ作成
-            self.risk_list.append(risk)
+            risk = spm2_predict.get_score()
+            risk = np.array(risk).reshape(2,3) #win1~win6の危険度マップ作成
             
             if len(self.risk_list) >= ct.const.MOVING_AVERAGE:
                 self.risk_list = self.risk_list[1:]
