@@ -177,10 +177,11 @@ class SPM2Evaluate():  # 藤井さんの行動計画側に移設予定
         if self.score_master_mother==[]:
             pass
         else:        
-            self.score_master=np.array(self.score_master)    
-            self.score_master_mother.append(self.score_master)
+            self.score_master_np=np.array(self.score_master)    
+            self.score_master_mother.append(self.score_master_np)
             self.score_master_mother=np.array(self.score_master_mother)
             self.score_master=self.score_master_mother.mean(axis=0)
+            self.score_master=self.score_master.tolist()
      
     def get_score(self):
         return self.score_master
