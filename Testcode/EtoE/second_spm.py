@@ -146,11 +146,12 @@ class SPM2Learn():  # second_spm.pyとして実装済み
 
 
 class SPM2Evaluate():  # 藤井さんの行動計画側に移設予定
-    def start(self, model_master, test_data_list_all_win, test_label_list_all_win, scaler_master):
+    def start(self, model_master, test_data_list_all_win, test_label_list_all_win, scaler_master,score_master_mother):
         self.model_master = model_master
         self.test_data_list_all_win = test_data_list_all_win
         self.test_label_list_all_win = test_label_list_all_win
         self.scaler_master = scaler_master
+        self.score_master_mother=score_master_mother
         if len(self.model_master) != len(self.test_data_list_all_win):
             print("学習済みモデルのウィンドウ数と、テストデータのウィンドウ数が一致しません")
             return None
@@ -170,6 +171,13 @@ class SPM2Evaluate():  # 藤井さんの行動計画側に移設予定
                     test_X.reshape(1, -1))
                 self.score_master[win_no].append(score)
                 weight = self.model_master[win_no].coef_
+        
+        self.apply_moving_average()
+
+    def apply_moving_average(self):
+        self.score_master_mother=np.array(self.score_master_mother)
+        
+
      
     def get_score(self):
         return self.score_master
