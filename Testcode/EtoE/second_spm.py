@@ -127,7 +127,7 @@ class SPM2Learn():  # second_spm.pyとして実装済み
             weight = win_model.coef_
             labels = labels[0]
             for (w, label) in zip(weight, labels):
-                if w > 1:
+                if w > 0.1:
                     self.nonzero_w[win_no].append(w)
                     self.nonzero_w_label[win_no].append(label)
             
