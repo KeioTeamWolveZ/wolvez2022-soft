@@ -11,7 +11,7 @@ from datetime import datetime
 
 class SPM2Open_npz():  # second_spm.pyとして実装済み
     def unpack(self, files):
-        print("===== npzファイルの解体 =====")
+#         print("===== npzファイルの解体 =====")
         print("読み込むフレーム数 : ", len(files))
         data_list_all_time = []
         label_list_all_time = []
@@ -22,8 +22,8 @@ class SPM2Open_npz():  # second_spm.pyとして実装済み
         data_list_all_time = np.array(data_list_all_time)
         label_list_all_time = np.array(label_list_all_time,dtype=object)
 
-        print("===== windowごとに集計 =====")
-        print("window数 : 6 (固定中。変更の場合はコード編集が必要）")
+#         print("===== windowごとに集計 =====")
+#         print("window数 : 6 (固定中。変更の場合はコード編集が必要）")
         self.data_list_all_win = [[], [], [], [], [], []]
         self.label_list_all_win = [[], [], [], [], [], []]
         for pic, lab_pic in zip(data_list_all_time, label_list_all_time):
@@ -41,7 +41,7 @@ class SPM2Open_npz():  # second_spm.pyとして実装済み
 #         print(f"画像加工の種類 : {win.shape[0]}種類")
 #         print(f"ヒストグラム特徴量の種類 : {win.shape[1]}種類")
 #         print(f"--- >>  合計 : {win.flatten().shape[0]}種類")
-        print("===== 終了 =====")
+#         print("===== 終了 =====")
 
         return self.data_list_all_win, self.label_list_all_win
 
@@ -107,8 +107,7 @@ class SPM2Learn():  # second_spm.pyとして実装済み
     def fit(self):
         for win_no, win in enumerate(self.data_list_all_win):
             train_X = win
-            self.scaler_master[win_no] = self.standardization_master[win_no].fit(
-                train_X)
+            self.scaler_master[win_no] = self.standardization_master[win_no].fit(train_X)
             train_X = self.scaler_master[win_no].transform(train_X)
             train_y = np.full((train_X.shape[0], 1), -100)
             # print(self.f1f2_array_window_custom[win_no][0])
@@ -131,22 +130,18 @@ class SPM2Learn():  # second_spm.pyとして実装済み
                     self.nonzero_w[win_no].append(w)
                     self.nonzero_w_label[win_no].append(label)
             
-            # num_error = 10-len(self.nonzero_w_label[win_no])
-            # if num_error !=0:
-            #     for i in range(num_error):
-            #         self.nonzero_w_label[win_no].append(str(i))
+            num_error = 10-len(self.nonzero_w_label[win_no])
                     
         self.nonzero_w_num = np.array([
-            [len(self.nonzero_w_label[0]), len(
-                self.nonzero_w_label[1]), len(self.nonzero_w_label[2])],
-            [len(self.nonzero_w_label[3]), len(
-                self.nonzero_w_label[4]), len(self.nonzero_w_label[5])]
+            [len(self.nonzero_w_label[0]), len(self.nonzero_w_label[1]), len(self.nonzero_w_label[2])],
+            [len(self.nonzero_w_label[3]), len(self.nonzero_w_label[4]), len(self.nonzero_w_label[5])]
         ])
         return self.nonzero_w, self.nonzero_w_label, self.nonzero_w_num
 
   
     def get_data(self):
         return self.model_master,self.label_list_all_win,self.scaler_master
+
 
 
 class SPM2Evaluate():  # 藤井さんの行動計画側に移設予定
@@ -193,8 +188,7 @@ class SPM2Evaluate():  # 藤井さんの行動計画側に移設予定
         global train_mov_code, test_mov_code, alpha
         plt.title(f"{train_mov_code} -->> {test_mov_code}  alpha={alpha}")
         plt.legend()
-        name = str(datetime.now()).replace(" ", "").replace(
-            ":", "").replace("-", "").replace(".", "")[:16]
+        name = str(datetime.now()).replace(" ", "").replace(":", "").replace("-", "").replace(".", "")[:16]
         plt.savefig(save_dir+f"/cca{train_mov_code}{test_mov_code}_{name}.jpg")
         plt.cla()
 
@@ -228,9 +222,21 @@ class SPM2Evaluate():  # 藤井さんの行動計画側に移設予定
                     self.nonzero_w[win_no].append(w)
                     self.nonzero_w_label[win_no].append(label)
         self.nonzero_w_num = np.array([
-            [len(self.nonzero_w_label[0]), len(
-                self.nonzero_w_label[1]), len(self.nonzero_w_label[2])],
-            [len(self.nonzero_w_label[3]), len(
-                self.nonzero_w_label[4]), len(self.nonzero_w_label[5])]
+            [len(self.nonzero_w_label[0]), len(self.nonzero_w_label[1]), len(self.nonzero_w_label[2])],
+            [len(self.nonzero_w_label[3]), len(self.nonzero_w_label[4]), len(self.nonzero_w_label[5])]
         ])
         return self.nonzero_w, self.nonzero_w_label, self.nonzero_w_num
+
+learn_npz_dir_path=""
+predict_npz_dir_path=""
+
+learn_open=SPM2Open_npz()
+data_list_all_win, label_list_all_win=learn_open.unpack(sorted(glob.glob(learn_npz_dir_path)))
+
+f1=136
+f2=196
+f3=776
+
+learn=SPM2Learn()
+model_master, label_list_all_win, scaler_master=learn.start(data_list_all_win, label_list_all_win, f1, f2, alpha=1.0, f1f2_array_window_custom=None)
+
