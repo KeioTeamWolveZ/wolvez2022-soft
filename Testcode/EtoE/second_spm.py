@@ -7,6 +7,7 @@ from pprint import pprint
 from sklearn.preprocessing import StandardScaler
 from scipy import signal
 from datetime import datetime
+import constant as ct
 
 
 class SPM2Open_npz():  # second_spm.pyとして実装済み
