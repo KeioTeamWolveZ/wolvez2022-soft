@@ -40,8 +40,8 @@ const.GPS_GOAL_LON = 139.6525889
 const.f1 = 136
 const.f2 = 196
 const.f3 = 776
-const.SPMSECOND_MIN = -10
-const.SPMSECOND_MAX = 10
+const.SPMSECOND_MIN = -100
+const.SPMSECOND_MAX = 100
 const.MOVING_AVERAGE = 5
 
 
