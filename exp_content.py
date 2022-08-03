@@ -4,71 +4,88 @@ import cv2
 import time
 import tkinter as tk
 import traceback
-# import RPi.GPIO as GPIO
-# from motor import motor
+import RPi.GPIO as GPIO
+from motor import motor
 
 class Experiment():
     def __init__(self):
-        self.state = 0
+        self.camerastate = 0
         self.start = 0.0
         self.end = 0.0
+        self.width = 300
+        self.height = 200
+        
+        self.MotorR = motor(ct.const.RIGHT_MOTOR_IN1_PIN,ct.const.RIGHT_MOTOR_IN2_PIN,ct.const.RIGHT_MOTOR_VREF_PIN)
+        self.MotorL = motor(ct.const.LEFT_MOTOR_IN1_PIN,ct.const.LEFT_MOTOR_IN2_PIN, ct.const.LEFT_MOTOR_VREF_PIN)
+        
         self.root = tk.Tk()
         self.ela_time = self.end-self.start
-        self.root.geometry('300x200')
+        self.root.geometry(f"{self.width}x{self.height}")
         self.root.title("制限時間")
         self.root.configure(bg = "red")
-        self.canvas=tk.Canvas(self.root,width=300,heigh=200)
+        self.canvas=tk.Canvas(self.root,width=self.width,heigh=self.height)
         self.canvas.pack()
 
     def create_canvas(self):
         time =180.0-self.ela_time
         m = str(int(time/60)).rjust(2,"0")
-        s = str(int(time%60)).rjust(2,"0")
+        s = str(int(time%60)).rjust(2,"0") 
         text = f"{m}:{s}"
-        self.canvas.create_text(300/2,200/2,text=text,font=("Times New Roman",100),tag='Y')
+        self.canvas.create_text(self.width/2,self.height/2,text=text,font=("Times New Roman",100),tag='Y')
         self.canvas.update()
         self.canvas.delete('Y')
     
     def key(self):
-        keyboard.on_press_key("up", lambda _: self.straight())
-        keyboard.on_press_key("down", lambda _: self.back())
-        keyboard.on_press_key("right", lambda _: self.right())
-        keyboard.on_press_key("left", lambda _: self.left())
-        keyboard.on_press_key("c", lambda _: self.cam_start())
+        if keyboard.is_pressed("up") == True:
+            self.straight()
+        elif keyboard.is_pressed("down") == True:
+            self.back()
+        elif keyboard.is_pressed("right") == True:
+            self.right()
+        elif keyboard.is_pressed("left") == True:
+            self.left()
+        elif keyboard.is_pressed("c") == True:
+            self.cam_start()
+        else:
+            self.motor_stop()
     
     def straight(self):
         print("Go straight")
-        MotorR.go(70)
-        MotorL.go(70)
+        self.MotorR.go(70)
+        self.MotorL.go(70)
     
     def back(self):
         print("Go backward")
-        MotorR.back(70)
-        MotorL.back(70)
+        self.MotorR.back(70)
+        self.MotorL.back(70)
     
     def right(self):
         print("Turn right")
-        MotorR.back(70)
-        MotorL.go(70)
+        self.MotorR.back(70)
+        self.MotorL.go(70)
 
     def left(self):
         print("Turn left")
-        MotorR.go(70)
-        MotorL.back(70)
-    
+        self.MotorR.go(70)
+        self.MotorL.back(70)
+        
+    def motor_stop(self):
+        self.MotorR.stop()
+        self.MotorL.stop()
+        
     def cam_start(self):
-        if self.state == 0:
+        if self.camerastate == 0:
             self.cap = cv2.VideoCapture(0)
             
             self.start = time.time()
-            self.state = 1
+            self.camerastate = 1
 
     def cam(self):
-        if self.state == 1:
+        if self.camerastate == 1:
             ret,img = self.cap.read()
             height = int(img.shape[0])
             width = int(img.shape[1])
-            img = cv2.resize(img,dsize=(int(width/2), int(height/2)))
+#             img = cv2.resize(img,dsize=(int(width/2), int(height/2)))
             cv2.imshow("image",img)
             cv2.moveWindow('window name', 300, 500)
 
@@ -76,10 +93,10 @@ class Experiment():
             self.ela_time = self.end-self.start
 
     def keyboardinterrupt(self):
-        MotorR.stop()
-        MotorL.stop()
+        self.MotorR.stop()
+        self.MotorL.stop()
         traceback.print_exc()
-        self.cap.release()
+#         self.cap.release()
 
 
 experiment = Experiment()  
