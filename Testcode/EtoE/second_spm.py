@@ -109,10 +109,10 @@ class SPM2Learn():  # second_spm.pyとして実装済み
             train_X = win
             self.scaler_master[win_no] = self.standardization_master[win_no].fit(train_X)
             train_X = self.scaler_master[win_no].transform(train_X)
-            train_y = np.full((train_X.shape[0], 1), -100)
+            train_y = np.full((train_X.shape[0], 1), ct.const.SPMSECOND_MIN)
             # print(self.f1f2_array_window_custom[win_no][0])
             train_y[-int(self.f1f2_array_window_custom[win_no][1]):int(
-                -self.f1f2_array_window_custom[win_no][0])] = 100
+                -self.f1f2_array_window_custom[win_no][0])] = ct.const.SPMSECOND_MAX
             # print(train_X.shape, train_y.shape)
             self.model_master[win_no].fit(train_X, train_y)
             pass
