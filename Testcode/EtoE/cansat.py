@@ -87,6 +87,7 @@ class Cansat():
         self.gpscount=0
         self.startgps_lon=[]
         self.startgps_lat=[]
+        self.risk_list = []
         
         #ステート管理用変数設定
         self.countFlyLoop = 0
@@ -616,8 +617,12 @@ class Cansat():
             SPM2_predict_prepare = SPM2Open_npz()
             test_data_list_all_win,test_label_list_all_win = SPM2_predict_prepare.unpack([planning_npz[-1]]) #作成したnpzファイルを取得
             spm2_predict = SPM2Evaluate()
-            spm2_predict.start(model_master,test_data_list_all_win,test_label_list_all_win,scaler_master) #第二段階の評価を実施
+            spm2_predict.start(model_master,test_data_list_all_win,test_label_list_all_win,scaler_master,self.risk_list) #第二段階の評価を実施
             risk = np.array(spm2_predict.get_score()).reshape(2,3) #win1~win6の危険度マップ作成
+            self.risk_list.append(risk)
+            
+            if len(self.risk_list) >= ct.const.MOVING_AVERAGE:
+                self.risk_list = self.risk_list[1:]
             
             print("===== Risk Map =====")
             for i in range(risk.shape[0]):

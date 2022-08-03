@@ -42,6 +42,7 @@ const.f2 = 196
 const.f3 = 776
 const.SPMSECOND_MIN = -10
 const.SPMSECOND_MAN = -10
+const.MOVING_AVERAGE = 5
 
 
 ## State Threshold
