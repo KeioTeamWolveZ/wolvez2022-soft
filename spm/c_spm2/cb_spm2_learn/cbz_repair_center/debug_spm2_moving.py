@@ -173,20 +173,19 @@ class SPM2Evaluate():  # 藤井さんの行動計画側に移設予定
                     test_X.reshape(1, -1))
                 self.score_master[win_no].append(score)
                 weight = self.model_master[win_no].coef_
-            self.score_master=np.array(self.score_master).reshape(2,3)    
+            self.score_master=np.array(self.score_master).reshape(2,3)
         self.apply_moving_average()
 
     def apply_moving_average(self):
-        print("### ROI START ###")
-        print("score_master",self.score_master.shape)
-        print("### ROI FINISH ###")
         if self.score_master_mother==[]:
             pass
         else:        
             self.score_master_mother.append(self.score_master)
             self.score_master_mother=np.array(self.score_master_mother)
             self.score_master=self.score_master_mother.mean(axis=0)
-            print(self.score_master.shape)
+        print("### ROI START ###")
+        print("score_master",self.score_master)
+        print("### ROI FINISH ###")
     def get_score(self):
         return self.score_master
         # pprint(self.score_master[0])
@@ -233,8 +232,8 @@ class SPM2Evaluate():  # 藤井さんの行動計画側に移設予定
         index=[]
         imgs=sorted(glob.glob("/home/ytpc2019a/code_ws/temp/cansat/images/*"))
         fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
-        video = cv2.VideoWriter(save_dir+'video.mp4',fourcc, 20, (1500, 1000))
-        for i, (img_path,w1,w2,w3,w4,w5,w6) in enumerate(zip(imgs,self.score_master[0],self.score_master[1],self.score_master[2],self.score_master[3],self.score_master[4],self.score_master[5])):
+        video = cv2.VideoWriter(save_dir+'ave.mp4',fourcc, 20, (1500, 1000))
+        for i, (img_path,w1,w2,w3,w4,w5,w6) in enumerate(zip(imgs,self.score_master[0,0],self.score_master[0,1],self.score_master[0,2],self.score_master[1,0],self.score_master[1,1],self.score_master[1,2])):
             for j, w in enumerate([w1,w2,w3,w4,w5,w6]):
                 hist[j].append(w)
                 if w>=10:
@@ -361,4 +360,4 @@ for path in sorted(glob.glob(predict_npz_dir_path)):
     risk_list.append(risk)
 
 # predict.special_plot("/home/ytpc2019a/code_ws/temp/cansat/results/")
-# predict.analysis_movie("/home/ytpc2019a/code_ws/temp/cansat/results/")
+predict.analysis_movie("/home/ytpc2019a/code_ws/temp/cansat/results/")

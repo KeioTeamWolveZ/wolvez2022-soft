@@ -344,3 +344,5 @@ predict.start(model_master, test_data_list_all_win, test_label_list_all_win, sca
 
 # predict.special_plot("/home/ytpc2019a/code_ws/temp/cansat/results/")
 predict.analysis_movie("/home/ytpc2019a/code_ws/temp/cansat/results/")
+
+print(predict.get_nonzero_w)
