@@ -171,13 +171,13 @@ class SPM2Evaluate():  # 藤井さんの行動計画側に移設予定
                     test_X.reshape(1, -1))
                 self.score_master[win_no].append(score)
                 weight = self.model_master[win_no].coef_
-        
         self.apply_moving_average()
 
     def apply_moving_average(self):
+        self.score_master=np.array(self.score_master)
+        self.score_master_mother.append(self.score_master)
         self.score_master_mother=np.array(self.score_master_mother)
-        
-
+        self.score_master=self.score_master_mother.mean(axis=0)
      
     def get_score(self):
         return self.score_master

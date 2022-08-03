@@ -1,8 +1,10 @@
 import numpy as np
 
-def moving_average(x, num=10):
-    ave_data = np.convolve(x, np.ones(num)/num)
-    return ave_data
-
-input_array=[1,2]
-print(moving_average(input_array,num=2)[:-1])
+risk_list=[np.array([[1,2,3],[4,5,6]]),np.array([[1,2,3],[4,5,6]]),np.array([[1,2,3],[4,5,6]]),np.array([[1,2,3],[4,5,6]])]
+risk=np.array([[1,2,3],[4,5,6]])
+risk_list.append(risk)
+print(risk_list)
+risk_list=np.array(risk_list)
+print(risk_list.shape)
+ave=risk_list.mean(axis=0)
+print((ave))
