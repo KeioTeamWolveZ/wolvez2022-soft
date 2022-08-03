@@ -1,6 +1,6 @@
 import numpy as np
 
-risk_list=[np.array([[1,2,3],[4,5,6]]),np.array([[1,2,3],[4,5,6]]),np.array([[1,2,3],[4,5,6]]),np.array([[1,2,3],[4,5,6]])]
+risk_list=[]#[np.array([[1,2,3],[4,5,6]]),np.array([[1,2,3],[4,5,6]]),np.array([[1,2,3],[4,5,6]]),np.array([[1,2,3],[4,5,6]])]
 risk=np.array([[1,2,3],[4,5,6]])
 risk_list.append(risk)
 print(risk_list)
