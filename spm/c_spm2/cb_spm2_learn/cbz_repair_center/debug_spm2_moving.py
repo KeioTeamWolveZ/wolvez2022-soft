@@ -173,16 +173,20 @@ class SPM2Evaluate():  # 藤井さんの行動計画側に移設予定
                     test_X.reshape(1, -1))
                 self.score_master[win_no].append(score)
                 weight = self.model_master[win_no].coef_
+            self.score_master=np.array(self.score_master).reshape(2,3)    
         self.apply_moving_average()
 
     def apply_moving_average(self):
+        print("### ROI START ###")
+        print("score_master",self.score_master.shape)
+        print("### ROI FINISH ###")
         if self.score_master_mother==[]:
             pass
         else:        
-            self.score_master=np.array(self.score_master)    
             self.score_master_mother.append(self.score_master)
             self.score_master_mother=np.array(self.score_master_mother)
-            self.score_master=self.score_master_mother.mean(axis=0)     
+            self.score_master=self.score_master_mother.mean(axis=0)
+            print(self.score_master.shape)
     def get_score(self):
         return self.score_master
         # pprint(self.score_master[0])
