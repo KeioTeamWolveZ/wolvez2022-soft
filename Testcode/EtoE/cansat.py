@@ -587,6 +587,10 @@ class Cansat():
 #         print("feature_names",np.array(nonzero_w_label,dtype=object).shape)
         feature_names = nonzero_w_label
         
+        if self.state == 5:
+            print("===== SPARSE MODEL =====")
+            print(feature_names)
+        
         """
             model_master: 各ウィンドウを学習したモデル（俗にいう"model.predict()"とかの"model.predict()"とかのmodelに相当するのがリストで入ってる）
             label_list_all_win: 重み行列の各成分を、その意味（ex.window_1のrgb画像のaverage）の説明で書き換えた配列
