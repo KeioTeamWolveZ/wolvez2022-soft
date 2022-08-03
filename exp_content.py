@@ -38,23 +38,23 @@ class Experiment():
     
     def straight(self):
         print("Go straight")
-        # MotorR.go(70)
-        # MotorL.go(70)
+        MotorR.go(70)
+        MotorL.go(70)
     
     def back(self):
         print("Go backward")
-        # MotorR.back(70)
-        # MotorL.back(70)
+        MotorR.back(70)
+        MotorL.back(70)
     
     def right(self):
         print("Turn right")
-        # MotorR.back(70)
-        # MotorL.go(70)
+        MotorR.back(70)
+        MotorL.go(70)
 
     def left(self):
         print("Turn left")
-        # MotorR.go(70)
-        # MotorL.back(70)
+        MotorR.go(70)
+        MotorL.back(70)
     
     def cam_start(self):
         if self.state == 0:
@@ -76,6 +76,8 @@ class Experiment():
             self.ela_time = self.end-self.start
 
     def keyboardinterrupt(self):
+        MotorR.stop()
+        MotorL.stop()
         traceback.print_exc()
         self.cap.release()
 
