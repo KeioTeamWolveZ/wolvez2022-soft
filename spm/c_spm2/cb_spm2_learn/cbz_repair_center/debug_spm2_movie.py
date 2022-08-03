@@ -112,10 +112,10 @@ class SPM2Learn():  # second_spm.pyとして実装済み
             train_X = win
             self.scaler_master[win_no] = self.standardization_master[win_no].fit(train_X)
             train_X = self.scaler_master[win_no].transform(train_X)
-            train_y = np.full((train_X.shape[0], 1), -10)
+            train_y = np.full((train_X.shape[0], 1), -100)
             # print(self.f1f2_array_window_custom[win_no][0])
             train_y[-int(self.f1f2_array_window_custom[win_no][1]):int(
-                -self.f1f2_array_window_custom[win_no][0])] = 10
+                -self.f1f2_array_window_custom[win_no][0])] = 100
             # print(train_X.shape, train_y.shape)
             self.model_master[win_no].fit(train_X, train_y)
             pass
@@ -221,13 +221,13 @@ class SPM2Evaluate():  # 藤井さんの行動計画側に移設予定
         index=[]
         imgs=sorted(glob.glob("/home/ytpc2019a/code_ws/temp/cansat/images/*"))
         fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
-        video = cv2.VideoWriter(save_dir+'video.mp4',fourcc, 20, (1500, 1000))
+        video = cv2.VideoWriter(save_dir+'th100.mp4',fourcc, 20, (1500, 1000))
         for i, (img_path,w1,w2,w3,w4,w5,w6) in enumerate(zip(imgs,self.score_master[0],self.score_master[1],self.score_master[2],self.score_master[3],self.score_master[4],self.score_master[5])):
             for j, w in enumerate([w1,w2,w3,w4,w5,w6]):
                 hist[j].append(w)
-                if w>=10:
+                if w>=100:
                     w=[10]
-                elif w<-10:
+                elif w<-100:
                     w=[-10]
                 else:
                     pass
