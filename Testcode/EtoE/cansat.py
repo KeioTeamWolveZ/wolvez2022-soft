@@ -472,8 +472,7 @@ class Cansat():
                         feature_values[feature_name][f'win_{win+1}']["skew"] = skew  # 歪度
                 
                 self.camerastate = 0   
-                
-                
+                       
             else: #第一段階評価モード。runningで使うための部
                 feature_list = ["normalRGB","enphasis","edge","hsv","red","blue","green","purple","emerald","yellow"]
                 for win,feature in enumerate(feature_names):# windowgoto
@@ -487,7 +486,7 @@ class Cansat():
                     for fmg in fmg_list: #それぞれの特徴画像に対して処理
                         iw_list, window_size = iw.breakout(iw.read_img(fmg)) #ブレイクアウト #hitotsunoshoriwojikkou
                         feature_name = str(re.findall(tempDir_name + f"/(.*)_.*_", fmg)[0])
-                        print("FEATURED BY: ",feature_name)
+#                         print("FEATURED BY: ",feature_name)
                         
                         D, ksvd = self.dict_list[feature_name]
                         ei = EvaluateImg(iw_list[win])
@@ -653,20 +652,24 @@ class Cansat():
         dir_run = self.calc_dir(risk,phi)
         if dir_run == 0:
 #             print("Left")
-            self.MotorR.go(80)
-            self.MotorL.go(60)
+            self.MotorR.go(70)
+            self.MotorL.go(50)
         elif dir_run == 1:
 #             print("Straight")
-            self.MotorR.go(70)
-            self.MotorL.go(70)
+            self.MotorR.go(60)
+            self.MotorL.go(60)
         elif dir_run == 2:
 #             print("Right")
-            self.MotorR.go(60)
-            self.MotorL.go(80)
+            self.MotorR.go(50)
+            self.MotorL.go(70)
         elif dir_run == 3:
 #             print("Stop")
-            self.MotorR.stop()
-            self.MotorL.stop()
+            self.MotorR.back(60)
+            self.MotorL.go(60)
+            time.sleep(0.5)
+            self.MotorR.go(60)
+            self.MotorL.go(60)
+            time.sleep(1)
 
     def decide_direction(self,phi):
         if phi >= 20:
@@ -682,7 +685,7 @@ class Cansat():
 
     def calc_dir(self,risk,phi):
         # 危険度の閾値を決定
-        threshold_risk = 10
+        threshold_risk = ct.const.PLANNING_RISK_THRE
         lower_risk = risk[1,:]
         direction_goal = self.decide_direction(phi)
         

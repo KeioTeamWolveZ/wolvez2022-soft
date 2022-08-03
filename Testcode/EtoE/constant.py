@@ -22,7 +22,7 @@ const.RED_LED_PIN =  10
 const.BLUE_LED_PIN = 9
 const.GREEN_LED_PIN = 11
 
-# Releasing Pin
+# Separation Pin
 const.SEPARATION_PIN = 25
 
 # Flight Pin
@@ -40,6 +40,8 @@ const.GPS_GOAL_LON = 139.6525889
 const.f1 = 136
 const.f2 = 196
 const.f3 = 776
+const.SPMSECOND_MIN = -10
+const.SPMSECOND_MAN = -10
 
 
 ## State Threshold
@@ -48,15 +50,16 @@ const.PREPARING_TIME_THRE = 10
 
 const.FLYING_FLIGHTPIN_COUNT_THRE = 10
 
-const.DROPPING_ACC_COUNT_THRE = 20
+const.DROPPING_ACC_COUNT_THRE = 30
 const.DROPPING_ACC_THRE = 1 #加速度の値
 
 const.SEPARATION_TIME_THRE = 10 #焼き切り時間
 
-const.LANDING_CAMERA_TIME_THRE = 2
 const.LANDING_MOTOR_TIME_THRE = 5 #分離シートから離れるためにモータを回転させる時間
 
 const.SPMFIRST_PIC_COUNT = 1
+
+const.PLANNING_RISK_THRE = 10
 
 const.STUCK_ACC_THRE = 0.1
 const.STUCK_COUNT_THRE = 30
