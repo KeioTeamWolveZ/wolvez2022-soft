@@ -474,79 +474,131 @@ class Cansat():
                 
                 self.camerastate = 0   
                        
+#             else: #第一段階評価モード。runningで使うための部
+#                 feature_list = ["normalRGB","enphasis","edge","hsv","red","blue","green","purple","emerald","yellow"]
+#                 features = []
+                
+#                 for feature in feature_names:# windowgoto
+#                     features = features + feature
+# #                     print("feature_names:",feature_names)
+#                 features = set(features)
+#                 features = list(features) #windownosaishouchi
+#                 fmg_list = iw.feature_img(frame_num=now,feature_names=features) # 特徴抽出。リストに特徴画像が入る
+# #                     print(f"win{win},feature{feature}")
+# #                     print("feature_names:",feature_names)
+# #                     print("fmg_list",fmg_list)
+#                 for fmg in fmg_list: #それぞれの特徴画像に対して処理
+#                     iw_list, window_size = iw.breakout(iw.read_img(fmg)) # ブレイクアウトにより画像を6分割
+#                     feature_name = str(re.findall(tempDir_name + f"/(.*)_.*_", fmg)[0]) # 特徴処理のみ抽出
+#                     print("FEATURED BY: ",feature_name)
+                    
+#                     for feature_element in feature_list: # 処理に含まれてるかどうか
+#                         feature_name = feature_element
+#                         if feature_element in features: # 特徴処理として選択されていた場合
+#                             for win in range(int(np.prod(iw_shape))): #それぞれのウィンドウに対して評価を実施
+# #                                 print("feature_names[win]",feature_names[win])
+                                
+#                                 if feature_name in feature_names[win]: #ウィンドウに含まれいていた場合
+#                                     D, ksvd = self.dict_list[feature_name]
+#                                     ei = EvaluateImg(iw_list[win])
+#                                     img_rec = ei.reconstruct(D, ksvd, window_size)
+#                                     saveName = self.saveDir + f"/camera_result/first_spm/learn{self.learncount}/processed/difference"
+#             #                         if not os.path.exists(saveName):
+#             #                             os.mkdir(saveName)
+#             #                         saveName = self.saveDir + f"/camera_result/first_spm/learn{self.learncount}/processed/difference/{now}"
+#             #                         if not os.path.exists(saveName):
+#             #                             os.mkdir(saveName)
+#                                     ave, med, var, mode, kurt, skew = ei.evaluate(iw_list[win], img_rec, win+1, feature_name, now, self.saveDir)
+#             #                         
+#                                     # 特徴量終結/1枚
+#                                     if feature_name not in feature_values:
+#                                         feature_values[feature_name] = {}
+
+#                                     feature_values[feature_name][f'win_{win+1}'] = {}
+#                                     feature_values[feature_name][f'win_{win+1}']["var"] = ave  # 平均値
+#                                     feature_values[feature_name][f'win_{win+1}']["med"] = med  # 中央値
+#                                     feature_values[feature_name][f'win_{win+1}']["ave"] = var  # 分散値
+#                                     feature_values[feature_name][f'win_{win+1}']["mode"] = mode  # 最頻値
+#                                     feature_values[feature_name][f'win_{win+1}']["kurt"] = kurt  # 尖度
+#                                     feature_values[feature_name][f'win_{win+1}']["skew"] = skew  # 歪度
+#                                 else:
+#                                     # 特徴量終結/1枚
+#                                     if feature_name not in feature_values:
+#                                         feature_values[feature_name] = {}
+
+#                                     feature_values[feature_name][f'win_{win+1}'] = {}
+#                                     feature_values[feature_name][f'win_{win+1}']["var"] = 0  # 平均値
+#                                     feature_values[feature_name][f'win_{win+1}']["med"] = 0  # 中央値
+#                                     feature_values[feature_name][f'win_{win+1}']["ave"] = 0  # 分散値
+#                                     feature_values[feature_name][f'win_{win+1}']["mode"] = 0  # 最頻値
+#                                     feature_values[feature_name][f'win_{win+1}']["kurt"] = 0  # 尖度
+#                                     feature_values[feature_name][f'win_{win+1}']["skew"] = 0  # 歪度
+                                    
+#                         else:
+#                             for win in range(int(np.prod(iw_shape))): #それぞれのウィンドウに対して評価を実施
+#                                 # 特徴量終結/1枚
+#                                 if feature_name not in feature_values:
+#                                     feature_values[feature_name] = {}
+
+#                                 feature_values[feature_name][f'win_{win+1}'] = {}
+#                                 feature_values[feature_name][f'win_{win+1}']["var"] = 0  # 平均値
+#                                 feature_values[feature_name][f'win_{win+1}']["med"] = 0  # 中央値
+#                                 feature_values[feature_name][f'win_{win+1}']["ave"] = 0  # 分散値
+#                                 feature_values[feature_name][f'win_{win+1}']["mode"] = 0  # 最頻値
+#                                 feature_values[feature_name][f'win_{win+1}']["kurt"] = 0  # 尖度
+#                                 feature_values[feature_name][f'win_{win+1}']["skew"] = 0  # 歪度
             else: #第一段階評価モード。runningで使うための部
                 feature_list = ["normalRGB","enphasis","edge","hsv","red","blue","green","purple","emerald","yellow"]
-                features = []
-                
-                for feature in feature_names:# windowgoto
-                    features = features + feature
+                for win,feature in enumerate(feature_names):# windowgoto
 #                     print("feature_names:",feature_names)
-                features = set(features)
-                features = list(features) #windownosaishouchi
-                fmg_list = iw.feature_img(frame_num=now,feature_names=features) # 特徴抽出。リストに特徴画像が入る
+                    feature = set(feature)
+                    feature = list(feature) #windownosaishouchi
+                    fmg_list = iw.feature_img(frame_num=now,feature_names=feature) #特徴抽出。リストに特徴画像が入る
 #                     print(f"win{win},feature{feature}")
 #                     print("feature_names:",feature_names)
 #                     print("fmg_list",fmg_list)
-                for fmg in fmg_list: #それぞれの特徴画像に対して処理
-                    iw_list, window_size = iw.breakout(iw.read_img(fmg)) # ブレイクアウトにより画像を6分割
-                    feature_name = str(re.findall(tempDir_name + f"/(.*)_.*_", fmg)[0]) # 特徴処理のみ抽出
-                    print("FEATURED BY: ",feature_name)
-                    
-                    for feature_element in feature_list: # 処理に含まれてるかどうか
-                        feature_name = feature_element
-                        if feature_element in features: # 特徴処理として選択されていた場合
-                            for win in range(int(np.prod(iw_shape))): #それぞれのウィンドウに対して評価を実施
-#                                 print("feature_names[win]",feature_names[win])
-                                
-                                if feature_name in feature_names[win]: #ウィンドウに含まれいていた場合
-                                    D, ksvd = self.dict_list[feature_name]
-                                    ei = EvaluateImg(iw_list[win])
-                                    img_rec = ei.reconstruct(D, ksvd, window_size)
-                                    saveName = self.saveDir + f"/camera_result/first_spm/learn{self.learncount}/processed/difference"
-            #                         if not os.path.exists(saveName):
-            #                             os.mkdir(saveName)
-            #                         saveName = self.saveDir + f"/camera_result/first_spm/learn{self.learncount}/processed/difference/{now}"
-            #                         if not os.path.exists(saveName):
-            #                             os.mkdir(saveName)
-                                    ave, med, var, mode, kurt, skew = ei.evaluate(iw_list[win], img_rec, win+1, feature_name, now, self.saveDir)
-            #                         
-                                    # 特徴量終結/1枚
-                                    if feature_name not in feature_values:
-                                        feature_values[feature_name] = {}
+                    for fmg in fmg_list: #それぞれの特徴画像に対して処理
+                        iw_list, window_size = iw.breakout(iw.read_img(fmg)) #ブレイクアウト #hitotsunoshoriwojikkou
+                        feature_name = str(re.findall(tempDir_name + f"/(.*)_.*_", fmg)[0])
+                        print("FEATURED BY: ",feature_name)
+#                         print("FEATURED BY: ",feature_name)
 
-                                    feature_values[feature_name][f'win_{win+1}'] = {}
-                                    feature_values[feature_name][f'win_{win+1}']["var"] = ave  # 平均値
-                                    feature_values[feature_name][f'win_{win+1}']["med"] = med  # 中央値
-                                    feature_values[feature_name][f'win_{win+1}']["ave"] = var  # 分散値
-                                    feature_values[feature_name][f'win_{win+1}']["mode"] = mode  # 最頻値
-                                    feature_values[feature_name][f'win_{win+1}']["kurt"] = kurt  # 尖度
-                                    feature_values[feature_name][f'win_{win+1}']["skew"] = skew  # 歪度
-                                else:
-                                    # 特徴量終結/1枚
-                                    if feature_name not in feature_values:
-                                        feature_values[feature_name] = {}
-
-                                    feature_values[feature_name][f'win_{win+1}'] = {}
-                                    feature_values[feature_name][f'win_{win+1}']["var"] = 0  # 平均値
-                                    feature_values[feature_name][f'win_{win+1}']["med"] = 0  # 中央値
-                                    feature_values[feature_name][f'win_{win+1}']["ave"] = 0  # 分散値
-                                    feature_values[feature_name][f'win_{win+1}']["mode"] = 0  # 最頻値
-                                    feature_values[feature_name][f'win_{win+1}']["kurt"] = 0  # 尖度
-                                    feature_values[feature_name][f'win_{win+1}']["skew"] = 0  # 歪度
-                                    
-                        else:
-                            for win in range(int(np.prod(iw_shape))): #それぞれのウィンドウに対して評価を実施
-                                # 特徴量終結/1枚
-                                if feature_name not in feature_values:
-                                    feature_values[feature_name] = {}
-
-                                feature_values[feature_name][f'win_{win+1}'] = {}
-                                feature_values[feature_name][f'win_{win+1}']["var"] = 0  # 平均値
-                                feature_values[feature_name][f'win_{win+1}']["med"] = 0  # 中央値
-                                feature_values[feature_name][f'win_{win+1}']["ave"] = 0  # 分散値
-                                feature_values[feature_name][f'win_{win+1}']["mode"] = 0  # 最頻値
-                                feature_values[feature_name][f'win_{win+1}']["kurt"] = 0  # 尖度
-                                feature_values[feature_name][f'win_{win+1}']["skew"] = 0  # 歪度
+                        D, ksvd = self.dict_list[feature_name]
+                        ei = EvaluateImg(iw_list[win])
+                        img_rec = ei.reconstruct(D, ksvd, window_size)
+                        saveName = self.saveDir + f"/camera_result/first_spm/learn{self.learncount}/processed/difference"
+#                         if not os.path.exists(saveName):
+#                             os.mkdir(saveName)
+#                         saveName = self.saveDir + f"/camera_result/first_spm/learn{self.learncount}/processed/difference/{now}"
+#                         if not os.path.exists(saveName):
+#                             os.mkdir(saveName)
+                        ave, med, var, mode, kurt, skew = ei.evaluate(iw_list[win], img_rec, win+1, feature_name, now, self.saveDir)
+#                         
+                        # 特徴量終結/1枚
+                        if feature_name not in feature_values:
+                            feature_values[feature_name] = {}
+                        feature_values[feature_name][f'win_{win+1}'] = {}
+                        feature_values[feature_name][f'win_{win+1}']["var"] = ave  # 平均値
+                        feature_values[feature_name][f'win_{win+1}']["med"] = med  # 中央値
+                        feature_values[feature_name][f'win_{win+1}']["ave"] = var  # 分散値
+                        feature_values[feature_name][f'win_{win+1}']["mode"] = mode  # 最頻値
+                        feature_values[feature_name][f'win_{win+1}']["kurt"] = kurt  # 尖度
+                        feature_values[feature_name][f'win_{win+1}']["skew"] = skew  # 歪度
+                
+                    for feature_list_element in feature_list:
+                        feature_name = feature_list_element
+                        
+                        if feature_name not in feature_values:
+                            feature_values[feature_name] = {}
+                        if feature_values[feature_name].get(f'win_{win+1}') == None:
+                            feature_values[feature_name][f'win_{win+1}'] = {}
+                            feature_values[feature_name][f'win_{win+1}']["var"] = 0  # 平均値
+                            feature_values[feature_name][f'win_{win+1}']["med"] = 0  # 中央値
+                            feature_values[feature_name][f'win_{win+1}']["ave"] = 0  # 分散値
+                            feature_values[feature_name][f'win_{win+1}']["mode"] = 0  # 最頻値
+                            feature_values[feature_name][f'win_{win+1}']["kurt"] = 0  # 尖度
+                            feature_values[feature_name][f'win_{win+1}']["skew"] = 0  # 歪度
+#                         print("feature_values:",feature_values)
 
             # npzファイル形式で計算結果保存
             if self.state == 4:
