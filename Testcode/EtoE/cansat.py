@@ -180,7 +180,7 @@ class Cansat():
         if self.bno055.begin() is not True:
             print("Error initializing device")
             exit()    
-
+ 
     def sensor(self): #セットアップ終了後
         self.timer = int(1000*(time.time() - self.startTime)) #経過時間 (ms)
         self.gps.gpsread()
@@ -483,7 +483,6 @@ class Cansat():
 #                     print("feature_names:",feature_names)
                 features = set(features)
                 features = list(features) #windownosaishouchi
-                print("features:",features)
                 fmg_list = iw.feature_img(frame_num=now,feature_names=features) # 特徴抽出。リストに特徴画像が入る
 #                     print(f"win{win},feature{feature}")
 #                     print("feature_names:",feature_names)
@@ -549,23 +548,6 @@ class Cansat():
                                 feature_values[feature_name][f'win_{win+1}']["kurt"] = 0  # 尖度
                                 feature_values[feature_name][f'win_{win+1}']["skew"] = 0  # 歪度
 
-            
-#                 for feature_list_element in feature_list:
-#                     feature_name = feature_list_element
-                    
-#                     if feature_name not in feature_values:
-#                         feature_values[feature_name] = {}
-
-#                     if feature_values[feature_name].get(f'win_{win+1}') == None:
-#                         feature_values[feature_name][f'win_{win+1}'] = {}
-#                         feature_values[feature_name][f'win_{win+1}']["var"] = 0  # 平均値
-#                         feature_values[feature_name][f'win_{win+1}']["med"] = 0  # 中央値
-#                         feature_values[feature_name][f'win_{win+1}']["ave"] = 0  # 分散値
-#                         feature_values[feature_name][f'win_{win+1}']["mode"] = 0  # 最頻値
-#                         feature_values[feature_name][f'win_{win+1}']["kurt"] = 0  # 尖度
-#                         feature_values[feature_name][f'win_{win+1}']["skew"] = 0  # 歪度
-# #                         print("feature_values:",feature_values)
-
             # npzファイル形式で計算結果保存
             if self.state == 4:
                 self.savenpz_dir = self.saveDir + f"/camera_result/second_spm/learn{self.learncount}/"
@@ -619,7 +601,7 @@ class Cansat():
             )
             t[s]で入力すること。
         """
-        spm2_learn.start(data_list_all_win,label_list_all_win,f1, f2,alpha=5.0,f1f2_array_window_custom=f1f2_array_window_custom) #どっちかは外すのがいいのか
+        spm2_learn.start(data_list_all_win,label_list_all_win,f1+ct.const.SPMFIRST_PIC_COUNT, f2+ct.const.SPMFIRST_PIC_COUNT,alpha=5.0,f1f2_array_window_custom=f1f2_array_window_custom) #どっちかは外すのがいいのか
         model_master,label_list_all_win,scaler_master=spm2_learn.get_data()
         nonzero_w, nonzero_w_label, nonzero_w_num = spm2_learn.get_nonzero_w()
 #         print("feature_names",np.array(nonzero_w_label,dtype=object).shape)
