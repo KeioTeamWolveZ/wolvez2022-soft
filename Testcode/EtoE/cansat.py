@@ -484,22 +484,22 @@ class Cansat():
                 features = set(features)
                 features = list(features) #windownosaishouchi
                 print("features:",features)
-                fmg_list = iw.feature_img(frame_num=now,feature_names=features) #特徴抽出。リストに特徴画像が入る
+                fmg_list = iw.feature_img(frame_num=now,feature_names=features) # 特徴抽出。リストに特徴画像が入る
 #                     print(f"win{win},feature{feature}")
 #                     print("feature_names:",feature_names)
 #                     print("fmg_list",fmg_list)
                 for fmg in fmg_list: #それぞれの特徴画像に対して処理
-                    iw_list, window_size = iw.breakout(iw.read_img(fmg)) #ブレイクアウト #hitotsunoshoriwojikkou
-                    feature_name = str(re.findall(tempDir_name + f"/(.*)_.*_", fmg)[0]) #tokuchoushorinomi
+                    iw_list, window_size = iw.breakout(iw.read_img(fmg)) # ブレイクアウトにより画像を6分割
+                    feature_name = str(re.findall(tempDir_name + f"/(.*)_.*_", fmg)[0]) # 特徴処理のみ抽出
                     print("FEATURED BY: ",feature_name)
                     
-                    for feature_element in feature_list: #shorinihukumareterukadouka
-                        if feature_element in features: #tokuchoushoritositesenntakusareteitabaai
-                            feature_name = feature_element
+                    for feature_element in feature_list: # 処理に含まれてるかどうか
+                        feature_name = feature_element
+                        if feature_element in features: # 特徴処理として選択されていた場合
                             for win in range(int(np.prod(iw_shape))): #それぞれのウィンドウに対して評価を実施
 #                                 print("feature_names[win]",feature_names[win])
                                 
-                                if feature_name in feature_names[win]: #windownihukumareterukadouka
+                                if feature_name in feature_names[win]: #ウィンドウに含まれいていた場合
                                     D, ksvd = self.dict_list[feature_name]
                                     ei = EvaluateImg(iw_list[win])
                                     img_rec = ei.reconstruct(D, ksvd, window_size)
@@ -538,7 +538,6 @@ class Cansat():
                         else:
                             for win in range(int(np.prod(iw_shape))): #それぞれのウィンドウに対して評価を実施
                                 # 特徴量終結/1枚
-                                feature_name = feature_element
                                 if feature_name not in feature_values:
                                     feature_values[feature_name] = {}
 
