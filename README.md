@@ -10,7 +10,7 @@ Mission code in Python for Keio Wolve'Z CanSat project 2022
 - Sensors
     
     |**Sensor**|**Products**|**image**|
-    |:---|:---:|:---:|
+    |:---:|:---:|:---:|
     |Camera|[Raspberry Pi Camera Module V2](http://akizukidenshi.com/catalog/g/gM-10518/)|<img src="https://user-images.githubusercontent.com/57528969/91016338-95d37e00-e627-11ea-8958-fba777a15778.png" width="20%" title="Raspberry Pi Camera Module V2">|
     |Communication Module|[ES920LR](https://easel5.com/products/es920lr/)|<img src="https://user-images.githubusercontent.com/57528969/90114355-92b9d180-dd8d-11ea-8565-76540eea0920.png" width="20%" title="Communication Module">|
     |GPS module|[GYSFDMAXB](http://akizukidenshi.com/catalog/g/gK-09991/)|<img src="https://user-images.githubusercontent.com/57528969/90114335-89c90000-dd8d-11ea-82d3-70ab748fa5f2.png" width="20%" title="GPS Module">|
@@ -27,20 +27,23 @@ git clone git@github.com:Toshiki-Keio/wolvez2022.git
 **1. OpenCV**  
   OpenCV is necessary for implimenting image processing in order to recognize following target. <br>
   Go to `setup` folder and run `inst_opencv.sh` to install opencv.
-```sudo bash inst_opencv.sh
+```
+sudo bash inst_opencv.sh
 ```
   Check in python if you successflly installed opencv or not `import cv2`
 
 **2. GPS Setup**  
   The proposed robot orients itself by GPS. Run `setup_gps.sh`  in terminal. (in `setup` folder)
   
-```sudo bash setup_gps.sh
+```
+sudo bash setup_gps.sh
 ```
 
 **3. I2C Setup**  
 I2C is one of the ways of serial communication. This is necessary for BNO055 (acceralation sensor). Run `setup_i2c` in terminal. (in `setup` folder)
 
-```sudo bash setup_i2c.sh
+```
+sudo bash setup_i2c.sh
 ```
 
 **4. Install Libraries**
@@ -48,13 +51,15 @@ If you want to run mission code, run `Testcode/EtoE/main.py`.<br>
 However you need to install some libraries to run this code without any error. <br>
 Run `requirements.sh` in terminal. (in  `setup` folder)
 
-```sudo bash requirements.sh
+```
+sudo bash requirements.sh
 ```
 
 **5. Access Point Setup (Additional)**  
   if you want to use Raspberry Pi remotely in **No Wi-fi** environment, you may want to use your Rasberry Pi as Wi-fi access point. Then go to `setup/ap` and run `setup_ap.sh`
   
-```sudo bash setup_ap.sh
+```
+sudo bash setup_ap.sh
 ```
   
   Once you activate access point, you cannot connect your Raspberry Pi to other Wi-fi networks. So you can turn it off by running `ap_off.sh`.
