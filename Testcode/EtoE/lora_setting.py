@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import serial
 import time
 import RPi.GPIO as GPIO
@@ -62,7 +63,7 @@ class LoraSettingClass:
         print("sleep end")
         
         while self.device.inWaiting() > 0:
-            print("##### enter while roop in lora_setting.py #####")
+            print("##### enter while loop in lora_setting.py #####")
             try:
                 line = self.device.readline()
                 line = line.decode("utf-8")
