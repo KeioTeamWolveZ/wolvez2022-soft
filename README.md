@@ -27,13 +27,12 @@ git clone git@github.com:Toshiki-Keio/wolvez2022.git
 **1. OpenCV**  
   OpenCV is necessary for implimenting image processing in order to recognize following target. <br>
   Go to `setup` folder and run `inst_opencv.sh` to install opencv.
-```
-sudo bash inst_opencv.sh
+```Bash
+ sudo bash inst_opencv.sh
 ```
   Check in python if you successflly installed opencv or not 
-```
-  python
-  import cv2
+```Python
+ import cv2
 ```
 
 **2. GPS Setup**  
