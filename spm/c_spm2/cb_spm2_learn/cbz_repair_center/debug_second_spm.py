@@ -10,6 +10,9 @@ from datetime import datetime
 import debug_constant as ct
 
 
+
+
+
 class SPM2Open_npz():  # second_spm.pyとして実装済み
     def unpack(self, files):
 #         print("===== npzファイルの解体 =====")
@@ -171,13 +174,18 @@ class SPM2Evaluate():  # 藤井さんの行動計画側に移設予定
                     test_X.reshape(1, -1))
                 self.score_master[win_no].append(score)
                 weight = self.model_master[win_no].coef_
-        self.score_master=self.apply_moving_average()
+        self.apply_moving_average()
 
     def apply_moving_average(self):
-        self.score_master=np.array(self.score_master)
-        self.score_master_mother.append(self.score_master)
-        self.score_master_mother=np.array(self.score_master_mother)
-        return self.score_master_mother.mean(axis=0)
+        if self.score_master_mother==[]:
+            pass
+        else:        
+            self.score_master_np=np.array(self.score_master)    
+            self.score_master_mother.append(self.score_master_np)
+            self.score_master_mother=np.array(self.score_master_mother)
+            self.score_master=self.score_master_mother.mean(axis=0)
+            self.score_master=self.score_master.tolist()
+            print(self.score_master)
      
     def get_score(self):
         return self.score_master
@@ -235,3 +243,24 @@ class SPM2Evaluate():  # 藤井さんの行動計画側に移設予定
             [len(self.nonzero_w_label[3]), len(self.nonzero_w_label[4]), len(self.nonzero_w_label[5])]
         ])
         return self.nonzero_w, self.nonzero_w_label, self.nonzero_w_num
+
+learn_npz_dir_path="/home/ytpc2019a/code_ws/wolvez2022/Testcode/EtoE/results/camera_result/second_spm/learn1/*"
+predict_npz_dir_path="/home/ytpc2019a/code_ws/temp/cansat/npz/*"
+
+learn_open=SPM2Open_npz()
+data_list_all_win, label_list_all_win=learn_open.unpack(sorted(glob.glob(learn_npz_dir_path)))
+
+f1=136
+f2=196
+f3=776
+
+learn=SPM2Learn()
+model_master, label_list_all_win, scaler_master=learn.start(data_list_all_win, label_list_all_win, f1, f2, alpha=1.0, f1f2_array_window_custom=None)
+
+predict_open=SPM2Open_npz()
+test_data_list_all_win, test_label_list_all_win=learn_open.unpack(sorted(glob.glob(predict_npz_dir_path)))
+
+predict=SPM2Evaluate()
+predict.start(model_master, test_data_list_all_win, test_label_list_all_win, scaler_master,[])
+
+print(predict.get_nonzero_w())

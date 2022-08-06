@@ -1,3 +1,4 @@
+import time
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.linear_model import Lasso
@@ -7,7 +8,8 @@ from pprint import pprint
 from sklearn.preprocessing import StandardScaler
 from scipy import signal
 from datetime import datetime
-import constant as ct
+
+import cv2
 
 
 class SPM2Open_npz():  # second_spm.pyとして実装済み
@@ -110,10 +112,10 @@ class SPM2Learn():  # second_spm.pyとして実装済み
             train_X = win
             self.scaler_master[win_no] = self.standardization_master[win_no].fit(train_X)
             train_X = self.scaler_master[win_no].transform(train_X)
-            train_y = np.full((train_X.shape[0], 1), ct.const.SPMSECOND_MIN)
+            train_y = np.full((train_X.shape[0], 1), -10)
             # print(self.f1f2_array_window_custom[win_no][0])
             train_y[-int(self.f1f2_array_window_custom[win_no][1]):int(
-                -self.f1f2_array_window_custom[win_no][0])] = ct.const.SPMSECOND_MAX
+                -self.f1f2_array_window_custom[win_no][0])] = 10
             # print(train_X.shape, train_y.shape)
             self.model_master[win_no].fit(train_X, train_y)
             pass
@@ -171,18 +173,19 @@ class SPM2Evaluate():  # 藤井さんの行動計画側に移設予定
                     test_X.reshape(1, -1))
                 self.score_master[win_no].append(score)
                 weight = self.model_master[win_no].coef_
-        #self.apply_moving_average()
+            self.score_master=np.array(self.score_master).reshape(2,3)
+        self.apply_moving_average()
 
     def apply_moving_average(self):
         if self.score_master_mother==[]:
             pass
         else:        
-            self.score_master_np=np.array(self.score_master)    
-            self.score_master_mother.append(self.score_master_np)
+            self.score_master_mother.append(self.score_master)
             self.score_master_mother=np.array(self.score_master_mother)
             self.score_master=self.score_master_mother.mean(axis=0)
-            self.score_master=self.score_master.tolist()
-     
+        print("### ROI START ###")
+        print("score_master",self.score_master)
+        print("### ROI FINISH ###")
     def get_score(self):
         return self.score_master
         # pprint(self.score_master[0])
@@ -202,13 +205,104 @@ class SPM2Evaluate():  # 藤井さんの行動計画側に移設予定
         plt.title(f"{train_mov_code} -->> {test_mov_code}  alpha={alpha}")
         plt.legend()
         name = str(datetime.now()).replace(" ", "").replace(":", "").replace("-", "").replace(".", "")[:16]
-        plt.savefig(save_dir+f"/cca{train_mov_code}{test_mov_code}_{name}.jpg")
+        plt.savefig(save_dir+f"{name}.jpg")
         plt.cla()
 
-        # plt.show()
+    def special_plot(self, save_dir):
+        for i, win_score in enumerate(self.score_master):
+            win_score = np.array(win_score).flatten()
+            win_score_mov_ave = self.moving_average(win_score)
+            # win_score_low = self.lowpass(win_score, 25600, 100, 600, 3, 40)
+            # plt.plot(np.arange(len(win_score)),win_score, label=f"win_{i+1}")
+            plt.plot(np.arange(len(win_score_mov_ave)),win_score_mov_ave, label=f"win_{i+1}_ave")
+            # plt.plot(np.arange(len(win_score)),win_score_low, label=f"win_{i+1}_lpf")
+        plt.xlabel("time")
+        plt.ylabel("degree of risk")
+        plt.ylim((-200, 200))
+        plt.title(f"test_results")
+        plt.legend()
+        name = str(datetime.now()).replace(" ", "").replace(":", "").replace("-", "").replace(".", "")[:16]
+        plt.savefig(save_dir+f"{name}.jpg")
+        plt.cla()
 
-    def moving_average(self, x, num=50):
-        ave_data = np.convolve(x, np.ones(num)/num, mode="valid")
+    def analysis_movie(self,save_dir):
+        hist=[[],[],[],[],[],[]]
+        hist_th=[[],[],[],[],[],[]]
+
+        index=[]
+        imgs=sorted(glob.glob("/home/ytpc2019a/code_ws/temp/cansat/images/*"))
+        fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
+        video = cv2.VideoWriter(save_dir+'ave.mp4',fourcc, 20, (1500, 1000))
+        for i, (img_path,w1,w2,w3,w4,w5,w6) in enumerate(zip(imgs,self.score_master[0,0],self.score_master[0,1],self.score_master[0,2],self.score_master[1,0],self.score_master[1,1],self.score_master[1,2])):
+            for j, w in enumerate([w1,w2,w3,w4,w5,w6]):
+                hist[j].append(w)
+                if w>=10:
+                    w=[10]
+                elif w<-10:
+                    w=[-10]
+                else:
+                    pass
+                hist_th[j].append(w)
+            index.append(i)
+            plt.subplots(figsize=(15.0, 10.0))
+            plt.subplot(5, 1, 1,)
+            img=cv2.imread(img_path)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            plt.imshow(img)
+            plt.subplot(5,1,2)
+            plt.title("raw data")
+            for j in range (6):
+                plt.plot(index,hist[j],label=f"w_{j+1}")
+            plt.legend(loc='lower left')
+            plt.subplot(5,1,3)
+            plt.title("cut |danger|>10")
+            for h in range (6):
+                plt.plot(index,hist_th[h],label=f"w_{h+1}")
+            plt.legend(loc='lower left')
+            plt.subplot(5,1,4)
+            plt.title("moving average 3")
+            for h in range (6):
+                # try:
+                no=3
+                if len(hist_th[h])<no:
+                    no=len(hist_th[h])
+                print("no",no)
+                print(index,np.array(hist_th[h]).flatten())
+                # print(self.moving_average(np.array(hist_th[h]).flatten()[:-no+1],num=no))
+                if no<2:
+                    plt.plot(index,hist_th[h],label=f"w_{h+1}")
+                else:
+                    plt.plot(index,self.moving_average(np.array(hist_th[h]).flatten()[:-no+1],num=no),label=f"w_{h+1}")
+            # plt.legend(loc='lower left')
+            plt.subplot(5,1,5)
+            plt.title("moving average 5")
+            for h in range (6):
+                # try:
+                no=5
+                if len(hist_th[h])<no:
+                    no=len(hist_th[h])
+                print("no",no)
+                print(index,np.array(hist_th[h]).flatten())
+                # print(self.moving_average(np.array(hist_th[h]).flatten()[:-no+1],num=no))
+                if no<2:
+                    plt.plot(index,hist_th[h],label=f"w_{h+1}")
+                else:
+                    plt.plot(index,self.moving_average(np.array(hist_th[h]).flatten()[:-no+1],num=no),label=f"w_{h+1}")
+
+
+            
+            # plt.subplot(2,3,4)
+            # plt.bar(np.array([1,2,3]), np.array([w1[0],w2[0],w3[0]]))
+            # plt.subplot(2,3,5)
+            # plt.bar(np.array([4,5,6]), np.array([w4[0],w5[0],w6[0]]))
+            plt.savefig(save_dir+"test.jpg")
+            plt.clf()
+            img2=cv2.imread(save_dir+"test.jpg")
+            video.write(img2)
+        video.release()
+
+    def moving_average(self, x, num=10):
+        ave_data = np.convolve(x, np.ones(num)/num)
         return ave_data
 
     def lowpass(self, x, samplerate, fp, fs, gpass, gstop):
@@ -239,3 +333,31 @@ class SPM2Evaluate():  # 藤井さんの行動計画側に移設予定
             [len(self.nonzero_w_label[3]), len(self.nonzero_w_label[4]), len(self.nonzero_w_label[5])]
         ])
         return self.nonzero_w, self.nonzero_w_label, self.nonzero_w_num
+
+learn_npz_dir_path="/home/ytpc2019a/code_ws/wolvez2022/Testcode/EtoE/results/camera_result/second_spm/learn1/*"
+predict_npz_dir_path="/home/ytpc2019a/code_ws/temp/cansat/npz/*"
+
+learn_open=SPM2Open_npz()
+data_list_all_win, label_list_all_win=learn_open.unpack(sorted(glob.glob(learn_npz_dir_path)))
+
+f1=136
+f2=196
+f3=776
+
+learn=SPM2Learn()
+model_master, label_list_all_win, scaler_master=learn.start(data_list_all_win, label_list_all_win, f1, f2, alpha=1.0, f1f2_array_window_custom=None)
+
+risk_list=[]
+for path in sorted(glob.glob(predict_npz_dir_path)):
+    print(path)
+    predict_open=SPM2Open_npz()
+    test_data_list_all_win, test_label_list_all_win=learn_open.unpack([path])
+
+    predict=SPM2Evaluate()
+    predict.start(model_master, test_data_list_all_win, test_label_list_all_win, scaler_master,risk_list)
+    risk=predict.get_score()
+    print(np.array(risk).shape)
+    risk_list.append(risk)
+
+# predict.special_plot("/home/ytpc2019a/code_ws/temp/cansat/results/")
+predict.analysis_movie("/home/ytpc2019a/code_ws/temp/cansat/results/")
