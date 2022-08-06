@@ -30,7 +30,11 @@ git clone git@github.com:Toshiki-Keio/wolvez2022.git
 ```
 sudo bash inst_opencv.sh
 ```
-  Check in python if you successflly installed opencv or not `import cv2`
+  Check in python if you successflly installed opencv or not 
+```
+  python
+  import cv2
+```
 
 **2. GPS Setup**  
   The proposed robot orients itself by GPS. Run `setup_gps.sh`  in terminal. (in `setup` folder)
