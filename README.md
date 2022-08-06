@@ -27,7 +27,7 @@ git clone git@github.com:Toshiki-Keio/wolvez2022.git
 **1. OpenCV**  
   OpenCV is necessary for implimenting image processing in order to recognize following target. <br>
   Go to `setup` folder and run `inst_opencv.sh` to install opencv.
-```Bash
+```
  sudo bash inst_opencv.sh
 ```
   Check in python if you successflly installed opencv or not 
@@ -49,9 +49,9 @@ I2C is one of the ways of serial communication. This is necessary for BNO055 (ac
 sudo bash setup_i2c.sh
 ```
 
-**4. Install Libraries**
+**4. Install Libraries**<br>
 If you want to run mission code, run `Testcode/EtoE/main.py`.<br>
-However you need to install some libraries to run this code without any error. <br>
+However, you need to install some libraries to run this code without any error. <br>
 Run `requirements.sh` in terminal. (in  `setup` folder)
 
 ```
