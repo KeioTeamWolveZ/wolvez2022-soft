@@ -27,21 +27,21 @@ git clone git@github.com:Toshiki-Keio/wolvez2022.git
 **1. OpenCV**  
   OpenCV is necessary for implimenting image processing in order to recognize following target. <br>
   Go to `setup` folder and run `inst_opencv.sh` to install opencv.
-  ```sudo bash inst_opencv.sh
-   ```
+```sudo bash inst_opencv.sh
+```
   Check in python if you successflly installed opencv or not `import cv2`
 
 **2. GPS Setup**  
   The proposed robot orients itself by GPS. Run `setup_gps.sh`  in terminal. (in `setup` folder)
   
-  ```sudo bash setup_gps.sh
-   ```
+```sudo bash setup_gps.sh
+```
 
 **3. I2C Setup**  
 I2C is one of the ways of serial communication. This is necessary for BNO055 (acceralation sensor). Run `setup_i2c` in terminal. (in `setup` folder)
 
 ```sudo bash setup_i2c.sh
- ```
+```
 
 **4. Install Libraries**
 If you want to run mission code, run `Testcode/EtoE/main.py`.<br>
@@ -54,8 +54,8 @@ Run `requirements.sh` in terminal. (in  `setup` folder)
 **5. Access Point Setup (Additional)**  
   if you want to use Raspberry Pi remotely in **No Wi-fi** environment, you may want to use your Rasberry Pi as Wi-fi access point. Then go to `setup/ap` and run `setup_ap.sh`
   
-  ```sudo bash setup_ap.sh
-  ```
+```sudo bash setup_ap.sh
+```
   
   Once you activate access point, you cannot connect your Raspberry Pi to other Wi-fi networks. So you can turn it off by running `ap_off.sh`.
   If you want to re-activate, then, run  `ap_on.sh`
