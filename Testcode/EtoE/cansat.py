@@ -2,7 +2,7 @@
 #Author : Toshiki Fukui
 
 from tempfile import TemporaryDirectory
-
+from xml.dom.pulldom import default_bufsize
 from pandas import IndexSlice
 from sympy import Indexed
 import RPi.GPIO as GPIO
@@ -150,6 +150,22 @@ class Cansat():
         
         with open('results/control_result.txt',"a")  as test: # [mode] x:ファイルの新規作成、r:ファイルの読み込み、w:ファイルへの書き込み、a:ファイルへの追記
             test.write(datalog + '\n')
+
+        if self.state == 6:
+            datalog_sparse =  str(self.timer) + ","\
+                    + "Time:"+str(self.gps.Time) + ","\
+                    + "Lat:"+str(self.gps.Lat).rjust(6) + ","\
+                    + "Lng:"+str(self.gps.Lon).rjust(6) + ","\
+                    + "Risk:"+str(self.risk).rjust(6) + ","\
+                    + "Goal Distance:"+str(self.gps.gpsdis).rjust(6) + ","\
+                    + "Goal Angle:"+str(self.gps.gpsdegrees).rjust(6) + ","\
+                    + "rV:"+str(round(self.MotorR.velocity,3)).rjust(6) + ","\
+                    + "lV:"+str(round(self.MotorL.velocity,3)).rjust(6) + ","\
+                    + "q:"+str(self.bno055.ex).rjust(6) + ","\
+
+            with open(f'results/{self.startTime}/planning_result.txt',"a")  as test: # [mode] x:ファイルの新規作成、r:ファイルの読み込み、w:ファイルへの書き込み、a:ファイルへの追記
+                test.write(datalog + '\n')
+
 
     def sequence(self):
         if self.state == 0: #センサ系の準備を行う段階。時間経過でステート移行
@@ -430,16 +446,9 @@ class Cansat():
         
             feature_values = {}
 
-            feature_values["normalRGB"] = {}
-            feature_values["enphasis"] = {}
-            feature_values["edge"] = {}
-            feature_values["hsv"] = {}
-            feature_values["red"] = {}
-            feature_values["blue"] = {}
-            feature_values["green"] = {}
-            feature_values["purple"] = {}
-            feature_values["emerald"] = {}
-            feature_values["yellow"] = {}
+            default_names = ["normalRGB","enphasis","edge","hsv","red","blue","green","purple","emerald","yellow"]
+            for keys in default_names:
+                feature_values[keys] = {}
             
             self.tempDir = TemporaryDirectory()
             tempDir_name = self.tempDir.name
@@ -457,7 +466,7 @@ class Cansat():
                     iw_list, window_size = iw.breakout(iw.read_img(fmg)) #ブレイクアウト
                     feature_name = str(re.findall(tempDir_name + f"/(.*)_.*_", fmg)[0])
                     
-                    print("FEATURED BY: ",feature_name)
+                    # print("FEATURED BY: ",feature_name)
                     
                     for win in range(int(np.prod(iw_shape))): #それぞれのウィンドウに対して評価を実施
                         D, ksvd = self.dict_list[feature_name]
@@ -633,28 +642,21 @@ class Cansat():
             test_data_list_all_win,test_label_list_all_win = SPM2_predict_prepare.unpack([planning_npz[-1]]) #作成したnpzファイルを取得
             spm2_predict = SPM2Evaluate()
             spm2_predict.start(model_master,test_data_list_all_win,test_label_list_all_win,scaler_master,self.risk_list) #第二段階の評価を実施
-            risk = spm2_predict.get_score()
-            risk = np.array(risk).reshape(2,3) #win1~win6の危険度マップ作成
+            self.risk = spm2_predict.get_score()
+            self.risk = np.array(self.risk).reshape(2,3) #win1~win6の危険度マップ作成
             
             if len(self.risk_list) >= ct.const.MOVING_AVERAGE:
                 self.risk_list = self.risk_list[1:]
             
-            print("===== Risk Map =====")
-            for i in range(risk.shape[0]):
-                for j in range(risk.shape[1]):
-                    if risk[i][j] >= 100:
-                        risk[i][j] = 100
-                    elif risk[i][j] <= -100:
-                        risk[i][j] = -100
-            print(np.round(risk))
+
     #         # 走行
-            self.planning(risk)
-            self.stuck_detection()#ここは注意
-            time_now = time.time()
-            print("calc time:",time_now-time_pre)
-            if self.gps.gpsdis <= ct.const.FINISH_DIS_THRE:
-                self.state = 7
-                self.laststate = 7
+            for i in range(self.risk.shape[0]):
+                for j in range(self.risk.shape[1]):
+                    if self.risk[i][j] >= 100:
+                        self.risk[i][j] = 100
+                    elif self.risk[i][j] <= -100:
+                        self.risk[i][j] = -100
+            print(np.round(self.risk))
     
     def finish(self):
         if self.finishTime == 0:
