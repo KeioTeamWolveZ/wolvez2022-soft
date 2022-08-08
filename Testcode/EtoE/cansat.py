@@ -176,7 +176,7 @@ class Cansat():
                     + "q:"+str(self.bno055.ex).rjust(6) + ","\
 
             with open(f'results/{self.startTime}/planning_result.txt',"a")  as test: # [mode] x:ファイルの新規作成、r:ファイルの読み込み、w:ファイルへの書き込み、a:ファイルへの追記
-                test.write(datalog + '\n')
+                test.write(datalog_sparse + '\n')
 
     def sequence(self):
         if self.state == 0: #センサ系の準備を行う段階。時間経過でステート移行
