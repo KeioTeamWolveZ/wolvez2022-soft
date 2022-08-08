@@ -642,6 +642,9 @@ class Cansat():
             self.GREEN_LED.led_on()
         else:
             SPM2_predict_prepare = SPM2Open_npz()
+            print("ROI start")
+            print(planning_npz)
+            print("ROI ended")
             test_data_list_all_win,test_label_list_all_win = SPM2_predict_prepare.unpack([planning_npz[-1]]) #作成したnpzファイルを取得
             spm2_predict = SPM2Evaluate()
             spm2_predict.start(model_master,test_data_list_all_win,test_label_list_all_win,scaler_master,self.risk_list) #第二段階の評価を実施
@@ -799,8 +802,10 @@ class Cansat():
     def keyboardinterrupt(self): #キーボードインタラプト入れた場合に発動する関数
         self.MotorR.stop()
         self.MotorL.stop()
+        GPIO.output(ct.const.SEPARATION_PIN,0) #焼き切りが危ないのでlowにしておく
         self.RED_LED.led_off()
         self.BLUE_LED.led_off()
         self.GREEN_LED.led_off()
         self.cap.release()
+        time.sleep(0.5)
         cv2.destroyAllWindows()
