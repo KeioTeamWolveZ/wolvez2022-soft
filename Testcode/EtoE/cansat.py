@@ -362,7 +362,7 @@ class Cansat():
             if relearning['relearn_state']:  # 再学習に用いる画像パスの指定
                 # 一つ前のlearncountファイルの-f3枚目を指定
                 try:
-                    importPath = sorted(glob(f"results/camera_result/planning/learn{self.learncount-1}/planning_pics/planningimg*.jpg"))[-relearning['f3']]
+                    importPath = sorted(glob(f"results/{self.startTime}/camera_result/planning/learn{self.learncount-1}/planning_pics/planningimg*.jpg"))[-relearning['f3']]
                 except IndexError:
                     # ここで学習枚数足りなかったら動作指定（あきらめて１回目と同じ動きするのか、再学習をあきらめるか）
                     print('There are not enough number of pics for ReLearning.')
@@ -377,7 +377,7 @@ class Cansat():
                 if self.camerafirst == 0:
                     self.cap = cv2.VideoCapture(0)
                     ret, firstimg = self.cap.read()
-                    cv2.imwrite(f"results/camera_result/first_spm/learn{self.learncount}/firstimg{self.firstlearnimgcount}.jpg",firstimg)
+                    cv2.imwrite(f"results/{self.startTime}/camera_result/first_spm/learn{self.learncount}/firstimg{self.firstlearnimgcount}.jpg",firstimg)
                     self.camerastate = "captured!"
                     self.sensor()
                     self.camerastate = 0
@@ -388,16 +388,16 @@ class Cansat():
                     再撮影をする場合はここに記載
                     '''
                 
-                importPath = f"results/camera_result/first_spm/learn{self.learncount}/firstimg{self.firstlearnimgcount-1}.jpg"
+                importPath = f"results/{self.startTime}/camera_result/first_spm/learn{self.learncount}/firstimg{self.firstlearnimgcount-1}.jpg"
             
-            processed_Dir = f"results/camera_result/first_spm/learn{self.learncount}/processed"
+            processed_Dir = f"results/{self.startTime}/camera_result/first_spm/learn{self.learncount}/processed"
             iw = IntoWindow(importPath, processed_Dir, Save) #画像の特徴抽出のインスタンス生成
             # processing img
             fmg_list = iw.feature_img(frame_num=now) #特徴抽出。リストに特徴画像が入る 
             for fmg in fmg_list:#それぞれの特徴画像に対して処理
                 # breakout by windows
                 iw_list, window_size = iw.breakout(iw.read_img(fmg)) #ブレイクアウト
-                feature_name = str(re.findall(self.saveDir + f"/camera_result/first_spm/learn{self.learncount}/processed/(.*)_.*_", fmg)[0])
+                feature_name = str(re.findall(self.saveDir + f"/{self.startTime}/camera_result/first_spm/learn{self.learncount}/processed/(.*)_.*_", fmg)[0])
                 print("FEATURED BY: ",feature_name)
 
                 for win in range(int(np.prod(iw_shape))): #それぞれのウィンドウに対して学習を実施
@@ -418,7 +418,7 @@ class Cansat():
     def spm_f_eval(self, PIC_COUNT=1, now="TEST", iw_shape=(2,3),feature_names=None, relearning:dict=dict(relearn_state=False,f1=ct.const.f1,f3=ct.const.f3)):#第一段階学習&評価。npzファイル作成が目的
         if relearning['relearn_state']:
             try:
-                second_img_paths = sorted(glob(f"results/camera_result/first_spm/learn{self.learncount-1}/evaluate/evaluateimg*.jpg"))[-relearning['f3']+1:-relearning['f1']]
+                second_img_paths = sorted(glob(f"results/{self.startTime}/camera_result/first_spm/learn{self.learncount-1}/evaluate/evaluateimg*.jpg"))[-relearning['f3']+1:-relearning['f1']]
             except IndexError:
                 # ここで学習枚数足りなかったら動作指定（あきらめて１回目と同じ動きするのか、再学習をあきらめるか）
                 print('There are not enough number of pics for ReLearning.')
@@ -429,9 +429,9 @@ class Cansat():
             for i in range(PIC_COUNT):
                 ret,self.secondimg = self.cap.read()
                 if self.state == 4:
-                    save_file = f"results/camera_result/first_spm/learn{self.learncount}/evaluate/evaluateimg{time.time():.0f}.jpg"
+                    save_file = f"results/{self.startTime}/camera_result/first_spm/learn{self.learncount}/evaluate/evaluateimg{time.time():.0f}.jpg"
                 elif self.state == 6:
-                    save_file = f"results/camera_result/planning/learn{self.learncount}/planning_pics/planningimg{time.time():.0f}.jpg"
+                    save_file = f"results/{self.startTime}/camera_result/planning/learn{self.learncount}/planning_pics/planningimg{time.time():.0f}.jpg"
 
                 cv2.imwrite(save_file,self.secondimg)
                 self.firstevalimgcount += 1
@@ -449,7 +449,7 @@ class Cansat():
                         self.camerastate = 0
                 
             if not PIC_COUNT == 1:
-                second_img_paths = sorted(glob(f"results/camera_result/first_spm/learn{self.learncount}/evaluate/evaluateimg*.jpg"))
+                second_img_paths = sorted(glob(f"results/{self.startTime}/camera_result/first_spm/learn{self.learncount}/evaluate/evaluateimg*.jpg"))
             else:
                 second_img_paths = [save_file]
         
@@ -484,10 +484,10 @@ class Cansat():
 
                         ei = EvaluateImg(iw_list[win])
                         img_rec = ei.reconstruct(D, ksvd, window_size)
-                        saveName = self.saveDir + f"/camera_result/first_spm/learn{self.learncount}/processed/difference"
+                        saveName = self.saveDir + f"/{self.startTime}/camera_result/first_spm/learn{self.learncount}/processed/difference"
                         if not os.path.exists(saveName):
                             os.mkdir(saveName)
-                        saveName = self.saveDir + f"/camera_result/first_spm/learn{self.learncount}/processed/difference/{now}"
+                        saveName = self.saveDir + f"/{self.startTime}/camera_result/first_spm/learn{self.learncount}/processed/difference/{now}"
                         if not os.path.exists(saveName):
                             os.mkdir(saveName)
                         ave, med, var, mode, kurt, skew = ei.evaluate(iw_list[win], img_rec, win+1, feature_name, now, self.saveDir)
@@ -523,7 +523,7 @@ class Cansat():
                             D, ksvd = self.dict_list[feature_name]
                             ei = EvaluateImg(iw_list[win])
                             img_rec = ei.reconstruct(D, ksvd, window_size)
-                            saveName = self.saveDir + f"/camera_result/first_spm/learn{self.learncount}/processed/difference"
+                            saveName = self.saveDir + f"/{self.startTime}/camera_result/first_spm/learn{self.learncount}/processed/difference"
     #                         if not os.path.exists(saveName):
     #                             os.mkdir(saveName)
     #                         saveName = self.saveDir + f"/camera_result/first_spm/learn{self.learncount}/processed/difference/{now}"
@@ -561,9 +561,9 @@ class Cansat():
 
             # npzファイル形式で計算結果保存
             if self.state == 4:
-                self.savenpz_dir = self.saveDir + f"/camera_result/second_spm/learn{self.learncount}/"
+                self.savenpz_dir = self.saveDir + f"/{self.startTime}/camera_result/second_spm/learn{self.learncount}/"
             elif self.state == 6:
-                self.savenpz_dir = self.saveDir + f"/camera_result/planning/learn{self.learncount}/planning_npz/"
+                self.savenpz_dir = self.saveDir + f"/{self.startTime}/camera_result/planning/learn{self.learncount}/planning_npz/"
             
             # 保存時のファイル名指定（現在は時間）
             now=str(datetime.now())[:19].replace(" ","_").replace(":","-")
@@ -579,7 +579,7 @@ class Cansat():
             self.BLUE_LED.led_on()
             self.GREEN_LED.led_on()
             
-        npz_dir = f"results/camera_result/second_spm/learn{self.learncount}/*"
+        npz_dir = f"results/{self.startTime}/camera_result/second_spm/learn{self.learncount}/*"
         train_npz = sorted(glob(npz_dir))
         spm2_prepare = SPM2Open_npz()
         data_list_all_win,label_list_all_win = spm2_prepare.unpack(train_npz)
@@ -635,7 +635,7 @@ class Cansat():
 
     def running(self,model_master,scaler_master,feature_names): #経路計画&走行
         time_pre = time.time()
-        planning_dir = f"results/camera_result/planning/learn{self.learncount}/planning_npz/*"
+        planning_dir = f"results/{self.startTime}/camera_result/planning/learn{self.learncount}/planning_npz/*"
         planning_npz = sorted(glob(planning_dir))
         
         #保存時のファイル名指定（現在は時間）
