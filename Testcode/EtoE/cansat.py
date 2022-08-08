@@ -660,7 +660,6 @@ class Cansat():
                     elif self.risk[i][j] <= -100:
                         self.risk[i][j] = -100
             print(np.round(self.risk))
-            print(np.round(self.risk))
     #         # 走行
             self.planning(self.risk)
             self.stuck_detection()#ここは注意

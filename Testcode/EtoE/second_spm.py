@@ -13,7 +13,7 @@ import constant as ct
 class SPM2Open_npz():  # second_spm.pyとして実装済み
     def unpack(self, files):
 #         print("===== npzファイルの解体 =====")
-        print("読み込むフレーム数 : ", len(files))
+#         print("読み込むフレーム数 : ", len(files))
         data_list_all_time = []
         label_list_all_time = []
         for file in files:
