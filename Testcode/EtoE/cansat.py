@@ -73,6 +73,7 @@ class Cansat():
         
         #初期パラメータ設定
         self.startTime = time.time()
+        self.startDateTime = datetime.now()
         self.preparingTime = 0
         self.flyingTime = 0
         self.droppingTime = 0
@@ -163,10 +164,10 @@ class Cansat():
                     + "rV:"+str(round(self.MotorR.velocity,3)).rjust(6) + ","\
                     + "lV:"+str(round(self.MotorL.velocity,3)).rjust(6) + ","\
                     + "q:"+str(self.bno055.ex).rjust(6)# + ","\
-
-            with open(f'results/{self.startTime}/planning_result.txt',"a")  as test: # [mode] x:ファイルの新規作成、r:ファイルの読み込み、w:ファイルへの書き込み、a:ファイルへの追記
-                test.write(datalog + '\n')
-                print("### SPARSE LOG ###",datalog)
+            now=str(self.startDateTime).replace(" ","_").replace(":","-").replace(".","_")[:22]
+            with open(f'results/planning_result{now}.txt',"a")  as test: # [mode] x:ファイルの新規作成、r:ファイルの読み込み、w:ファイルへの書き込み、a:ファイルへの追記
+                test.write(datalog_sparse + '\n')
+                print("### SPARSE LOG ###",datalog_sparse)
 
 
     def sequence(self):
@@ -719,7 +720,7 @@ class Cansat():
             self.MotorL.go(60)
             time.sleep(1)
         
-        writeSparseData(risk)
+        self.writeSparseData(risk)
 
     def decide_direction(self,phi):
         if phi >= 20:
