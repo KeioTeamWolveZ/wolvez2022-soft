@@ -2,6 +2,7 @@
 #Author : Toshiki Fukui
 
 from tempfile import TemporaryDirectory
+from xml.dom.pulldom import default_bufsize
 
 from pandas import IndexSlice
 from sympy import Indexed
@@ -430,16 +431,9 @@ class Cansat():
         
             feature_values = {}
 
-            feature_values["normalRGB"] = {}
-            feature_values["enphasis"] = {}
-            feature_values["edge"] = {}
-            feature_values["hsv"] = {}
-            feature_values["red"] = {}
-            feature_values["blue"] = {}
-            feature_values["green"] = {}
-            feature_values["purple"] = {}
-            feature_values["emerald"] = {}
-            feature_values["yellow"] = {}
+            default_names = ["normalRGB","enphasis","edge","hsv","red","blue","green","purple","emerald","yellow"]
+            for keys in default_names:
+                feature_values[keys] = {}
             
             self.tempDir = TemporaryDirectory()
             tempDir_name = self.tempDir.name
@@ -457,7 +451,7 @@ class Cansat():
                     iw_list, window_size = iw.breakout(iw.read_img(fmg)) #ブレイクアウト
                     feature_name = str(re.findall(tempDir_name + f"/(.*)_.*_", fmg)[0])
                     
-                    print("FEATURED BY: ",feature_name)
+                    # print("FEATURED BY: ",feature_name)
                     
                     for win in range(int(np.prod(iw_shape))): #それぞれのウィンドウに対して評価を実施
                         D, ksvd = self.dict_list[feature_name]
