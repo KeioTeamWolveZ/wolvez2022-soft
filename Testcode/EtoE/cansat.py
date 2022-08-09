@@ -16,6 +16,7 @@ import re
 import math
 from datetime import datetime
 from glob import glob
+import shutil
 # from math import prod
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 
@@ -73,7 +74,7 @@ class Cansat():
         self.learn_state = True
         
         #初期パラメータ設定
-        self.startTime = time.time()
+        self.startTime = str(datetime.now())[:19].replace(" ","_").replace(":","-")
         self.preparingTime = 0
         self.flyingTime = 0
         self.droppingTime = 0
@@ -105,6 +106,7 @@ class Cansat():
         self.saveDir = "results"
         self.mkdir()
         self.mkfile()
+        self.mvfile()
 
     def mkdir(self): #フォルダ作成部分
         folder_paths =[f"results/{self.startTime}",
@@ -123,13 +125,18 @@ class Cansat():
         for folder_path in folder_paths:
             if not os.path.exists(folder_path):
                 os.mkdir(folder_path)
-    
+
     def mkfile(self):
         control_path = open(f'results/{self.startTime}/control_result.txt', 'w')
         control_path.close()
         planning_path = open(f'results/{self.startTime}/planning_result.txt', 'w')
         planning_path.close()
-    
+
+    def mvfile(self):
+        pre_data = "../../pre_data/*"
+        dest_dir = f"results/{self.startTime}/camera_result/second_spm/learn{self.learncount}"
+        for file in pre_data:
+            shutil.copy2(file, dest_dir)
     
     def writeData(self): #ログデータ作成。\マークを入れることで改行してもコードを続けて書くことができる
         print_datalog = str(self.timer) + ","\
