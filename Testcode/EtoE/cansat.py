@@ -733,6 +733,8 @@ class Cansat():
             self.MotorR.go(60)
             self.MotorL.go(60)
             time.sleep(1)
+        
+        self.writeSparseData(risk)
 
     def decide_direction(self,phi):
         if phi >= 20:
