@@ -110,7 +110,7 @@ class Cansat():
 
     def mkdir(self): #フォルダ作成部分
         folder_paths =[f"results/{self.startTime}",
-                       f"results/{self.startTime}/camera_result"
+                       f"results/{self.startTime}/camera_result",
                        f"results/{self.startTime}/camera_result/first_spm",
                        f"results/{self.startTime}/camera_result/first_spm/learn{self.learncount}",
                        f"results/{self.startTime}/camera_result/first_spm/learn{self.learncount}/evaluate",
@@ -170,6 +170,7 @@ class Cansat():
         with open(f'results/{self.startTime}/control_result.txt',"a")  as test: # [mode] x:ファイルの新規作成、r:ファイルの読み込み、w:ファイルへの書き込み、a:ファイルへの追記
             test.write(datalog + '\n')
 
+    def writeSparseData(self,risk): #ログデータ作成。\マークを入れることで改行してもコードを続けて書くことができる   
         if self.state == 6:
             datalog_sparse =  str(self.timer) + ","\
                     + "Time:"+str(self.gps.Time) + ","\
@@ -524,7 +525,7 @@ class Cansat():
                 for fmg in fmg_list: #それぞれの特徴画像に対して処理
                     iw_list, window_size = iw.breakout(iw.read_img(fmg)) # ブレイクアウトにより画像を6分割
                     feature_name = str(re.findall(tempDir_name + f"/(.*)_.*_", fmg)[0]) # 特徴処理のみ抽出
-                    print("FEATURED BY: ",feature_name)
+                    # print("FEATURED BY: ",feature_name)
                     for win in range(int(np.prod(iw_shape))): #それぞれのウィンドウに対して評価を実施                            
                         if feature_name in feature_names[win]: #ウィンドウに含まれいていた場合
                             D, ksvd = self.dict_list[feature_name]
