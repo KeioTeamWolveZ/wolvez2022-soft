@@ -324,7 +324,7 @@ class Cansat():
         MUST READ:
             1: This IntelliSence
             2: line 331~359 for learn state
-            3: line 393=425 for evaluate state
+            3: line 393~425 for evaluate state
         ------
         EXPLANATION
         ---
@@ -445,10 +445,10 @@ class Cansat():
                 self.firstevalimgcount += 1
                 
                 if self.state == 4:
-                    self.MotorR.go(70)#走行
-                    self.MotorL.go(70)#走行
+                    self.MotorR.go(50)#走行
+                    self.MotorL.go(20)#走行
                     self.stuck_detection()
-                    time.sleep(0.4)
+                    time.sleep(0.2)
                     self.MotorR.stop()
                     self.MotorL.stop()
                     if i%10 == 0: #10枚撮影する毎にセンサの値取得
@@ -703,11 +703,13 @@ class Cansat():
         self.x = self.gps.gpsdis*math.cos(math.radians(self.gps.gpsdegrees))
         self.y = self.gps.gpsdis*math.sin(math.radians(self.gps.gpsdegrees))
         theta_goal = self.gps.gpsdegrees
-        phi = theta_goal-self.bno055.ex
+        # phi = theta_goal-self.bno055.ex
+        phi = self.bno055.ex  # 雨用にbnoの値だけをとってくる
         
         if phi < -180:
             phi += 360
         elif phi > 180:
+            1
             phi -= 360
 #         print("theta_goal:",theta_goal,"ex:",self.bno055.ex)
         print("distance:", self.gps.gpsdis)
