@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+# test from hotel moriyama
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.linear_model import Lasso
