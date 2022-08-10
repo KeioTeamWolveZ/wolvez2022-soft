@@ -138,6 +138,7 @@ class SPM2Learn():  # second_spm.pyとして実装済み
                 self.model_master[win_no].fit(train_X, train_y)
                 pass
             pass
+        
     def get_nonzero_w(self):
         self.nonzero_w = []
         self.nonzero_w_label = []
