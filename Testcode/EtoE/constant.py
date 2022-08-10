@@ -37,8 +37,8 @@ const.STUCK_MOTOR_VREF = 100
 ## Variables
 const.GPS_GOAL_LAT = 35.5559391
 const.GPS_GOAL_LON = 139.6525889
-const.f1 = 136
-const.f2 = 196
+const.f1 = 1 # 136
+const.f2 = 50 # 196
 const.f3 = 776
 const.SPMSECOND_MIN = -100
 const.SPMSECOND_MAX = 100
