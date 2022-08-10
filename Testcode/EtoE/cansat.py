@@ -570,7 +570,8 @@ class Cansat():
 
             # npzファイル形式で計算結果保存
             if self.state == 4:
-                self.savenpz_dir = self.saveDir + f"/{self.startTime}/camera_result/second_spm/learn{self.learncount}/"
+                self.savenpz_dir = "../../pre_data"
+                # self.savenpz_dir = self.saveDir + f"/{self.startTime}/camera_result/second_spm/learn{self.learncount}/"
             elif self.state == 6:
                 self.savenpz_dir = self.saveDir + f"/{self.startTime}/camera_result/planning/learn{self.learncount}/planning_npz/"
             
