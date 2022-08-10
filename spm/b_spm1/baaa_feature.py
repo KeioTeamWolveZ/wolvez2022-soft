@@ -1,5 +1,4 @@
 import cv2
-from pyrsistent import s
 from FEATURE import Feature_img
 import tempfile
 

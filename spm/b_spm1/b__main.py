@@ -5,7 +5,6 @@ import cv2
 import numpy as np
 from datetime import datetime
 from glob import glob
-from math import prod
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 
 from baba_into_window import IntoWindow
@@ -80,7 +79,7 @@ def spm_first(img_path=False,npz_dir=None, learn_state=False,patch_size=(24,32),
             iw_list, window_size = iw.breakout(iw.read_img(fmg))
             feature_name = str(re.findall(temp_dir_name + f"/baca_featuring/(.*)_.*_", fmg)[0])
             print("FEATURED BY: ",feature_name)
-            for win in range(int(prod(iw_shape))):
+            for win in range(6):
                 #print("PRAT: ",win+1)
                 if learn_state:
                     if win+1 == int((iw_shape[0]-1)*iw_shape[1]) + int(iw_shape[1]/2) + 1:
