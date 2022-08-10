@@ -419,7 +419,7 @@ class Cansat():
 
         else:#20枚撮影
             if self.state == 4:  # 再学習時にステート操作が必要なら追記
-                self.spm_f_eval(PIC_COUNT=50, now=now, iw_shape=iw_shape, relearning=relearning) #第2段階用の画像を撮影
+                self.spm_f_eval(PIC_COUNT=100, now=now, iw_shape=iw_shape, relearning=relearning) #第2段階用の画像を撮影
                 self.state = 5
                 self.laststate = 5
             else:
@@ -437,7 +437,11 @@ class Cansat():
         if not relearning['relearn_state']:
         # self.cap = cv2.VideoCapture(0)
             for i in range(PIC_COUNT):
-                ret,self.secondimg = self.cap.read()
+                try:
+                    ret,self.secondimg = self.cap.read()
+                    print("done:",i)
+                except:
+                    pass
                 if self.state == 4:
                     save_file = f"results/{self.startTime}/camera_result/first_spm/learn{self.learncount}/evaluate/evaluateimg{time.time():.2f}.jpg"
                 elif self.state == 6:
@@ -464,6 +468,9 @@ class Cansat():
                 second_img_paths = [save_file]
         
         for importPath in second_img_paths:
+            self.GREEN_LED.led_on()
+            self.RED_LED.led_on()
+            self.BLUE_LED.led_off()
         
             feature_values = {}
 
@@ -476,10 +483,10 @@ class Cansat():
             
             iw = IntoWindow(importPath, tempDir_name, False) #画像の特徴抽出のインスタンス生成
             
-            if self.state == 4: #ステートが4の場合はセンサの値取得
-                self.sensor()
+            #if self.state == 4: #ステートが4の場合はセンサの値取得
+                #self.sensor()
             
-            if feature_names == None:#第一段階学習モード
+            if feature_names == None: #第一段階学習モード
                 self.camerastate = "captured!"
                 fmg_list = iw.feature_img(frame_num=now,feature_names=feature_names) #特徴抽出。リストに特徴画像が入る
                 
@@ -568,7 +575,8 @@ class Cansat():
                                 feature_values[feature_name][f'win_{win+1}']["mode"] = 0  # 最頻値
                                 feature_values[feature_name][f'win_{win+1}']["kurt"] = 0  # 尖度
                                 feature_values[feature_name][f'win_{win+1}']["skew"] = 0  # 歪度
-
+            
+            self.BLUE_LED.led_on()
             # npzファイル形式で計算結果保存
             if self.state == 4:
                 self.savenpz_dir = "/home/pi/Desktop/wolvez2022/pre_data/"
@@ -582,6 +590,9 @@ class Cansat():
             # print("shape:",len(feature_values))
             np.savez_compressed(self.savenpz_dir + now,array_1=np.array([feature_values])) #npzファイル作成
             self.tempDir.cleanup()
+        self.GREEN_LED.led_on()
+        self.RED_LED.led_on()
+        self.BLUE_LED.led_off()
     
     def spm_second(self): #スパースモデリング第二段階実施
         if self.spmsecondTime == 0: #時刻を取得してLEDをステートに合わせて光らせる
