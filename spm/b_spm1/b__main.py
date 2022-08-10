@@ -57,7 +57,7 @@ def spm_first(img_path=False,npz_dir=None, learn_state=False,patch_size=(24,32),
         importPath = path.replace("\\", "/")
         
         # This will change such as datetime
-        print("CURRENT FRAME: "+str(re.findall(".*/frame_(.*).jpg", importPath)[0]))
+        # print("CURRENT FRAME: "+str(re.findall(".*/frame_(.*).jpg", importPath)[0]))
         
         iw_shape = (2, 3)
         D, ksvd = None, None
@@ -77,7 +77,7 @@ def spm_first(img_path=False,npz_dir=None, learn_state=False,patch_size=(24,32),
         for fmg in fmg_list:
             # breakout by windows
             iw_list, window_size = iw.breakout(iw.read_img(fmg))
-            feature_name = str(re.findall(temp_dir_name + f"/baca_featuring/(.*)_.*_", fmg)[0])
+            feature_name = str(re.findall(temp_dir_name + f"/(.*)_.*_", fmg)[0])
             print("FEATURED BY: ",feature_name)
             for win in range(6):
                 #print("PRAT: ",win+1)
@@ -120,7 +120,7 @@ def spm_first(img_path=False,npz_dir=None, learn_state=False,patch_size=(24,32),
         
                     
         if not learn_state:
-            np.savez_compressed(npz_dir+now,array_1=np.array([feature_values]))
+            np.savez_compressed("b-data/bcca_secondinput/8.10/"+now,array_1=np.array([feature_values]))
             # np.savez_compressed(saveDir + f"/bczz_h_param/{params}",array_1=np.array([feature_values]))
             #with open(saveDir + f"/bcca_secondinput/"+now, "wb") as tf:
             #    pickle.dump(feature_values, tf)
