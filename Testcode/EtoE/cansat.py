@@ -324,7 +324,7 @@ class Cansat():
         MUST READ:
             1: This IntelliSence
             2: line 331~359 for learn state
-            3: line 393=425 for evaluate state
+            3: line 393~425 for evaluate state
         ------
         EXPLANATION
         ---
