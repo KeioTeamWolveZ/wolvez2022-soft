@@ -5,7 +5,6 @@ from tempfile import TemporaryDirectory
 from xml.dom.pulldom import default_bufsize
 
 from pandas import IndexSlice
-from sympy import Indexed
 import RPi.GPIO as GPIO
 import sys
 import cv2
@@ -74,6 +73,7 @@ class Cansat():
         self.learn_state = True
         
         #初期パラメータ設定
+        self.startTime_time=time.time()
         self.startTime = str(datetime.now())[:19].replace(" ","_").replace(":","-")
         self.preparingTime = 0
         self.flyingTime = 0
@@ -133,7 +133,7 @@ class Cansat():
         planning_path.close()
 
     def mvfile(self):
-        pre_data = sorted(glob.glob("../../pre_data/*"))
+        pre_data = sorted(glob("../../pre_data/*"))
         dest_dir = f"results/{self.startTime}/camera_result/second_spm/learn{self.learncount}"
         for file in pre_data:
             shutil.copy2(file, dest_dir)
@@ -217,7 +217,7 @@ class Cansat():
             exit()    
  
     def sensor(self): #セットアップ終了後
-        self.timer = int(1000*(time.time() - self.startTime)) #経過時間 (ms)
+        self.timer = int(1000*(time.time() - self.startTime_time)) #経過時間 (ms)
         self.gps.gpsread()
         self.bno055.bnoread()
         self.ax=round(self.bno055.ax,3)
@@ -703,11 +703,13 @@ class Cansat():
         self.x = self.gps.gpsdis*math.cos(math.radians(self.gps.gpsdegrees))
         self.y = self.gps.gpsdis*math.sin(math.radians(self.gps.gpsdegrees))
         theta_goal = self.gps.gpsdegrees
-        phi = theta_goal-self.bno055.ex
+        # phi = theta_goal-self.bno055.ex
+        phi = self.bno055.ex  # 雨用にbnoの値だけをとってくる
         
         if phi < -180:
             phi += 360
         elif phi > 180:
+            1
             phi -= 360
 #         print("theta_goal:",theta_goal,"ex:",self.bno055.ex)
         print("distance:", self.gps.gpsdis)
