@@ -703,11 +703,13 @@ class Cansat():
         self.x = self.gps.gpsdis*math.cos(math.radians(self.gps.gpsdegrees))
         self.y = self.gps.gpsdis*math.sin(math.radians(self.gps.gpsdegrees))
         theta_goal = self.gps.gpsdegrees
-        phi = theta_goal-self.bno055.ex
+        # phi = theta_goal-self.bno055.ex
+        phi = self.bno055.ex  # 雨用にbnoの値だけをとってくる
         
         if phi < -180:
             phi += 360
         elif phi > 180:
+            1
             phi -= 360
 #         print("theta_goal:",theta_goal,"ex:",self.bno055.ex)
         print("distance:", self.gps.gpsdis)
