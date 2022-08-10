@@ -128,8 +128,8 @@ def spm_first(img_path=False,npz_dir=None, learn_state=False,patch_size=(24,32),
         end_time = time()
         # Learn state should be changed by main.py
         learn_state = False
-        frame = str(re.findall(".*/frame_(.*).jpg", importPath)[0])
-        print(f"\n\n==={now}_data was evaluated===\nframe number is {frame}.\nIt cost {end_time-start_time} seconds.\n\n")
+        # frame = str(re.findall(".*/frame_(.*).jpg", importPath)[0])
+        # print(f"\n\n==={now}_data was evaluated===\nframe number is {frame}.\nIt cost {end_time-start_time} seconds.\n\n")
         temp_dir.cleanup()
 
 patch=60

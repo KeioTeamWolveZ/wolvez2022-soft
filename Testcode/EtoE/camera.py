@@ -11,7 +11,7 @@ def camera(cap):
     引数1→動画
     """
     ret, img = cap.read()      
-    cv2.imshow('cameratest', img)
+    cv2.imwrite('cameratest', img)
     # if cv2.waitKey(10) & 0xFF == ord('q'):
     #     break
 
@@ -19,8 +19,8 @@ def camera(cap):
 # cap.release()
 # cv2.destroyAllWindows()
 
-# if __name__ == '__main__':
-#     args = sys.argv
-#     main(args[1])
+if __name__ == '__main__':
+    args = sys.argv
+    main(args[1])
 
 camera()
