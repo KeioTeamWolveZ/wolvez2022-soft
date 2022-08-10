@@ -418,10 +418,12 @@ class Cansat():
             self.learn_state = False
 
         else:#20枚撮影
-            self.spm_f_eval(PIC_COUNT=PIC_COUNT, now=now, iw_shape=iw_shape, relearning=relearning) #第2段階用の画像を撮影
             if self.state == 4:  # 再学習時にステート操作が必要なら追記
+                self.spm_f_eval(PIC_COUNT=50, now=now, iw_shape=iw_shape, relearning=relearning) #第2段階用の画像を撮影
                 self.state = 5
                 self.laststate = 5
+            else:
+                self.spm_f_eval(PIC_COUNT=PIC_COUNT, now=now, iw_shape=iw_shape, relearning=relearning) #第2段階用の画像を撮影
 
     def spm_f_eval(self, PIC_COUNT=1, now="TEST", iw_shape=(2,3),feature_names=None, relearning:dict=dict(relearn_state=False,f1=ct.const.f1,f3=ct.const.f3)):#第一段階学習&評価。npzファイル作成が目的
         if relearning['relearn_state']:
@@ -437,17 +439,17 @@ class Cansat():
             for i in range(PIC_COUNT):
                 ret,self.secondimg = self.cap.read()
                 if self.state == 4:
-                    save_file = f"results/{self.startTime}/camera_result/first_spm/learn{self.learncount}/evaluate/evaluateimg{time.time():.0f}.jpg"
+                    save_file = f"results/{self.startTime}/camera_result/first_spm/learn{self.learncount}/evaluate/evaluateimg{time.time():.2f}.jpg"
                 elif self.state == 6:
-                    save_file = f"results/{self.startTime}/camera_result/planning/learn{self.learncount}/planning_pics/planningimg{time.time():.0f}.jpg"
+                    save_file = f"results/{self.startTime}/camera_result/planning/learn{self.learncount}/planning_pics/planningimg{time.time():.2f}.jpg"
 
                 cv2.imwrite(save_file,self.secondimg)
                 self.firstevalimgcount += 1
                 
                 if self.state == 4:
-                    self.MotorR.go(50)#走行
-                    self.MotorL.go(20)#走行
-                    self.stuck_detection()
+                    self.MotorR.go(70)#走行
+                    self.MotorL.go(70)#走行
+                    # self.stuck_detection()
                     time.sleep(0.2)
                     self.MotorR.stop()
                     self.MotorL.stop()
@@ -569,12 +571,13 @@ class Cansat():
 
             # npzファイル形式で計算結果保存
             if self.state == 4:
-                self.savenpz_dir = self.saveDir + f"/{self.startTime}/camera_result/second_spm/learn{self.learncount}/"
+                self.savenpz_dir = "/home/pi/Desktop/wolvez2022/pre_data/"
+                # self.savenpz_dir = self.saveDir + f"/{self.startTime}/camera_result/second_spm/learn{self.learncount}/"
             elif self.state == 6:
                 self.savenpz_dir = self.saveDir + f"/{self.startTime}/camera_result/planning/learn{self.learncount}/planning_npz/"
             
             # 保存時のファイル名指定（現在は時間）
-            now=str(datetime.now())[:19].replace(" ","_").replace(":","-")
+            now=str(datetime.now())[:21].replace(" ","_").replace(":","-")
 #             print("feature_values:",feature_values)
             # print("shape:",len(feature_values))
             np.savez_compressed(self.savenpz_dir + now,array_1=np.array([feature_values])) #npzファイル作成
@@ -704,7 +707,7 @@ class Cansat():
         self.y = self.gps.gpsdis*math.sin(math.radians(self.gps.gpsdegrees))
         theta_goal = self.gps.gpsdegrees
         # phi = theta_goal-self.bno055.ex
-        phi = self.bno055.ex  # 雨用にbnoの値だけをとってくる
+        phi = - self.bno055.ex  # 雨用にbnoの値だけをとってくる
         
         if phi < -180:
             phi += 360
