@@ -5,7 +5,6 @@ from tempfile import TemporaryDirectory
 from xml.dom.pulldom import default_bufsize
 
 from pandas import IndexSlice
-from sympy import Indexed
 import RPi.GPIO as GPIO
 import sys
 import cv2
