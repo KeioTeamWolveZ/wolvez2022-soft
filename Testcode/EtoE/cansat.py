@@ -449,7 +449,7 @@ class Cansat():
                 if self.state == 4:
                     self.MotorR.go(70)#走行
                     self.MotorL.go(70)#走行
-                    self.stuck_detection()
+                    # self.stuck_detection()
                     time.sleep(0.2)
                     self.MotorR.stop()
                     self.MotorL.stop()
@@ -571,13 +571,13 @@ class Cansat():
 
             # npzファイル形式で計算結果保存
             if self.state == 4:
-                self.savenpz_dir = "home/pi/Desktop/wolvez2022/pre_data"
+                self.savenpz_dir = "/home/pi/Desktop/wolvez2022/pre_data/"
                 # self.savenpz_dir = self.saveDir + f"/{self.startTime}/camera_result/second_spm/learn{self.learncount}/"
             elif self.state == 6:
                 self.savenpz_dir = self.saveDir + f"/{self.startTime}/camera_result/planning/learn{self.learncount}/planning_npz/"
             
             # 保存時のファイル名指定（現在は時間）
-            now=str(datetime.now())[:19].replace(" ","_").replace(":","-")
+            now=str(datetime.now())[:21].replace(" ","_").replace(":","-")
 #             print("feature_values:",feature_values)
             # print("shape:",len(feature_values))
             np.savez_compressed(self.savenpz_dir + now,array_1=np.array([feature_values])) #npzファイル作成
