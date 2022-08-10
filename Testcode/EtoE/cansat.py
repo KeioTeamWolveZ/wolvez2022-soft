@@ -439,9 +439,9 @@ class Cansat():
             for i in range(PIC_COUNT):
                 ret,self.secondimg = self.cap.read()
                 if self.state == 4:
-                    save_file = f"results/{self.startTime}/camera_result/first_spm/learn{self.learncount}/evaluate/evaluateimg{time.time():.0f}.jpg"
+                    save_file = f"results/{self.startTime}/camera_result/first_spm/learn{self.learncount}/evaluate/evaluateimg{time.time():.2f}.jpg"
                 elif self.state == 6:
-                    save_file = f"results/{self.startTime}/camera_result/planning/learn{self.learncount}/planning_pics/planningimg{time.time():.0f}.jpg"
+                    save_file = f"results/{self.startTime}/camera_result/planning/learn{self.learncount}/planning_pics/planningimg{time.time():.2f}.jpg"
 
                 cv2.imwrite(save_file,self.secondimg)
                 self.firstevalimgcount += 1
