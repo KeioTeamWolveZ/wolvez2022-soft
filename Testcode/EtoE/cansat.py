@@ -419,7 +419,7 @@ class Cansat():
 
         else:#20枚撮影
             if self.state == 4:  # 再学習時にステート操作が必要なら追記
-                self.spm_f_eval(PIC_COUNT=300, now=now, iw_shape=iw_shape, relearning=relearning) #第2段階用の画像を撮影
+                self.spm_f_eval(PIC_COUNT=50, now=now, iw_shape=iw_shape, relearning=relearning) #第2段階用の画像を撮影
                 self.state = 5
                 self.laststate = 5
             else:
@@ -707,7 +707,7 @@ class Cansat():
         self.y = self.gps.gpsdis*math.sin(math.radians(self.gps.gpsdegrees))
         theta_goal = self.gps.gpsdegrees
         # phi = theta_goal-self.bno055.ex
-        phi = self.bno055.ex  # 雨用にbnoの値だけをとってくる
+        phi = - self.bno055.ex  # 雨用にbnoの値だけをとってくる
         
         if phi < -180:
             phi += 360
