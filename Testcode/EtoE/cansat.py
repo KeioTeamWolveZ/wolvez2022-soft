@@ -73,6 +73,7 @@ class Cansat():
         self.learn_state = True
         
         #初期パラメータ設定
+        self.startTime_time=time.time()
         self.startTime = str(datetime.now())[:19].replace(" ","_").replace(":","-")
         self.preparingTime = 0
         self.flyingTime = 0
@@ -216,7 +217,7 @@ class Cansat():
             exit()    
  
     def sensor(self): #セットアップ終了後
-        self.timer = int(1000*(time.time() - self.startTime)) #経過時間 (ms)
+        self.timer = int(1000*(time.time() - self.startTime_time)) #経過時間 (ms)
         self.gps.gpsread()
         self.bno055.bnoread()
         self.ax=round(self.bno055.ax,3)
