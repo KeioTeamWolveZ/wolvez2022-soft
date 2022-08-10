@@ -107,13 +107,14 @@ class SPM2Learn():  # second_spm.pyとして実装済み
 
     def fit(self):
         try:
-            train_X2=[]
-            train_X2=np.array(train_X2)
-            for win_no, win in enumerate(self.data_list_all_win):
+            train_X2=self.data_list_all_win[0]
+            for win_no, win in enumerate(self.data_list_all_win[1:]):
+                win_no+=1
                 train_X2=np.vstack([train_X2,win])
-            train_X=train_X2
+#             train_X=train_X2
+            print("SPM2 will be excetuted by integrated model across all windows")
             for win_no, win in enumerate(self.data_list_all_win):
-                train_X = self.scaler_master[win_no].transform(train_X)
+                train_X = self.scaler_master[win_no].transform(train_X2)
                 train_y = np.full((train_X.shape[0], 1), ct.const.SPMSECOND_MIN)
                 # print(self.f1f2_array_window_custom[win_no][0])
                 train_y[-int(self.f1f2_array_window_custom[win_no][1]):int(
@@ -121,7 +122,9 @@ class SPM2Learn():  # second_spm.pyとして実装済み
                 # print(train_X.shape, train_y.shape)
                 self.model_master[win_no].fit(train_X, train_y)
             
-        except Exception:
+        except Exception as e:
+            print(e)
+            print("SPM2 will be excecuted by each model for each window")
             for win_no, win in enumerate(self.data_list_all_win):
                 train_X = win
                 self.scaler_master[win_no] = self.standardization_master[win_no].fit(train_X)
