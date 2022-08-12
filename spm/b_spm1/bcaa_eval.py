@@ -25,7 +25,10 @@ class EvaluateImg(LearnDict):
         scl=StandardScaler()
         scl.fit(Y_rec) # おまじない
         # 0-255の画素値に戻す
-        Y_rec=scl.inverse_transform(Y_rec)*255/(Y_rec.max()-Y_rec.min())+255/2
+        if (Y_rec.max()-Y_rec.min()) == 0:
+            Y_rec=scl.inverse_transform(Y_rec)*255/0.1+255/2
+        else:        
+            Y_rec=scl.inverse_transform(Y_rec)*255/(Y_rec.max()-Y_rec.min())+255/2
         # 配列の整形
         Y_rec=Y_rec.reshape(-1,self.patch_size[0],self.patch_size[1])
         # 画像の復元
