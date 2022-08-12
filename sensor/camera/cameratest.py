@@ -14,7 +14,7 @@ def main(args):
     if args == "0":
         ret,img = cap.read()
         cv2.imwrite('test.jpg', img)
-        
+        print(ret)
     else:
 #         now_time = time.time()
 #         frame_rate = cap.get(cv2.CAP_PROP_FPS)
@@ -25,6 +25,7 @@ def main(args):
 #         writer = cv2.VideoWriter("./result/"+str(now_time)+".mp4",fmt,frame_rate,size)
         while True:
             ret, img = cap.read()
+            
             edges = cv2.Canny(img,100,200)
             for i in range(img.shape[0]):
                 for j in range(img.shape[1]):
