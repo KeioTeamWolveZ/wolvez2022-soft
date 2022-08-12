@@ -89,7 +89,7 @@ class Cansat():
         self.startgps_lon=[]
         self.startgps_lat=[]
         self.risk_list = []
-        self.risk_list_all = []
+        self.risk_list_below = []
         self.risk = [0,0,0,0,0,0]
         
         #ステート管理用変数設定
@@ -683,7 +683,7 @@ class Cansat():
             spm2_predict.start(model_master,test_data_list_all_win,test_label_list_all_win,scaler_master,self.risk_list) #第二段階の評価を実施
             self.risk = spm2_predict.get_score()
             self.risk_list.append(self.risk)
-            self.risk_list_all.append(self.risk)
+            self.risk_list_below.append(self.risk[3:])
             self.risk = np.array(self.risk).reshape(2,3) #win1~win6の危険度マップ作成
             
             if len(self.risk_list) >= ct.const.MOVING_AVERAGE:
@@ -771,10 +771,19 @@ class Cansat():
             direction_goal = 0
 #             print("ゴール方向："+str(direction_goal)+" -> 左に曲がりたい")
         return direction_goal
+    
+    def safe_or_not(self,lower_risk):
+        """
+        ・入力：下半分のwindowのリスク行列（3*1または1*3？ここはロバストに作ります）
+        ・出力：危険=1、安全=0の(入力と同じ次元)
+        """
+        self.threshold_risk = np.average(np.array(self.risk_list_below))+2*np.std(np.array(self.risk_list_below))
+
+        pass
 
     def calc_dir(self,risk,phi):
         # 危険度の閾値を決定
-        self.threshold_risk = np.average(np.array(self.risk_list_all))+2*np.std(np.array(self.risk_list_all))
+        self.threshold_risk = np.average(np.array(self.risk_list_below))+2*np.std(np.array(self.risk_list_below))
         lower_risk = risk[1,:]
         direction_goal = self.decide_direction(phi)
         
