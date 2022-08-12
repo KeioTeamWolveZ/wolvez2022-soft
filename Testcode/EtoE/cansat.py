@@ -186,6 +186,7 @@ class Cansat():
                     + "Risk:"+str(np.array(self.risk).reshape(1,-1)).rjust(6) + ","\
                     + "threadshold_risk:"+str(self.threshold_risk).rjust(6) + ","\
                     + "max_risk:"+str(self.max_risk).rjust(6)+","\
+                    + "boolean_risk:"+str(self.boolean_risk).rjust(6)+","\
                     + "    "\
                     + "Plan:"+str(self.plan_str) + ","\
                     + "rV:"+str(round(self.MotorR.velocity,3)).rjust(6) + ","\
@@ -589,7 +590,7 @@ class Cansat():
                         self.sensor()
                         self.planning(self.risk)
                         self.stuck_detection()#ここは注意
-                    print(f"{fmg_list.index(fmg)} fmg evaluated")
+#                     print(f"{fmg_list.index(fmg)} fmg evaluated")
                     
             self.BLUE_LED.led_on()
             # npzファイル形式で計算結果保存
@@ -747,7 +748,7 @@ class Cansat():
         print("distance:", self.gps.gpsdis)
 
         dir_run = self.calc_dir(risk,phi)
-        print(f"Plan:{self.plan_str}, risk:{risk}, boolean_risk:{self.boolean_risk}")
+        print(f"###Plan:{self.plan_str}, risk:{risk}, boolean_risk:{self.boolean_risk}")
         if dir_run == 0:
 #             print("Left")
             self.MotorR.go(70)
@@ -793,7 +794,6 @@ class Cansat():
             self.max_risk=np.max(np.array(self.risk_list_below))
         except Exception:
             self.max_risk=1000
-        print("### here ###")
         answer_mtx=np.zeros(3)
         for i, risk_scaler in enumerate(lower_risk):
             if risk_scaler >= self.threshold_risk or risk_scaler >= self.max_risk:
@@ -806,9 +806,6 @@ class Cansat():
         
         
         self.boolean_risk = list(self.safe_or_not(lower_risk))
-        print(self.boolean_risk)
-        print(type(self.boolean_risk))
-        print(list(self.boolean_risk))
         
         direction_goal = self.decide_direction(phi)
         dir_run = 0
