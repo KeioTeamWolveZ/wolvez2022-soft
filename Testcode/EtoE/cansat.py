@@ -729,7 +729,6 @@ class Cansat():
         if phi < -180:
             phi += 360
         elif phi > 180:
-            1
             phi -= 360
 #         print("theta_goal:",theta_goal,"ex:",self.bno055.ex)
         print("distance:", self.gps.gpsdis)
