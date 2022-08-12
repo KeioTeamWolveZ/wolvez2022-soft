@@ -47,7 +47,7 @@ def spm_first(img_path=False,npz_dir=None, learn_state=False,patch_size=(24,32),
     for path in import_paths:
         start_time = time()
         
-        now=str(datetime.now())[:19].replace(" ","_").replace(":","-")
+        now=str(datetime.now())[:21].replace(" ","_").replace(":","-")
         print(now)
         saveName = saveDir + f"/bcba_difference/{now}"
         if not os.path.exists(saveName):
