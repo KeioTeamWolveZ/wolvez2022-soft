@@ -184,7 +184,7 @@ class Cansat():
                     + "lV:"+str(round(self.MotorL.velocity,3)).rjust(6) + ","\
                     + "q:"+str(self.bno055.ex).rjust(6) + ","\
                     + "threadshold_risk"+str(self.threshold_risk).rjust(6) + ","\
-                    + "risk_max"+str(self.max_risk).rjust(6)+","\
+                    + "max_risk"+str(self.max_risk).rjust(6)+","\
 
             with open(f'results/{self.startTime}/planning_result.txt',"a")  as test: # [mode] x:ファイルの新規作成、r:ファイルの読み込み、w:ファイルへの書き込み、a:ファイルへの追記
                 test.write(datalog_sparse + '\n')
