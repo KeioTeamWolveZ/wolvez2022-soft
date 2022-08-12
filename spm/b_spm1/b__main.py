@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 from datetime import datetime
 from glob import glob
-from math import prod
+#from math import prod
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 
 from baba_into_window import IntoWindow
@@ -58,7 +58,7 @@ def spm_first(img_path=False,npz_dir=None, learn_state=False,patch_size=(24,32),
         importPath = path.replace("\\", "/")
         
         # This will change such as datetime
-        print("CURRENT FRAME: "+str(re.findall(".*/frame_(.*).jpg", importPath)[0]))
+        #print("CURRENT FRAME: "+str(re.findall(".*/frame_(.*).jpg", importPath)[0]))
         
         iw_shape = (2, 3)
         D, ksvd = None, None
@@ -78,9 +78,9 @@ def spm_first(img_path=False,npz_dir=None, learn_state=False,patch_size=(24,32),
         for fmg in fmg_list:
             # breakout by windows
             iw_list, window_size = iw.breakout(iw.read_img(fmg))
-            feature_name = str(re.findall(temp_dir_name + f"/baca_featuring/(.*)_.*_", fmg)[0])
+            feature_name = str(re.findall(temp_dir_name + "/(.*)_.*_", fmg)[0])
             print("FEATURED BY: ",feature_name)
-            for win in range(int(prod(iw_shape))):
+            for win in range(6):
                 #print("PRAT: ",win+1)
                 if learn_state:
                     if win+1 == int((iw_shape[0]-1)*iw_shape[1]) + int(iw_shape[1]/2) + 1:
@@ -121,7 +121,7 @@ def spm_first(img_path=False,npz_dir=None, learn_state=False,patch_size=(24,32),
         
                     
         if not learn_state:
-            np.savez_compressed(npz_dir+now,array_1=np.array([feature_values]))
+            np.savez_compressed("b-data/bcca_secondinput/8.11pre/"+now,array_1=np.array([feature_values]))
             # np.savez_compressed(saveDir + f"/bczz_h_param/{params}",array_1=np.array([feature_values]))
             #with open(saveDir + f"/bcca_secondinput/"+now, "wb") as tf:
             #    pickle.dump(feature_values, tf)
@@ -129,8 +129,8 @@ def spm_first(img_path=False,npz_dir=None, learn_state=False,patch_size=(24,32),
         end_time = time()
         # Learn state should be changed by main.py
         learn_state = False
-        frame = str(re.findall(".*/frame_(.*).jpg", importPath)[0])
-        print(f"\n\n==={now}_data was evaluated===\nframe number is {frame}.\nIt cost {end_time-start_time} seconds.\n\n")
+        #frame = str(re.findall(".*/frame_(.*).jpg", importPath)[0])
+        #print(f"\n\n==={now}_data was evaluated===\nframe number is {frame}.\nIt cost {end_time-start_time} seconds.\n\n")
         temp_dir.cleanup()
 
 patch=60

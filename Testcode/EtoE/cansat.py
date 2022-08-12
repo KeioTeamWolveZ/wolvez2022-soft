@@ -41,8 +41,7 @@ import constant as ct
 5. spm_second() 第2段階スパースモデリングステート。第一段階で獲得した特徴処理に対する特徴量（1ウィンドウ60個の特徴量、全体で360個の特徴量）から
                 重要な特徴量を抽出。危険度の算出まで可能になる。
 6. running()    経路計画&走行ステート。ステート5まで獲得したモデルで危険度を逐次算出しながら経路を計画。計画した経路を走行。
-7. relearning() 再学習ステート（未実装）。スタックしたら再度学習を行いモデルを更新。
-8. finish()     終了ステート
+7. finish()     終了ステート
 
 """
 
@@ -451,10 +450,10 @@ class Cansat():
                 self.firstevalimgcount += 1
                 
                 if self.state == 4:
-                    self.MotorR.go(70)#走行
+                    self.MotorR.go(74)#走行
                     self.MotorL.go(70)#走行
                     # self.stuck_detection()
-                    time.sleep(0.2)
+                    time.sleep(0.1)
                     self.MotorR.stop()
                     self.MotorL.stop()
                     if i%10 == 0: #10枚撮影する毎にセンサの値取得

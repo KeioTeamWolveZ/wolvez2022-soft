@@ -56,11 +56,11 @@ const.DROPPING_ACC_THRE = 1 #加速度の値
 
 const.SEPARATION_TIME_THRE = 10 #焼き切り時間
 
-const.LANDING_MOTOR_TIME_THRE = 5 #分離シートから離れるためにモータを回転させる時間
+const.LANDING_MOTOR_TIME_THRE = 10 #分離シートから離れるためにモータを回転させる時間
 
 const.SPMFIRST_PIC_COUNT = 1
 
-const.PLANNING_RISK_THRE = 10
+const.PLANNING_RISK_THRE = 50
 
 const.FINISH_DIS_THRE = 1.5
 
