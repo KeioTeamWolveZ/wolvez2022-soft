@@ -177,7 +177,7 @@ class Cansat():
                     + "Time:"+str(self.gps.Time) + ","\
                     + "Lat:"+str(self.gps.Lat).rjust(6) + ","\
                     + "Lng:"+str(self.gps.Lon).rjust(6) + ","\
-                    + "Risk:"+str(self.risk).rjust(6) + ","\
+                    + "Risk:"+str(np.array(self.risk).reshape(1,-1)).rjust(6) + ","\
                     + "Goal Distance:"+str(self.gps.gpsdis).rjust(6) + ","\
                     + "Goal Angle:"+str(self.gps.gpsdegrees).rjust(6) + ","\
                     + "rV:"+str(round(self.MotorR.velocity,3)).rjust(6) + ","\
