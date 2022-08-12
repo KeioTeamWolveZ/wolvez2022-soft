@@ -91,7 +91,8 @@ class Cansat():
         self.risk_list = []
         self.risk_list_below = []
         self.max_risk = -10000000
-        self.risk = [0,0,0,0,0,0]
+        self.risk = [-100,-100,-100,-100,-100,-100]
+#         self.risk = [[0,0,0],[0,0,0]]
         self.plan_str = "not defined"
         
         #ステート管理用変数設定
@@ -427,7 +428,7 @@ class Cansat():
 
         else:#20枚撮影
             if self.state == 4:  # 再学習時にステート操作が必要なら追記
-                self.spm_f_eval(PIC_COUNT=1, now=now, iw_shape=iw_shape, relearning=relearning) #第2段階用の画像を撮影
+                self.spm_f_eval(PIC_COUNT=2, now=now, iw_shape=iw_shape, relearning=relearning) #第2段階用の画像を撮影
                 self.state = 5
                 self.laststate = 5
             else:
@@ -493,7 +494,7 @@ class Cansat():
             
             #if self.state == 4: #ステートが4の場合はセンサの値取得
                 #self.sensor()
-            
+            print(feature_names)
             if feature_names == None: #第一段階学習モード
                 self.camerastate = "captured!"
                 fmg_list = iw.feature_img(frame_num=now,feature_names=feature_names) #特徴抽出。リストに特徴画像が入る
@@ -584,7 +585,7 @@ class Cansat():
                                 feature_values[feature_name][f'win_{win+1}']["kurt"] = 0  # 尖度
                                 feature_values[feature_name][f'win_{win+1}']["skew"] = 0  # 歪度
 
-                    if fmg != fmg_list[-1]:
+                    if fmg != fmg_list[-1] and type(self.risk) == np.ndarray:
                         self.sensor()
                         self.planning(self.risk)
                         self.stuck_detection()#ここは注意
@@ -692,7 +693,7 @@ class Cansat():
             self.risk = spm2_predict.get_score()
             self.risk_list.append(self.risk)
             self.risk_list_below.append(self.risk[3:])
-            self.risk = np.array(self.risk).reshape(2,3) #win1~win6の危険度マップ作成
+#             self.risk = np.array(self.risk).reshape(2,3) #win1~win6の危険度マップ作成
             
             if len(self.risk_list) >= ct.const.MOVING_AVERAGE:
                 self.risk_list = self.risk_list[1:]
@@ -787,18 +788,29 @@ class Cansat():
         ・出力:危険=1、安全=0の(入力と同じ次元)
         """
         self.threshold_risk = np.average(np.array(self.risk_list_below))+2*np.std(np.array(self.risk_list_below))
-        self.max_risk=np.max(np.array(self.risk_list_below))
+        try:
+            self.max_risk=np.max(np.array(self.risk_list_below))
+        except Exception:
+            self.max_risk=1000
+        print("### here ###")
         answer_mtx=np.zeros_like(lower_risk)
         for i, risk_scaler in enumerate(lower_risk):
             if risk_scaler >= self.threshold_risk or risk_scaler >= self.max_risk:
                 answer_mtx[i]=1
         return answer_mtx
 
-    def calc_dir(self,risk,phi):        
-        lower_risk = risk[1,:]
-        self.boolean_risk = self.safe_or_not(lower_risk)
-        direction_goal = self.decide_direction(phi)
+    def calc_dir(self,risk,phi):
+
+        lower_risk = risk[3:]
         
+        
+        self.boolean_risk = list(self.safe_or_not(lower_risk))
+        print(self.boolean_risk)
+        print(type(self.boolean_risk))
+        print(list(self.boolean_risk))
+        
+        direction_goal = self.decide_direction(phi)
+        dir_run = 0
         if self.boolean_risk == [0, 0, 0]:
             self.plan_str = "to goal"
             dir_run = direction_goal
