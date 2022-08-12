@@ -92,6 +92,7 @@ class Cansat():
         self.risk_list_below = []
         self.max_risk = -10000000
         self.risk = [0,0,0,0,0,0]
+        self.plan_str = "not defined"
         
         #ステート管理用変数設定
         self.countFlyLoop = 0
@@ -740,6 +741,7 @@ class Cansat():
         print("distance:", self.gps.gpsdis)
 
         dir_run = self.calc_dir(risk,phi)
+        print(f"Plan:{self.plan_str}, risk:{risk}, boolean_risk:{self.boolean_risk}")
         if dir_run == 0:
 #             print("Left")
             self.MotorR.go(70)
@@ -787,38 +789,42 @@ class Cansat():
             if risk_scaler >= self.threshold_risk or risk_scaler >= self.max_risk:
                 answer_mtx[i]=1
         return answer_mtx
-    def calc_dir(self,risk,phi):
-        # 危険度の閾値を決定
-        self.threshold_risk = np.average(np.array(self.risk_list_below))+2*np.std(np.array(self.risk_list_below))
+
+    def calc_dir(self,risk,phi):        
         lower_risk = risk[1,:]
+        self.boolean_risk = self.safe_or_not(lower_risk)
         direction_goal = self.decide_direction(phi)
         
-        if np.amin(lower_risk) >= self.threshold_risk:
-            print("前方に安全なルートはありません。回転して新たな経路を探索します。")
-            direction_real = 3
-        else:
-            if lower_risk[direction_goal] <= self.threshold_risk:   #ゴール方向の危険度が閾値以下の場合
-                print("go for goal")
-                direction_real = direction_goal
+        if self.boolean_risk == [0, 0, 0]:
+            self.plan_str = "to goal"
+            dir_run = direction_goal
+        elif self.boolean_risk == [1, 0, 0]:
+            self.plan_str = "avoid to right"
+            dir_run = 2
+        elif self.boolean_risk == [0, 1, 0]:
+            if lower_risk[0] > lower_risk[2]:
+                self.plan_str = "avoid to right"
+                dir_run = 2
             else:
-                print("ゴール方向が安全ではありません。別ルートを探索します。")
-                if direction_goal == 0:
-                    if lower_risk[1] <= lower_risk[2]:
-                        direction_real = 1
-                    else:
-                        direction_real = 2
-                elif direction_goal == 1:
-                    if lower_risk[0] <= lower_risk[2]:
-                        direction_real = 0
-                    else:
-                        direction_real = 2
-                elif direction_goal == 2:
-                    if lower_risk[0] <= lower_risk[1]:
-                        direction_real = 0
-                    else:
-                        direction_real = 1
+                self.plan_str = "avoid to left"
+                dir_run = 0
+        elif self.boolean_risk == [0, 0, 1]:
+            self.plan_str = "avoid to left"
+            dir_run = 0
+        elif self.boolean_risk == [1, 1, 0]:
+            self.plan_str = "avoid to right"
+            dir_run = 2
+        elif self.boolean_risk == [1, 0, 1]:
+            self.plan_str = "turning to avoid"
+            dir_run = 3
+        elif self.boolean_risk == [0, 1, 1]:
+            self.plan_str = "avoid to left"
+            dir_run = 0
+        elif self.boolean_risk == [1, 1, 1]:
+            self.plan_str = "turning to avoid"
+            dir_run = 3
                         
-        return direction_real
+        return dir_run
             
     def sendLoRa(self): #通信モジュールの送信を行う関数
         datalog = str(self.state) + ","\
