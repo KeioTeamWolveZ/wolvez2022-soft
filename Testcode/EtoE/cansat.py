@@ -774,8 +774,8 @@ class Cansat():
     
     def safe_or_not(self,lower_risk):
         """
-        ・入力：下半分のwindowのリスク行列（3*1または1*3？ここはロバストに作ります）
-        ・出力：危険=1、安全=0の(入力と同じ次元)
+        ・入力:下半分のwindowのリスク行列（3*1または1*3？ここはロバストに作ります）
+        ・出力:危険=1、安全=0の(入力と同じ次元)
         """
         self.threshold_risk = np.average(np.array(self.risk_list_below))+2*np.std(np.array(self.risk_list_below))
         self.max_risk=np.max(np.array(self.risk_list_below))
