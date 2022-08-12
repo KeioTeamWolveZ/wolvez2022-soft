@@ -90,6 +90,7 @@ class Cansat():
         self.startgps_lat=[]
         self.risk_list = []
         self.risk_list_below = []
+        self.max_risk = -10000000
         self.risk = [0,0,0,0,0,0]
         
         #ステート管理用変数設定
