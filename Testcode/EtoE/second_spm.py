@@ -58,8 +58,8 @@ class SPM2Open_npz():  # second_spm.pyとして実装済み
                 list_master[i].append(list(pic[f_key][w_key].values()))
                 labels=[]
                 for feature in list(pic[f_key][w_key].keys()):
-#                     labels.append(f"{w_key}-{f_key}-{feature}")
-                      labels.append(f"{f_key}")
+                    labels.append(f"{w_key}-{f_key}-{feature}")
+                    #labels.append(f"{f_key}")
                 list_master_label[i].append(labels)
         list_master = np.array(list_master,dtype=object)
         return list_master, list_master_label
@@ -112,6 +112,7 @@ class SPM2Learn():  # second_spm.pyとして実装済み
             train_y2=np.full((train_X_memorization.shape[0],1),ct.const.SPMSECOND_MIN)
             train_y2[-int(self.f1f2_array_window_custom[0][1]):int(
                     -self.f1f2_array_window_custom[0][0])] = ct.const.SPMSECOND_MAX
+            self.scaler_master[0] = self.standardization_master[0].fit(train_X2)
 
             for win_no, win in enumerate(self.data_list_all_win[1:]):
                 win_no+=1
