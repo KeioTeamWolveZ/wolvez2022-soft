@@ -121,10 +121,10 @@ class SPM2Learn():  # second_spm.pyとして実装済み
                 train_y2_win = np.full((train_X_memorization.shape[0], 1), ct.const.SPMSECOND_MIN)
                 train_y2_win[-int(self.f1f2_array_window_custom[win_no][1]):int(
                     -self.f1f2_array_window_custom[win_no][0])] = ct.const.SPMSECOND_MAX
-                train_y2=np.array(train_y2.tolist().append(train_y2_win))
-            
+                train_y2=np.vstack([train_y2,train_y2_win])
+                print(train_y2.shape)
 
-#             train_X=train_X2
+    #             train_X=train_X2
             print("SPM2 will be excetuted by integrated model across all windows")
             train_X=train_X
             train_y=train_y2
@@ -144,8 +144,7 @@ class SPM2Learn():  # second_spm.pyとして実装済み
                     -self.f1f2_array_window_custom[win_no][0])] = ct.const.SPMSECOND_MAX
                 # print(train_X.shape, train_y.shape)
                 self.model_master[win_no].fit(train_X, train_y)
-                pass
-            pass
+
 
     def get_nonzero_w(self):
         self.nonzero_w = []
@@ -156,11 +155,9 @@ class SPM2Learn():  # second_spm.pyとして実装済み
             weight = win_model.coef_
             labels = labels[0]
             for (w, label) in zip(weight, labels):
-                if w > 1:
+                if abs(w) > 1:
                     self.nonzero_w[win_no].append(w)
                     self.nonzero_w_label[win_no].append(label)
-            
-            num_error = 10-len(self.nonzero_w_label[win_no])
                     
         self.nonzero_w_num = np.array([
             [len(self.nonzero_w_label[0]), len(self.nonzero_w_label[1]), len(self.nonzero_w_label[2])],
