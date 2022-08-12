@@ -774,21 +774,18 @@ class Cansat():
 
     def calc_dir(self,risk,phi):
         # 危険度の閾値を決定
-        ## 10フレーム以上走行した場合、
-        if len(self.risk_list_all)<10:
-            threshold_risk = ct.const.PLANNING_RISK_THRE
-        elif np.average(np.array(self.risk_list_all))>=0:
-            threshold_risk = np.average(np.array(self.risk_list_all)) * 1.3
+        if np.average(np.array(self.risk))-np.average(np.array(self.risk_list_all))>=0:
+            self.threshold_risk = np.average(np.array(self.risk_list_all))+np.std(np.array(self.risk_list_all))
         else:
-            threshold_risk = -np.average(np.array(self.risk_list_all)) * 0.7
+            self.threshold_risk = np.average(np.array(self.risk_list_all)) * 0.7
         lower_risk = risk[1,:]
         direction_goal = self.decide_direction(phi)
         
-        if np.amin(lower_risk) >= threshold_risk:
-            print("前方に安全なルートはありません。90度回転して新たな経路を探索します。")
+        if np.amin(lower_risk) >= self.threshold_risk:
+            print("前方に安全なルートはありません。回転して新たな経路を探索します。")
             direction_real = 3
         else:
-            if lower_risk[direction_goal] <= threshold_risk:   #ゴール方向の危険度が閾値以下の場合
+            if lower_risk[direction_goal] <= self.threshold_risk:   #ゴール方向の危険度が閾値以下の場合
                 print("go for goal")
                 direction_real = direction_goal
             else:
