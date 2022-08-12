@@ -777,8 +777,10 @@ class Cansat():
         ## 10フレーム以上走行した場合、
         if len(self.risk_list_all)<10:
             threshold_risk = ct.const.PLANNING_RISK_THRE
+        elif np.average(np.array(self.risk_list_all))>=0:
+            threshold_risk = np.average(np.array(self.risk_list_all)) * 1.3
         else:
-            threshold_risk = np.average(np.array(self.risk_list)) * 1.3
+            threshold_risk = -np.average(np.array(self.risk_list_all)) * 0.7
         lower_risk = risk[1,:]
         direction_goal = self.decide_direction(phi)
         
