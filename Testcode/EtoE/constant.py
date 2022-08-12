@@ -60,7 +60,7 @@ const.LANDING_MOTOR_TIME_THRE = 10 #分離シートから離れるためにモ�
 
 const.SPMFIRST_PIC_COUNT = 1
 
-const.PLANNING_RISK_THRE = 50
+const.PLANNING_RISK_THRE = 200
 
 const.FINISH_DIS_THRE = 1.5
 

@@ -89,7 +89,8 @@ class Cansat():
         self.startgps_lon=[]
         self.startgps_lat=[]
         self.risk_list = []
-        self.risk = 0
+        self.risk_list_all = []
+        self.risk = [0,0,0,0,0,0]
         
         #ステート管理用変数設定
         self.countFlyLoop = 0
@@ -681,18 +682,20 @@ class Cansat():
             spm2_predict = SPM2Evaluate()
             spm2_predict.start(model_master,test_data_list_all_win,test_label_list_all_win,scaler_master,self.risk_list) #第二段階の評価を実施
             self.risk = spm2_predict.get_score()
+            self.risk_list.append(self.risk)
+            self.risk_list_all.append(self.risk)
             self.risk = np.array(self.risk).reshape(2,3) #win1~win6の危険度マップ作成
             
             if len(self.risk_list) >= ct.const.MOVING_AVERAGE:
                 self.risk_list = self.risk_list[1:]
             
             print("===== Risk Map =====")
-            for i in range(self.risk.shape[0]):
-                for j in range(self.risk.shape[1]):
-                    if self.risk[i][j] >= 100:
-                        self.risk[i][j] = 100
-                    elif self.risk[i][j] <= -100:
-                        self.risk[i][j] = -100
+            # for i in range(self.risk.shape[0]):
+            #     for j in range(self.risk.shape[1]):
+            #         if self.risk[i][j] >= 100:
+            #             self.risk[i][j] = 100
+            #         elif self.risk[i][j] <= -100:
+            #             self.risk[i][j] = -100
             print(np.round(self.risk))
     #         # 走行
             self.sensor()
@@ -771,7 +774,11 @@ class Cansat():
 
     def calc_dir(self,risk,phi):
         # 危険度の閾値を決定
-        threshold_risk = ct.const.PLANNING_RISK_THRE
+        ## 10フレーム以上走行した場合、
+        if len(self.risk_list_all)<10:
+            threshold_risk = ct.const.PLANNING_RISK_THRE
+        else:
+            threshold_risk = np.average(np.array(self.risk_list)) * 1.3
         lower_risk = risk[1,:]
         direction_goal = self.decide_direction(phi)
         
