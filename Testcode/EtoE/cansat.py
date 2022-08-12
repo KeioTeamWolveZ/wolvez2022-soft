@@ -778,9 +778,12 @@ class Cansat():
         ・出力：危険=1、安全=0の(入力と同じ次元)
         """
         self.threshold_risk = np.average(np.array(self.risk_list_below))+2*np.std(np.array(self.risk_list_below))
-
-        pass
-
+        self.max_risk=np.max(np.array(self.risk_list_below))
+        answer_mtx=np.zeros_like(lower_risk)
+        for i, risk_scaler in enumerate(lower_risk):
+            if risk_scaler >= self.threshold_risk or risk_scaler >= self.max_risk:
+                answer_mtx[i]=1
+        return answer_mtx
     def calc_dir(self,risk,phi):
         # 危険度の閾値を決定
         self.threshold_risk = np.average(np.array(self.risk_list_below))+2*np.std(np.array(self.risk_list_below))
