@@ -775,7 +775,7 @@ class Cansat():
     def calc_dir(self,risk,phi):
         # 危険度の閾値を決定
         if np.average(np.array(self.risk))-np.average(np.array(self.risk_list_all))>=0:
-            self.threshold_risk = np.average(np.array(self.risk_list_all))+np.std(np.array(self.risk_list_all))
+            self.threshold_risk = np.average(np.array(self.risk_list_all))+2*np.std(np.array(self.risk_list_all))
         else:
             self.threshold_risk = np.average(np.array(self.risk_list_all)) * 0.7
         lower_risk = risk[1,:]
