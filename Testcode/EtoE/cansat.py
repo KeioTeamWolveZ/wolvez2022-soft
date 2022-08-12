@@ -92,6 +92,7 @@ class Cansat():
         self.risk_list_below = []
         self.max_risk = -10000000
         self.risk = [0,0,0,0,0,0]
+        self.plan_str = "not defined"
         
         #ステート管理用変数設定
         self.countFlyLoop = 0
@@ -785,13 +786,38 @@ class Cansat():
             if risk_scaler >= self.threshold_risk or risk_scaler >= self.max_risk:
                 answer_mtx[i]=1
         return answer_mtx
+
     def calc_dir(self,risk,phi):
         # 危険度の閾値を決定
-        self.threshold_risk = np.average(np.array(self.risk_list_below))+2*np.std(np.array(self.risk_list_below))
+        
         lower_risk = risk[1,:]
+        boolean_risk = self.safe_or_not(lower_risk)
         direction_goal = self.decide_direction(phi)
         
-        if np.amin(lower_risk) >= self.threshold_risk:
+        if boolean_risk == [0, 0, 0]:
+            self.plan_str = "to goal"
+            direction_real = direction_goal
+        elif boolean_risk == [1, 0, 0]:
+            self.plan_str = "to goal"
+        elif boolean_risk == [0, 1, 0]:
+            self.plan_str = "to goal"
+        elif boolean_risk == [0, 0, 1]:
+            self.plan_str = "to goal"
+        elif boolean_risk == [1, 1, 0]:
+            self.plan_str = "to goal"
+        elif boolean_risk == [1, 0, 1]:
+            self.plan_str = "to goal"
+        elif boolean_risk == [0, 1, 1]:
+            self.plan_str = "to goal"
+        elif boolean_risk == [1, 1, 1]:
+            print("前方に安全なルートはありません。回転して新たな経路を探索します。")
+            direction_real = 3
+            
+        
+
+
+        # 消す
+        if np.amin(boolean_risk) == 1:
             print("前方に安全なルートはありません。回転して新たな経路を探索します。")
             direction_real = 3
         else:
