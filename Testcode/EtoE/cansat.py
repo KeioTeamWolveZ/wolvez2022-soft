@@ -691,6 +691,7 @@ class Cansat():
             spm2_predict = SPM2Evaluate()
             spm2_predict.start(model_master,test_data_list_all_win,test_label_list_all_win,scaler_master,self.risk_list) #第二段階の評価を実施
             self.risk = spm2_predict.get_score()
+            self.risk = np.array([self.risk[i][0][0] for i in range(6)])
             self.risk_list.append(self.risk)
             self.risk_list_below.append(self.risk[3:])
 #             self.risk = np.array(self.risk).reshape(2,3) #win1~win6の危険度マップ作成
@@ -793,7 +794,7 @@ class Cansat():
         except Exception:
             self.max_risk=1000
         print("### here ###")
-        answer_mtx=np.zeros_like(lower_risk)
+        answer_mtx=np.zeros(3)
         for i, risk_scaler in enumerate(lower_risk):
             if risk_scaler >= self.threshold_risk or risk_scaler >= self.max_risk:
                 answer_mtx[i]=1
@@ -801,7 +802,7 @@ class Cansat():
 
     def calc_dir(self,risk,phi):
 
-        lower_risk = risk[3:]
+        lower_risk = [risk[i] for i in range(3,6)]
         
         
         self.boolean_risk = list(self.safe_or_not(lower_risk))
