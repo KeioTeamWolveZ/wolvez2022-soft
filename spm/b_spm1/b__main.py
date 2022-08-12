@@ -121,7 +121,7 @@ def spm_first(img_path=False,npz_dir=None, learn_state=False,patch_size=(24,32),
         
                     
         if not learn_state:
-            np.savez_compressed("b-data/bcca_secondinput/8.11pre/"+now,array_1=np.array([feature_values]))
+            np.savez_compressed("b-data/bcca_secondinput/pre_data_new/"+now,array_1=np.array([feature_values]))
             # np.savez_compressed(saveDir + f"/bczz_h_param/{params}",array_1=np.array([feature_values]))
             #with open(saveDir + f"/bcca_secondinput/"+now, "wb") as tf:
             #    pickle.dump(feature_values, tf)
