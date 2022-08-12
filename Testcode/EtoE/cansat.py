@@ -574,7 +574,13 @@ class Cansat():
                                 feature_values[feature_name][f'win_{win+1}']["mode"] = 0  # 最頻値
                                 feature_values[feature_name][f'win_{win+1}']["kurt"] = 0  # 尖度
                                 feature_values[feature_name][f'win_{win+1}']["skew"] = 0  # 歪度
-            
+
+                    if fmg != fmg_list[-1]:
+                        self.sensor()
+                        self.planning(self.risk)
+                        self.stuck_detection()#ここは注意
+                    print(f"{fmg_list.index(fmg)} fmg evaluated")
+                    
             self.BLUE_LED.led_on()
             # npzファイル形式で計算結果保存
             if self.state == 4:
@@ -689,6 +695,7 @@ class Cansat():
                         self.risk[i][j] = -100
             print(np.round(self.risk))
     #         # 走行
+            self.sensor()
             self.planning(self.risk)
             self.stuck_detection()#ここは注意
             time_now = time.time()
