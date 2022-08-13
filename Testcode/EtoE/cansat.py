@@ -790,8 +790,18 @@ class Cansat():
         ・出力:危険=1、安全=0の(入力と同じ次元)
         """
         self.threshold_risk = np.average(np.array(self.risk_list_below))+2*np.std(np.array(self.risk_list_below))
+#         if len(self.risk_list_below)<=100:
+#             self.threshold_risk = np.average(np.array(self.risk_list_below))+2*np.std(np.array(self.risk_list_below))
+#         else:
+#             self.threshold_risk = np.average(np.array(self.risk_list_below[-100:]))+2*np.std(np.array(self.risk_list_below[-100:]))
+        
         try:
             self.max_risk=np.max(np.array(self.risk_list_below))
+#             if len(self.risk_list_below)<=100:
+#                 self.max_risk=np.max(np.array(self.risk_list_below))
+#             else:
+#                 self.max_risk=np.max(np.array(self.risk_list_below[-100:]))
+            
         except Exception:
             self.max_risk=1000
         answer_mtx=np.zeros(3)

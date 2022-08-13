@@ -23,7 +23,7 @@ import time
 
 """
 
-state =  4
+state =  0
 
 cansat = Cansat(state)
 cansat.setup()
