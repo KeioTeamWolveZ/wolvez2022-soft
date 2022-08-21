@@ -43,4 +43,7 @@ try:
 except KeyboardInterrupt:
     print("Finished")
     cansat.keyboardinterrupt()
+    time.sleep(1)
+    GPIO.cleanup()
+    time.sleep(1)
     GPIO.cleanup() 

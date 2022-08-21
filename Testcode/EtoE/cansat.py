@@ -3,7 +3,6 @@
 
 from tempfile import TemporaryDirectory
 from xml.dom.pulldom import default_bufsize
-
 from pandas import IndexSlice
 import RPi.GPIO as GPIO
 import sys
@@ -156,7 +155,7 @@ class Cansat():
                   + "Camera:" + str(self.camerastate)
 
         print(print_datalog)
-        
+     
         datalog = str(self.timer) + ","\
                   + "state:"+str(self.state) + ","\
                   + "Time:"+str(self.gps.Time) + ","\
@@ -195,6 +194,8 @@ class Cansat():
 
             with open(f'results/{self.startTime}/planning_result.txt',"a")  as test: # [mode] x:ファイルの新規作成、r:ファイルの読み込み、w:ファイルへの書き込み、a:ファイルへの追記
                 test.write(datalog_sparse + '\n')
+                print("### SPARSE LOG ###",datalog_sparse)
+
 
     def sequence(self):
         if self.state == 0: #センサ系の準備を行う段階。時間経過でステート移行
@@ -415,7 +416,7 @@ class Cansat():
             for fmg in fmg_list:#それぞれの特徴画像に対して処理
                 # breakout by windows
                 iw_list, window_size = iw.breakout(iw.read_img(fmg)) #ブレイクアウト
-                feature_name = str(re.findall(self.saveDir + f"/{self.startTime}/camera_result/first_spm/learn{self.learncount}/processed/(.*)_.*_", fmg)[0])
+                feature_name = str(re.findall(self.saveDir + f"/camera_result/first_spm/learn{self.learncount}/processed/(.*)_.*_", fmg)[0])
                 # print("FEATURED BY: ",feature_name)
 
                 for win in range(int(np.prod(iw_shape))): #それぞれのウィンドウに対して学習を実施
@@ -688,6 +689,9 @@ class Cansat():
             self.GREEN_LED.led_on()
         else:
             SPM2_predict_prepare = SPM2Open_npz()
+            print("ROI start")
+            print(planning_npz)
+            print("ROI ended")
             test_data_list_all_win,test_label_list_all_win = SPM2_predict_prepare.unpack([planning_npz[-1]]) #作成したnpzファイルを取得
             spm2_predict = SPM2Evaluate()
             spm2_predict.start(model_master,test_data_list_all_win,test_label_list_all_win,scaler_master,self.risk_list) #第二段階の評価を実施
@@ -717,8 +721,7 @@ class Cansat():
             if self.gps.gpsdis <= ct.const.FINISH_DIS_THRE:
                 self.state = 7
                 self.laststate = 7
-                self.camerastate = 0
-    
+                
     def finish(self):
         if self.finishTime == 0:
             self.finishTime = time.time()
@@ -883,8 +886,10 @@ class Cansat():
     def keyboardinterrupt(self): #キーボードインタラプト入れた場合に発動する関数
         self.MotorR.stop()
         self.MotorL.stop()
+        GPIO.output(ct.const.SEPARATION_PIN,0) #焼き切りが危ないのでlowにしておく
         self.RED_LED.led_off()
         self.BLUE_LED.led_off()
         self.GREEN_LED.led_off()
         self.cap.release()
+        time.sleep(0.5)
         cv2.destroyAllWindows()
