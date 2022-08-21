@@ -25,7 +25,10 @@ class EvaluateImg(LearnDict):
         scl=StandardScaler()
         scl.fit(Y_rec) # おまじない
         # 0-255の画素値に戻す
-        Y_rec=scl.inverse_transform(Y_rec)*255/(Y_rec.max()-Y_rec.min())+255/2
+        if (Y_rec.max()-Y_rec.min()) == 0:
+            Y_rec=scl.inverse_transform(Y_rec)*255/0.1+255/2
+        else:        
+            Y_rec=scl.inverse_transform(Y_rec)*255/(Y_rec.max()-Y_rec.min())+255/2
         # 配列の整形
         Y_rec=Y_rec.reshape(-1,self.patch_size[0],self.patch_size[1])
         # 画像の復元
@@ -60,10 +63,6 @@ class EvaluateImg(LearnDict):
         val, count = np.unique(diff, return_counts=True)
         index = np.argmax(count)
         mode = val[index]
-<<<<<<< HEAD
-        
-=======
->>>>>>> 6d17e328b705482999f7e93234c1d3a7bdb36b49
         
         # ax3.imshow(diff*255,cmap='gray')
         # ax3.set_title("difference")

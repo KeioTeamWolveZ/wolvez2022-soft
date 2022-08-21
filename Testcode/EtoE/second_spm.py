@@ -58,8 +58,8 @@ class SPM2Open_npz():  # second_spm.pyとして実装済み
                 list_master[i].append(list(pic[f_key][w_key].values()))
                 labels=[]
                 for feature in list(pic[f_key][w_key].keys()):
-#                     labels.append(f"{w_key}-{f_key}-{feature}")
-                      labels.append(f"{f_key}")
+                    # labels.append(f"{w_key}-{f_key}-{feature}")
+                    labels.append(f"{f_key}")
                 list_master_label[i].append(labels)
         list_master = np.array(list_master,dtype=object)
         return list_master, list_master_label
@@ -106,18 +106,47 @@ class SPM2Learn():  # second_spm.pyとして実装済み
             self.scaler_master.append("")
 
     def fit(self):
-        for win_no, win in enumerate(self.data_list_all_win):
-            train_X = win
-            self.scaler_master[win_no] = self.standardization_master[win_no].fit(train_X)
-            train_X = self.scaler_master[win_no].transform(train_X)
-            train_y = np.full((train_X.shape[0], 1), ct.const.SPMSECOND_MIN)
-            # print(self.f1f2_array_window_custom[win_no][0])
-            train_y[-int(self.f1f2_array_window_custom[win_no][1]):int(
-                -self.f1f2_array_window_custom[win_no][0])] = ct.const.SPMSECOND_MAX
-            # print(train_X.shape, train_y.shape)
-            self.model_master[win_no].fit(train_X, train_y)
-            pass
-        pass
+        try:
+            train_X2=self.data_list_all_win[0]
+            train_X_memorization=self.data_list_all_win[0]
+            train_y2=np.full((train_X_memorization.shape[0],1),ct.const.SPMSECOND_MIN)
+            train_y2[-int(self.f1f2_array_window_custom[0][1]):int(
+                    -self.f1f2_array_window_custom[0][0])] = ct.const.SPMSECOND_MAX
+            self.scaler_master[0] = self.standardization_master[0].fit(train_X2)
+
+            for win_no, win in enumerate(self.data_list_all_win[1:]):
+                win_no+=1
+                train_X2=np.vstack([train_X2,win])
+                self.scaler_master[win_no] = self.standardization_master[win_no].fit(train_X2)
+                train_X = self.scaler_master[win_no].transform(train_X2)
+                train_y2_win = np.full((train_X_memorization.shape[0], 1), ct.const.SPMSECOND_MIN)
+                train_y2_win[-int(self.f1f2_array_window_custom[win_no][1]):int(
+                    -self.f1f2_array_window_custom[win_no][0])] = ct.const.SPMSECOND_MAX
+                train_y2=np.vstack([train_y2,train_y2_win])
+                print(train_y2.shape)
+
+    #             train_X=train_X2
+            print("SPM2 will be excetuted by integrated model across all windows")
+            train_X=train_X
+            train_y=train_y2
+            for win_no, win in enumerate(self.data_list_all_win):
+                self.model_master[win_no].fit(train_X, train_y)
+            
+        except Exception as e:
+            print(e)
+            print("SPM2 will be excecuted by each model for each window")
+            for win_no, win in enumerate(self.data_list_all_win):
+                train_X = win
+                self.scaler_master[win_no] = self.standardization_master[win_no].fit(train_X)
+                train_X = self.scaler_master[win_no].transform(train_X)
+                train_y = np.full((train_X.shape[0], 1), ct.const.SPMSECOND_MIN)
+                # print(self.f1f2_array_window_custom[win_no][0])
+                train_y[-int(self.f1f2_array_window_custom[win_no][1]):int(
+                    -self.f1f2_array_window_custom[win_no][0])] = ct.const.SPMSECOND_MAX
+                # print(train_X.shape, train_y.shape)
+                self.model_master[win_no].fit(train_X, train_y)
+
+
     def get_nonzero_w(self):
         self.nonzero_w = []
         self.nonzero_w_label = []
@@ -127,11 +156,9 @@ class SPM2Learn():  # second_spm.pyとして実装済み
             weight = win_model.coef_
             labels = labels[0]
             for (w, label) in zip(weight, labels):
-                if w > 1:
+                if abs(w) > 1:
                     self.nonzero_w[win_no].append(w)
                     self.nonzero_w_label[win_no].append(label)
-            
-            num_error = 10-len(self.nonzero_w_label[win_no])
                     
         self.nonzero_w_num = np.array([
             [len(self.nonzero_w_label[0]), len(self.nonzero_w_label[1]), len(self.nonzero_w_label[2])],
