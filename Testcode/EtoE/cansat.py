@@ -411,11 +411,15 @@ class Cansat():
             
             processed_Dir = f"results/{self.startTime}/camera_result/first_spm/learn{self.learncount}/processed"
             iw = IntoWindow(importPath, processed_Dir, Save) #画像の特徴抽出のインスタンス生成
+            self.img=cv2.imread(importPath, 1)
+            self.img = self.img[int(0.25*self.img.shape[0]):int(0.75*self.img.shape[0])]
+            cv2.imwrite(importPath, self.img)
+            
             # processing img
             fmg_list = iw.feature_img(frame_num=now) #特徴抽出。リストに特徴画像が入る 
             for fmg in fmg_list:#それぞれの特徴画像に対して処理
                 # breakout by windows
-                iw_list, window_size = iw.breakout(iw.read_img(fmg)) #ブレイクアウト
+                iw_list, window_size = iw.breakout(cv2.imread(fmg, cv2.IMREAD_GRAYSCALE)) #ブレイクアウト
                 feature_name = str(re.findall(self.saveDir + f"/camera_result/first_spm/learn{self.learncount}/processed/(.*)_.*_", fmg)[0])
                 # print("FEATURED BY: ",feature_name)
 
@@ -493,6 +497,9 @@ class Cansat():
             tempDir_name = self.tempDir.name
             
             iw = IntoWindow(importPath, tempDir_name, False) #画像の特徴抽出のインスタンス生成
+            self.img=cv2.imread(importPath, 1)
+            self.img = self.img[int(0.25*self.img.shape[0]):int(0.75*self.img.shape[0])]
+            cv2.imwrite(importPath, self.img)
             
             #if self.state == 4: #ステートが4の場合はセンサの値取得
                 #self.sensor()
@@ -502,7 +509,7 @@ class Cansat():
                 fmg_list = iw.feature_img(frame_num=now,feature_names=feature_names) #特徴抽出。リストに特徴画像が入る
                 
                 for fmg in fmg_list:#それぞれの特徴画像に対して処理
-                    iw_list, window_size = iw.breakout(iw.read_img(fmg)) #ブレイクアウト
+                    iw_list, window_size = iw.breakout(cv2.imread(fmg,cv2.IMREAD_GRAYSCALE)) #ブレイクアウト
                     feature_name = str(re.findall(tempDir_name + f"/(.*)_.*_", fmg)[0])
                     
                     # print("FEATURED BY: ",feature_name)
