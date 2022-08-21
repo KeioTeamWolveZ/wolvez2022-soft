@@ -3,7 +3,6 @@
 
 from tempfile import TemporaryDirectory
 from xml.dom.pulldom import default_bufsize
-
 from pandas import IndexSlice
 from sympy import Indexed
 import RPi.GPIO as GPIO
@@ -74,6 +73,7 @@ class Cansat():
         
         #初期パラメータ設定
         self.startTime = time.time()
+        self.startDateTime = datetime.now()
         self.preparingTime = 0
         self.flyingTime = 0
         self.droppingTime = 0
@@ -146,7 +146,7 @@ class Cansat():
                   + "Camera:" + str(self.camerastate)
 
         print(print_datalog)
-        
+     
         datalog = str(self.timer) + ","\
                   + "state:"+str(self.state) + ","\
                   + "Time:"+str(self.gps.Time) + ","\
@@ -163,20 +163,23 @@ class Cansat():
         with open(f'results/{self.startTime}/control_result.txt',"a")  as test: # [mode] x:ファイルの新規作成、r:ファイルの読み込み、w:ファイルへの書き込み、a:ファイルへの追記
             test.write(datalog + '\n')
 
+    def writeSparseData(self,risk): #ログデータ作成。\マークを入れることで改行してもコードを続けて書くことができる   
         if self.state == 6:
             datalog_sparse =  str(self.timer) + ","\
                     + "Time:"+str(self.gps.Time) + ","\
                     + "Lat:"+str(self.gps.Lat).rjust(6) + ","\
                     + "Lng:"+str(self.gps.Lon).rjust(6) + ","\
-                    + "Risk:"+str(self.risk).rjust(6) + ","\
+                    + "Risk:"+str(risk).rjust(6) + ","\
                     + "Goal Distance:"+str(self.gps.gpsdis).rjust(6) + ","\
                     + "Goal Angle:"+str(self.gps.gpsdegrees).rjust(6) + ","\
                     + "rV:"+str(round(self.MotorR.velocity,3)).rjust(6) + ","\
                     + "lV:"+str(round(self.MotorL.velocity,3)).rjust(6) + ","\
-                    + "q:"+str(self.bno055.ex).rjust(6) + ","\
-
-            with open(f'results/{self.startTime}/planning_result.txt',"a")  as test: # [mode] x:ファイルの新規作成、r:ファイルの読み込み、w:ファイルへの書き込み、a:ファイルへの追記
+                    + "q:"+str(self.bno055.ex).rjust(6)# + ","\
+            now=str(self.startDateTime).replace(" ","_").replace(":","-").replace(".","_")[:22]
+            with open(f'results/planning_result{now}.txt',"a")  as test: # [mode] x:ファイルの新規作成、r:ファイルの読み込み、w:ファイルへの書き込み、a:ファイルへの追記
                 test.write(datalog_sparse + '\n')
+                print("### SPARSE LOG ###",datalog_sparse)
+
 
     def sequence(self):
         if self.state == 0: #センサ系の準備を行う段階。時間経過でステート移行
@@ -397,7 +400,7 @@ class Cansat():
             for fmg in fmg_list:#それぞれの特徴画像に対して処理
                 # breakout by windows
                 iw_list, window_size = iw.breakout(iw.read_img(fmg)) #ブレイクアウト
-                feature_name = str(re.findall(self.saveDir + f"/{self.startTime}/camera_result/first_spm/learn{self.learncount}/processed/(.*)_.*_", fmg)[0])
+                feature_name = str(re.findall(self.saveDir + f"/camera_result/first_spm/learn{self.learncount}/processed/(.*)_.*_", fmg)[0])
                 # print("FEATURED BY: ",feature_name)
 
                 for win in range(int(np.prod(iw_shape))): #それぞれのウィンドウに対して学習を実施
@@ -517,7 +520,7 @@ class Cansat():
                 for fmg in fmg_list: #それぞれの特徴画像に対して処理
                     iw_list, window_size = iw.breakout(iw.read_img(fmg)) # ブレイクアウトにより画像を6分割
                     feature_name = str(re.findall(tempDir_name + f"/(.*)_.*_", fmg)[0]) # 特徴処理のみ抽出
-                    print("FEATURED BY: ",feature_name)
+                    # print("FEATURED BY: ",feature_name)
                     for win in range(int(np.prod(iw_shape))): #それぞれのウィンドウに対して評価を実施                            
                         if feature_name in feature_names[win]: #ウィンドウに含まれいていた場合
                             D, ksvd = self.dict_list[feature_name]
@@ -650,6 +653,9 @@ class Cansat():
             self.GREEN_LED.led_on()
         else:
             SPM2_predict_prepare = SPM2Open_npz()
+            print("ROI start")
+            print(planning_npz)
+            print("ROI ended")
             test_data_list_all_win,test_label_list_all_win = SPM2_predict_prepare.unpack([planning_npz[-1]]) #作成したnpzファイルを取得
             spm2_predict = SPM2Evaluate()
             spm2_predict.start(model_master,test_data_list_all_win,test_label_list_all_win,scaler_master,self.risk_list) #第二段階の評価を実施
@@ -659,7 +665,8 @@ class Cansat():
             if len(self.risk_list) >= ct.const.MOVING_AVERAGE:
                 self.risk_list = self.risk_list[1:]
             
-            print("===== Risk Map =====")
+
+    #         # 走行
             for i in range(self.risk.shape[0]):
                 for j in range(self.risk.shape[1]):
                     if self.risk[i][j] >= 100:
@@ -675,8 +682,7 @@ class Cansat():
             if self.gps.gpsdis <= ct.const.FINISH_DIS_THRE:
                 self.state = 7
                 self.laststate = 7
-                self.camerastate = 0
-    
+                
     def finish(self):
         if self.finishTime == 0:
             self.finishTime = time.time()
@@ -705,6 +711,7 @@ class Cansat():
         print("distance:", self.gps.gpsdis)
 
         dir_run = self.calc_dir(risk,phi)
+        
         if dir_run == 0:
 #             print("Left")
             self.MotorR.go(70)
@@ -725,6 +732,8 @@ class Cansat():
             self.MotorR.go(60)
             self.MotorL.go(60)
             time.sleep(1)
+        
+        self.writeSparseData(risk)
 
     def decide_direction(self,phi):
         if phi >= 20:
@@ -804,8 +813,10 @@ class Cansat():
     def keyboardinterrupt(self): #キーボードインタラプト入れた場合に発動する関数
         self.MotorR.stop()
         self.MotorL.stop()
+        GPIO.output(ct.const.SEPARATION_PIN,0) #焼き切りが危ないのでlowにしておく
         self.RED_LED.led_off()
         self.BLUE_LED.led_off()
         self.GREEN_LED.led_off()
         self.cap.release()
+        time.sleep(0.5)
         cv2.destroyAllWindows()

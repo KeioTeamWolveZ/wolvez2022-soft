@@ -35,8 +35,8 @@ const.RUNNING_MOTOR_VREF = 70
 const.STUCK_MOTOR_VREF = 100
 
 ## Variables
-const.GPS_GOAL_LAT = 35.5559391
-const.GPS_GOAL_LON = 139.6525889
+const.GPS_GOAL_LAT = (35.55490833+35.55491333)/2
+const.GPS_GOAL_LON = (139.65601667+139.65601333)/2
 const.f1 = 136
 const.f2 = 196
 const.f3 = 776
@@ -60,7 +60,7 @@ const.LANDING_MOTOR_TIME_THRE = 5 #分離シートから離れるためにモー
 
 const.SPMFIRST_PIC_COUNT = 1
 
-const.PLANNING_RISK_THRE = 10
+const.PLANNING_RISK_THRE = 101
 
 const.FINISH_DIS_THRE = 1.5
 
