@@ -30,7 +30,6 @@ import constant as ct
 
 """
 ステート説明
-
 0. preparing()  準備ステート。センサ系の準備。一定時間以上経過したらステート移行。
 1. flying()     放出準備ステート。フライトピンが接続されている状態（＝ボイド缶に収納されている）。フライトピンが外れたらステート移行。
 2. droping()    降下&着陸判定ステート。加速度センサの値が一定値以下の状態が一定時間続いたら着陸と判定しステート移行。
@@ -41,7 +40,6 @@ import constant as ct
                 重要な特徴量を抽出。危険度の算出まで可能になる。
 6. running()    経路計画&走行ステート。ステート5まで獲得したモデルで危険度を逐次算出しながら経路を計画。計画した経路を走行。
 7. finish()     終了ステート
-
 """
 
 class Cansat():
@@ -466,20 +464,20 @@ class Cansat():
                 self.firstevalimgcount += 1
                 
                 if self.state == 4:
-                    self.MotorR.go(74)#走行
-                    self.MotorL.go(70)#走行
-                    # self.stuck_detection()
-                    time.sleep(0.1)
-                    self.MotorR.stop()
-                    self.MotorL.stop()
-                    if i%10 == 0: #10枚撮影する毎にセンサの値取得
-                        self.camerastate = "captured!"
-                        self.sensor()
-                        self.camerastate = 0
-                # state4の学習時にもBNOベースで走行
-                self.sensor()
-                self.planning(np.array([0,0,0,0,0,0]))
-                self.stuck_detection()#ここは注意
+                    # self.MotorR.go(74)#走行
+                    # self.MotorL.go(70)#走行
+                    # # self.stuck_detection()
+                    # time.sleep(0.1)
+                    # self.MotorR.stop()
+                    # self.MotorL.stop()
+                    # if i%10 == 0: #10枚撮影する毎にセンサの値取得
+                    #     self.camerastate = "captured!"
+                    #     self.sensor()
+                    #     self.camerastate = 0
+                    # state4の学習時にもBNOベースで走行
+                    self.sensor()
+                    self.planning(np.array([0,0,0,0,0,0]))
+                    self.stuck_detection()#ここは注意
 #                     print(f"{fmg_list.index(fmg)} fmg evaluated")
                 
             if not PIC_COUNT == 1:
@@ -607,8 +605,8 @@ class Cansat():
             self.BLUE_LED.led_on()
             # npzファイル形式で計算結果保存
             if self.state == 4:
-                self.savenpz_dir = "/home/pi/Desktop/wolvez2022/pre_data/"
-                # self.savenpz_dir = self.saveDir + f"/{self.startTime}/camera_result/second_spm/learn{self.learncount}/"
+                # self.savenpz_dir = "/home/pi/Desktop/wolvez2022/pre_data/"
+                self.savenpz_dir = self.saveDir + f"/{self.startTime}/camera_result/second_spm/learn{self.learncount}/"
             elif self.state == 6:
                 self.savenpz_dir = self.saveDir + f"/{self.startTime}/camera_result/planning/learn{self.learncount}/planning_npz/"
             
