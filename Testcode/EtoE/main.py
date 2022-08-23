@@ -23,7 +23,7 @@ import time
 
 """
 
-state =  4
+state =  0
 
 cansat = Cansat(state)
 cansat.setup()
@@ -43,4 +43,7 @@ try:
 except KeyboardInterrupt:
     print("Finished")
     cansat.keyboardinterrupt()
+    time.sleep(1)
+    GPIO.cleanup()
+    time.sleep(1)
     GPIO.cleanup() 

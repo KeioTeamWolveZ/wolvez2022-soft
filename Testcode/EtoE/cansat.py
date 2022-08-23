@@ -3,7 +3,6 @@
 
 from tempfile import TemporaryDirectory
 from xml.dom.pulldom import default_bufsize
-
 from pandas import IndexSlice
 import RPi.GPIO as GPIO
 import sys
@@ -156,7 +155,7 @@ class Cansat():
                   + "Camera:" + str(self.camerastate)
 
         print(print_datalog)
-        
+     
         datalog = str(self.timer) + ","\
                   + "state:"+str(self.state) + ","\
                   + "Time:"+str(self.gps.Time) + ","\
@@ -195,6 +194,8 @@ class Cansat():
 
             with open(f'results/{self.startTime}/planning_result.txt',"a")  as test: # [mode] x:ファイルの新規作成、r:ファイルの読み込み、w:ファイルへの書き込み、a:ファイルへの追記
                 test.write(datalog_sparse + '\n')
+                print("### SPARSE LOG ###",datalog_sparse)
+
 
     def sequence(self):
         if self.state == 0: #センサ系の準備を行う段階。時間経過でステート移行
@@ -410,12 +411,16 @@ class Cansat():
             
             processed_Dir = f"results/{self.startTime}/camera_result/first_spm/learn{self.learncount}/processed"
             iw = IntoWindow(importPath, processed_Dir, Save) #画像の特徴抽出のインスタンス生成
+            self.img=cv2.imread(importPath, 1)
+            self.img = self.img[int(0.25*self.img.shape[0]):int(0.75*self.img.shape[0])]
+            cv2.imwrite(importPath, self.img)
+            
             # processing img
             fmg_list = iw.feature_img(frame_num=now) #特徴抽出。リストに特徴画像が入る 
             for fmg in fmg_list:#それぞれの特徴画像に対して処理
                 # breakout by windows
-                iw_list, window_size = iw.breakout(iw.read_img(fmg)) #ブレイクアウト
-                feature_name = str(re.findall(self.saveDir + f"/{self.startTime}/camera_result/first_spm/learn{self.learncount}/processed/(.*)_.*_", fmg)[0])
+                iw_list, window_size = iw.breakout(cv2.imread(fmg, cv2.IMREAD_GRAYSCALE)) #ブレイクアウト
+                feature_name = str(re.findall(self.saveDir + f"/camera_result/first_spm/learn{self.learncount}/processed/(.*)_.*_", fmg)[0])
                 # print("FEATURED BY: ",feature_name)
 
                 for win in range(int(np.prod(iw_shape))): #それぞれのウィンドウに対して学習を実施
@@ -427,7 +432,7 @@ class Cansat():
                         # cv2.imwrite(save_name, iw_list[win])
             self.learn_state = False
 
-        else:#20枚撮影
+        else:# PIC_COUNT枚撮影
             if self.state == 4:  # 再学習時にステート操作が必要なら追記
                 self.spm_f_eval(PIC_COUNT=1, now=now, iw_shape=iw_shape, relearning=relearning) #第2段階用の画像を撮影
                 self.state = 5
@@ -492,6 +497,9 @@ class Cansat():
             tempDir_name = self.tempDir.name
             
             iw = IntoWindow(importPath, tempDir_name, False) #画像の特徴抽出のインスタンス生成
+            self.img=cv2.imread(importPath, 1)
+            self.img = self.img[int(0.25*self.img.shape[0]):int(0.75*self.img.shape[0])]
+            cv2.imwrite(importPath, self.img)
             
             #if self.state == 4: #ステートが4の場合はセンサの値取得
                 #self.sensor()
@@ -501,23 +509,27 @@ class Cansat():
                 fmg_list = iw.feature_img(frame_num=now,feature_names=feature_names) #特徴抽出。リストに特徴画像が入る
                 
                 for fmg in fmg_list:#それぞれの特徴画像に対して処理
-                    iw_list, window_size = iw.breakout(iw.read_img(fmg)) #ブレイクアウト
+                    iw_list, window_size = iw.breakout(cv2.imread(fmg,cv2.IMREAD_GRAYSCALE)) #ブレイクアウト
                     feature_name = str(re.findall(tempDir_name + f"/(.*)_.*_", fmg)[0])
                     
                     # print("FEATURED BY: ",feature_name)
                     
+                    D, ksvd = self.dict_list[feature_name]
                     for win in range(int(np.prod(iw_shape))): #それぞれのウィンドウに対して評価を実施
-                        D, ksvd = self.dict_list[feature_name]
 
-                        ei = EvaluateImg(iw_list[win])
-                        img_rec = ei.reconstruct(D, ksvd, window_size)
-                        saveName = self.saveDir + f"/{self.startTime}/camera_result/first_spm/learn{self.learncount}/processed/difference"
-                        if not os.path.exists(saveName):
-                            os.mkdir(saveName)
-                        saveName = self.saveDir + f"/{self.startTime}/camera_result/first_spm/learn{self.learncount}/processed/difference/{now}"
-                        if not os.path.exists(saveName):
-                            os.mkdir(saveName)
-                        ave, med, var, mode, kurt, skew = ei.evaluate(iw_list[win], img_rec, win+1, feature_name, now, self.saveDir)
+                        # win_1~3は特徴量算出を行わない
+                        if win not in [0,1,2]:
+                            ei = EvaluateImg(iw_list[win])
+                            img_rec = ei.reconstruct(D, ksvd, window_size)
+                            saveName = self.saveDir + f"/{self.startTime}/camera_result/first_spm/learn{self.learncount}/processed/difference"
+                            if not os.path.exists(saveName):
+                                os.mkdir(saveName)
+                            saveName = self.saveDir + f"/{self.startTime}/camera_result/first_spm/learn{self.learncount}/processed/difference/{now}"
+                            if not os.path.exists(saveName):
+                                os.mkdir(saveName)
+                            ave, med, var, mode, kurt, skew = ei.evaluate(iw_list[win], img_rec, win+1, feature_name, now, self.saveDir)
+                        else :
+                            ave, med, var, mode, kurt, skew = 0, 0, 0, 0, 0, 0
 
                         feature_values[feature_name][f'win_{win+1}'] = {}
                         feature_values[feature_name][f'win_{win+1}']["var"] = ave  # 平均値
@@ -542,11 +554,11 @@ class Cansat():
                 fmg_list = iw.feature_img(frame_num=now,feature_names=features) # 特徴抽出。リストに特徴画像が入る
 
                 for fmg in fmg_list: #それぞれの特徴画像に対して処理
-                    iw_list, window_size = iw.breakout(iw.read_img(fmg)) # ブレイクアウトにより画像を6分割
+                    iw_list, window_size = iw.breakout(cv2.imread(fmg,cv2.IMREAD_GRAYSCALE)) # ブレイクアウトにより画像を6分割
                     feature_name = str(re.findall(tempDir_name + f"/(.*)_.*_", fmg)[0]) # 特徴処理のみ抽出
                     # print("FEATURED BY: ",feature_name)
-                    for win in range(int(np.prod(iw_shape))): #それぞれのウィンドウに対して評価を実施                            
-                        if feature_name in feature_names[win]: #ウィンドウに含まれいていた場合
+                    for win in range(int(np.prod(iw_shape))): #それぞれのウィンドウに対して評価を実施
+                        if feature_name in feature_names[win] and win not in [0,1,2]: #ウィンドウに含まれいていた場合
                             D, ksvd = self.dict_list[feature_name]
                             ei = EvaluateImg(iw_list[win])
                             img_rec = ei.reconstruct(D, ksvd, window_size)
@@ -557,24 +569,19 @@ class Cansat():
     #                         if not os.path.exists(saveName):
     #                             os.mkdir(saveName)
                             ave, med, var, mode, kurt, skew = ei.evaluate(iw_list[win], img_rec, win+1, feature_name, now, self.saveDir)
-    #                         
-                            feature_values[feature_name][f'win_{win+1}'] = {}
-                            feature_values[feature_name][f'win_{win+1}']["var"] = ave  # 平均値
-                            feature_values[feature_name][f'win_{win+1}']["med"] = med  # 中央値
-                            feature_values[feature_name][f'win_{win+1}']["ave"] = var  # 分散値
-                            feature_values[feature_name][f'win_{win+1}']["mode"] = mode  # 最頻値
-                            feature_values[feature_name][f'win_{win+1}']["kurt"] = kurt  # 尖度
-                            feature_values[feature_name][f'win_{win+1}']["skew"] = skew  # 歪度
-                            
+
                         else:
-                            feature_values[feature_name][f'win_{win+1}'] = {}
-                            feature_values[feature_name][f'win_{win+1}']["var"] = 0  # 平均値
-                            feature_values[feature_name][f'win_{win+1}']["med"] = 0  # 中央値
-                            feature_values[feature_name][f'win_{win+1}']["ave"] = 0  # 分散値
-                            feature_values[feature_name][f'win_{win+1}']["mode"] = 0  # 最頻値
-                            feature_values[feature_name][f'win_{win+1}']["kurt"] = 0  # 尖度
-                            feature_values[feature_name][f'win_{win+1}']["skew"] = 0  # 歪度
-                                    
+                            ave, med, var, mode, kurt, skew = 0, 0, 0, 0, 0, 0
+
+
+                        feature_values[feature_name][f'win_{win+1}'] = {}
+                        feature_values[feature_name][f'win_{win+1}']["var"] = ave  # 平均値
+                        feature_values[feature_name][f'win_{win+1}']["med"] = med  # 中央値
+                        feature_values[feature_name][f'win_{win+1}']["ave"] = var  # 分散値
+                        feature_values[feature_name][f'win_{win+1}']["mode"] = mode  # 最頻値
+                        feature_values[feature_name][f'win_{win+1}']["kurt"] = kurt  # 尖度
+                        feature_values[feature_name][f'win_{win+1}']["skew"] = skew  # 歪度
+                                
                     for feature_name in feature_list:
                         if feature_name not in features:
                             for win in range(int(np.prod(iw_shape))): #それぞれのウィンドウに対して評価を実施
@@ -688,6 +695,9 @@ class Cansat():
             self.GREEN_LED.led_on()
         else:
             SPM2_predict_prepare = SPM2Open_npz()
+            print("ROI start")
+            print(planning_npz)
+            print("ROI ended")
             test_data_list_all_win,test_label_list_all_win = SPM2_predict_prepare.unpack([planning_npz[-1]]) #作成したnpzファイルを取得
             spm2_predict = SPM2Evaluate()
             spm2_predict.start(model_master,test_data_list_all_win,test_label_list_all_win,scaler_master,self.risk_list) #第二段階の評価を実施
@@ -717,8 +727,7 @@ class Cansat():
             if self.gps.gpsdis <= ct.const.FINISH_DIS_THRE:
                 self.state = 7
                 self.laststate = 7
-                self.camerastate = 0
-    
+                
     def finish(self):
         if self.finishTime == 0:
             self.finishTime = time.time()
@@ -790,8 +799,18 @@ class Cansat():
         ・出力:危険=1、安全=0の(入力と同じ次元)
         """
         self.threshold_risk = np.average(np.array(self.risk_list_below))+2*np.std(np.array(self.risk_list_below))
+#         if len(self.risk_list_below)<=100:
+#             self.threshold_risk = np.average(np.array(self.risk_list_below))+2*np.std(np.array(self.risk_list_below))
+#         else:
+#             self.threshold_risk = np.average(np.array(self.risk_list_below[-100:]))+2*np.std(np.array(self.risk_list_below[-100:]))
+        
         try:
             self.max_risk=np.max(np.array(self.risk_list_below))
+#             if len(self.risk_list_below)<=100:
+#                 self.max_risk=np.max(np.array(self.risk_list_below))
+#             else:
+#                 self.max_risk=np.max(np.array(self.risk_list_below[-100:]))
+            
         except Exception:
             self.max_risk=1000
         answer_mtx=np.zeros(3)
@@ -873,8 +892,10 @@ class Cansat():
     def keyboardinterrupt(self): #キーボードインタラプト入れた場合に発動する関数
         self.MotorR.stop()
         self.MotorL.stop()
+        GPIO.output(ct.const.SEPARATION_PIN,0) #焼き切りが危ないのでlowにしておく
         self.RED_LED.led_off()
         self.BLUE_LED.led_off()
         self.GREEN_LED.led_off()
         self.cap.release()
+        time.sleep(0.5)
         cv2.destroyAllWindows()
