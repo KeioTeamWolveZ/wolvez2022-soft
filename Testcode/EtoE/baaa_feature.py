@@ -235,7 +235,7 @@ class Feature_img():
                 if g*g+r*b != 0:
                     rgbvi = (g*g-r*b)/(g*g+r*b)     # ここがGRVIの計算式
                 else:
-                    rgbvi = 0 
+                    rgbvi = (g*g-r*b)/0.01 
                 self.vari_list_np[i][j] = rgbvi
                 self.output_img[i][j] = np.uint8(self.rgbvi_list_np[i][j])
         self.save_name = self.sav_d + f"/rgbvi_{self.frame_num}.jpg"
