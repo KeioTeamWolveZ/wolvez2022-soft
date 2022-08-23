@@ -8,11 +8,28 @@ GPIO.setmode(GPIO.BCM) #GPIOの設定
 bno055 = bno055.BNO055()
 bno055.setupBno()
 
+
+# bno055.setupBno()
+
 if bno055.begin() is not True:
     print("Error initializing device")
     exit()
     
 try:
+    while True:
+        bno_sys, bno_gyr, bno_acc, bno_mag = bno055.getCalibration()
+        print(bno055.getCalibration())
+        print(bno_sys)
+        time.sleep(0.1)
+        if bno_mag == 3:
+            print("### End Calibration")
+            print("### Set Zero")
+            time.sleep(5)
+#             bno055.bnoInitial()
+            print("### Finish Setting")
+#             time.sleep(5)
+            break
+        
     while True:
         bno055.bnoread()
         bno055.ax=round(bno055.ax,3)
@@ -34,7 +51,7 @@ try:
               +"ey="+str(bno055.ey)+","\
               +"ez="+str(bno055.ez)
         print(euler) 
-              
+        print(bno055.getCalibration())      
         time.sleep(0.5)
 except KeyboardInterrupt:
     GPIO.cleanup()

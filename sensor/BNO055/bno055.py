@@ -11,6 +11,7 @@ class BNO055:
         self.gx=0.0
         self.gy=0.0
         self.gz=0.0
+        self.ex_ini = 0.0
     
     BNO055_ADDRESS_A                = 0x28
     BNO055_ADDRESS_B                = 0x29
@@ -196,11 +197,14 @@ class BNO055:
     def __init__(self, sensorId=-1, address=0x28):
         self._sensorId = sensorId
         self._address = address
-        self._mode = BNO055.OPERATION_MODE_NDOF
+#         self._mode = BNO055.OPERATION_MODE_NDOF
+        self._mode = BNO055.OPERATION_MODE_COMPASS
+        self.ex_ini = 0.0
 
 
     def begin(self, mode=None):
-        if mode is None: mode = BNO055.OPERATION_MODE_NDOF
+#         if mode is None: mode = BNO055.OPERATION_MODE_NDOF
+        if mode is None: mode = BNO055.OPERATION_MODE_COMPASS
         # Open I2C bus
         self._bus = smbus.SMBus(1)
 
@@ -301,3 +305,10 @@ class BNO055:
         self.ax,self.ay,self.az = self.getVector(BNO055.VECTOR_GYROSCOPE)
         self.gx,self.gy,self.gz = self.getVector(BNO055.VECTOR_GRAVITY)
         self.ex,self.ey,self.ez = self.getVector(BNO055.VECTOR_EULER)
+        self.ex -= self.ex_ini
+        if self.ex < 0:
+            self.ex += 360
+        
+    def bnoInitial(self):
+        self.ex,self.ey,self.ez = self.getVector(BNO055.VECTOR_EULER)
+        self.ex_ini = self.ex
