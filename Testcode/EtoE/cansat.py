@@ -434,7 +434,7 @@ class Cansat():
 
         else:# PIC_COUNT枚撮影
             if self.state == 4:  # 再学習時にステート操作が必要なら追記
-                self.spm_f_eval(PIC_COUNT=1, now=now, iw_shape=iw_shape, relearning=relearning) #第2段階用の画像を撮影
+                self.spm_f_eval(PIC_COUNT=50, now=now, iw_shape=iw_shape, relearning=relearning) #第2段階用の画像を撮影
                 self.state = 5
                 self.laststate = 5
             else:
@@ -476,6 +476,11 @@ class Cansat():
                         self.camerastate = "captured!"
                         self.sensor()
                         self.camerastate = 0
+                # state4の学習時にもBNOベースで走行
+                self.sensor()
+                self.planning(np.array([0,0,0,0,0,0]))
+                self.stuck_detection()#ここは注意
+#                     print(f"{fmg_list.index(fmg)} fmg evaluated")
                 
             if not PIC_COUNT == 1:
                 second_img_paths = sorted(glob(f"results/{self.startTime}/camera_result/first_spm/learn{self.learncount}/evaluate/evaluateimg*.jpg"))
