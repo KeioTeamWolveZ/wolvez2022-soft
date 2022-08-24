@@ -506,7 +506,6 @@ class Cansat():
             
             #if self.state == 4: #ステートが4の場合はセンサの値取得
                 #self.sensor()
-            print(feature_names)
             if feature_names == None: #第一段階学習モード
                 self.camerastate = "captured!"
                 fmg_list = iw.feature_img(frame_num=now,feature_names=feature_names) #特徴抽出。リストに特徴画像が入る
