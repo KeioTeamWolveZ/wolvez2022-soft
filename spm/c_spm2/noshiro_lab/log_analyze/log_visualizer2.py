@@ -16,7 +16,7 @@ csv_data_master=csv_data_master.T
 
 for i, window in enumerate(csv_data_master[:6]):
     plt.plot(np.arange(0,len(window)),window,label=f"win_{i+1}")
-plt.plot(np.arange(0,len(csv_data_master[6])),csv_data_master[6],label="threadshold_risk",lw=4)
+plt.plot(np.arange(0,len(csv_data_master[6])),csv_data_master[6],label="threshold_risk",lw=4)
 plt.plot(np.arange(0,len(csv_data_master[7])),csv_data_master[7],label="max_risk",lw=4)
 plt.title(f"experiment no.{no}")
 plt.xlabel("frames")
