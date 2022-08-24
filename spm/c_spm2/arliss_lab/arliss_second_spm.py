@@ -14,7 +14,6 @@ from datetime import datetime
 class SPM2Open_npz():  # second_spm.pyとして実装済み
     def unpack(self, files):
         print("===== npzファイルの解体 =====")
-        print("読み込むフレーム数 : ", len(files))
         data_list_all_time = []
         label_list_all_time = []
         for file in files:
@@ -23,11 +22,18 @@ class SPM2Open_npz():  # second_spm.pyとして実装済み
             label_list_all_time.append(label_list_per_pic)
         data_list_all_time = np.array(data_list_all_time)
         label_list_all_time = np.array(label_list_all_time)
+        print("フレーム数 : ", len(files))
+        try:
+            print(f"window数 : {len(data_list_all_time[0])}")
+        except IndexError:
+            print("npz内部にデータを確認できませんでした。破損等がないか確認してください。")
 
         print("===== windowごとに集計 =====")
-        print("window数 : 6 (固定中。変更の場合はコード編集が必要）")
-        self.data_list_all_win = [[], [], [], [], [], []]
-        self.label_list_all_win = [[], [], [], [], [], []]
+        self.data_list_all_win=[]
+        self.label_list_all_win=[]
+        for i in range(len(data_list_all_time[0])):
+            self.data_list_all_win.append([])
+            self.label_list_all_win.append([])
         for pic, lab_pic in zip(data_list_all_time, label_list_all_time):
             for win_no, (win, label_win) in enumerate(zip(pic, lab_pic)):
                 self.data_list_all_win[win_no].append(win.flatten())
@@ -241,3 +247,9 @@ class SPM2Evaluate():  # 藤井さんの行動計画側に移設予定
                 self.nonzero_w_label[4]), len(self.nonzero_w_label[5])]
         ])
         return self.nonzero_w, self.nonzero_w_label, self.nonzero_w_num
+
+npz_path="/Users/hayashidekazuyuki/Desktop/Git_Win_Air/wolvez2022/Testcode/EtoE/results/camera_result/planning/learn1/planning_npz"
+files=glob.glob(npz_path+"/*")
+spm2_prepare = SPM2Open_npz()
+
+spm2_prepare.unpack(files)
