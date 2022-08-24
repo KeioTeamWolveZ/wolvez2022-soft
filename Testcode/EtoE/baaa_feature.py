@@ -235,7 +235,7 @@ class Feature_img():
                 if g*g+r*b != 0:
                     rgbvi = (g*g-r*b)/(g*g+r*b)     # ここがGRVIの計算式
                 else:
-                    rgbvi = 0 
+                    rgbvi = (g*g-r*b)/0.01 
                 self.vari_list_np[i][j] = rgbvi
                 self.output_img[i][j] = np.uint8(self.rgbvi_list_np[i][j])
         self.save_name = self.sav_d + f"/rgbvi_{self.frame_num}.jpg"
@@ -271,7 +271,7 @@ class Feature_img():
                 b = float(self.org_img[i][j][0])
                 g = float(self.org_img[i][j][1])
                 r = float(self.org_img[i][j][2])
-                ior = (g-r)/(g+r)     # ここがGRVIの計算式
+                ior = r/b     # ここがGRVIの計算式
                 self.ior_list_np[i][j] = ior
                 self.output_img[i][j] = np.uint8(self.ior_list_np[i][j])
         self.save_name = self.sav_d + f"/ior_{self.frame_num}.jpg"
