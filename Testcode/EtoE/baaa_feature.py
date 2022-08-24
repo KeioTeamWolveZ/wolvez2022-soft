@@ -1,5 +1,4 @@
 import cv2
-from pyrsistent import s
 import numpy as np
 import os
 from PIL import Image
@@ -82,7 +81,7 @@ class ReadFeaturedImg():
     def read_img(self, path):
         #print("===== func read_img starts =====")
         self.img=cv2.imread(path,cv2.IMREAD_GRAYSCALE)
-        self.img = self.img[int(0.5*self.img.shape[0]):]
+        self.img = self.img[int(0.25*self.img.shape[0]):int(0.75*self.img.shape[0])]
         # 読み込めないエラーが生じた際のロバスト性も検討したい
         return self.img
 
@@ -206,7 +205,7 @@ class Feature_img():
                 self.vari_list_np[i][j] = 100*(self.vari_list_np[i][j] - vari_min)/(vari_max - vari_min)
                 if self.vari_list_np[i][j] > 1.0:
                     self.vari_list_np[i][j] = 1.0
-                self.vari_list_np[i][j] = 255*self.vari_list_np[i][j]
+                self.vari_list_np[i][j] = int(255*self.vari_list_np[i][j])
                 # print(self.vari_list_np[i][j])
                 # print(np.uint8(self.vari_list_np[i][j]))
                 self.output_img[i][j] = np.uint8(self.vari_list_np[i][j])
@@ -237,7 +236,7 @@ class Feature_img():
                     rgbvi = (g*g-r*b)/(g*g+r*b)     # ここがGRVIの計算式
                 else:
                     rgbvi = 0 
-                self.vari_list_np[i][j] = rgbvi
+                self.rgbvi_list_np[i][j] = int(rgbvi)
                 self.output_img[i][j] = np.uint8(self.rgbvi_list_np[i][j])
         self.save_name = self.sav_d + f"/rgbvi_{self.frame_num}.jpg"
         cv2.imwrite(self.save_name, self.output_img)
@@ -272,7 +271,7 @@ class Feature_img():
                 b = float(self.org_img[i][j][0])
                 g = float(self.org_img[i][j][1])
                 r = float(self.org_img[i][j][2])
-                ior = (g-r)/(g+r)     # ここがGRVIの計算式
+                ior = r/b     # ここがGRVIの計算式
                 self.ior_list_np[i][j] = ior
                 self.output_img[i][j] = np.uint8(self.ior_list_np[i][j])
         self.save_name = self.sav_d + f"/ior_{self.frame_num}.jpg"
