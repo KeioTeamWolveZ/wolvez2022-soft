@@ -1,5 +1,2 @@
-number_win=3
-data_list_all_win=[]
-for i in range (number_win):
-    data_list_all_win.append([])
-print(data_list_all_win)
+dictionary={"key1":"value1","key2":"value1","key3":"value1",}
+print(len(dictionary))

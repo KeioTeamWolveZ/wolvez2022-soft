@@ -52,10 +52,13 @@ class SPM2Open_npz():  # second_spm.pyとして実装済み
 
     def load(self, file):
         pic = np.load(file, allow_pickle=True)['array_1'][0]
-        # pprint(pic)
+        num_win=len(pic[next(iter(pic))])
+        list_master=[]
+        list_master_label=[]
+        for i in range(num_win):
+            list_master.append([])
+            list_master_label.append([])
         feature_keys = list(pic.keys())
-        list_master = [[], [], [], [], [], []]
-        list_master_label = [[], [], [], [], [], []]
         for f_key in feature_keys:
             window_keys = list(pic[f_key].keys())
             for i, w_key in enumerate(window_keys):
