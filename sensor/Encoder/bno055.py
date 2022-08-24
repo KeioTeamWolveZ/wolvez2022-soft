@@ -196,9 +196,11 @@ class BNO055:
         self._sensorId = sensorId
         self._address = address
         self._mode = BNO055.OPERATION_MODE_NDOF
+#         self._mode = BNO055.OPERATION_MODE_MAGONLY
     
     def begin(self, mode=None):
         if mode is None: mode = BNO055.OPERATION_MODE_NDOF
+#         if mode is None: mode = BNO055.OPERATION_MODE_MAGONLY
         # Open I2C bus
         self._bus = smbus.SMBus(1)
         

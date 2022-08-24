@@ -4,7 +4,6 @@
 from tempfile import TemporaryDirectory
 from xml.dom.pulldom import default_bufsize
 from pandas import IndexSlice
-from sympy import Indexed
 import RPi.GPIO as GPIO
 import sys
 import cv2
@@ -15,6 +14,7 @@ import re
 import math
 from datetime import datetime
 from glob import glob
+import shutil
 # from math import prod
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 
@@ -30,7 +30,6 @@ import constant as ct
 
 """
 ステート説明
-
 0. preparing()  準備ステート。センサ系の準備。一定時間以上経過したらステート移行。
 1. flying()     放出準備ステート。フライトピンが接続されている状態（＝ボイド缶に収納されている）。フライトピンが外れたらステート移行。
 2. droping()    降下&着陸判定ステート。加速度センサの値が一定値以下の状態が一定時間続いたら着陸と判定しステート移行。
@@ -40,9 +39,7 @@ import constant as ct
 5. spm_second() 第2段階スパースモデリングステート。第一段階で獲得した特徴処理に対する特徴量（1ウィンドウ60個の特徴量、全体で360個の特徴量）から
                 重要な特徴量を抽出。危険度の算出まで可能になる。
 6. running()    経路計画&走行ステート。ステート5まで獲得したモデルで危険度を逐次算出しながら経路を計画。計画した経路を走行。
-7. relearning() 再学習ステート（未実装）。スタックしたら再度学習を行いモデルを更新。
-8. finish()     終了ステート
-
+7. finish()     終了ステート
 """
 
 class Cansat():
@@ -72,8 +69,8 @@ class Cansat():
         self.learn_state = True
         
         #初期パラメータ設定
-        self.startTime = time.time()
-        self.startDateTime = datetime.now()
+        self.startTime_time=time.time()
+        self.startTime = str(datetime.now())[:19].replace(" ","_").replace(":","-")
         self.preparingTime = 0
         self.flyingTime = 0
         self.droppingTime = 0
@@ -89,6 +86,11 @@ class Cansat():
         self.startgps_lon=[]
         self.startgps_lat=[]
         self.risk_list = []
+        self.risk_list_below = []
+        self.max_risk = -10000000
+        self.risk = [-100,-100,-100,-100,-100,-100]
+#         self.risk = [[0,0,0],[0,0,0]]
+        self.plan_str = "not defined"
         
         #ステート管理用変数設定
         self.countFlyLoop = 0
@@ -103,22 +105,38 @@ class Cansat():
         self.goallon = ct.const.GPS_GOAL_LON
         self.saveDir = "results"
         self.mkdir()
+        self.mkfile()
+        self.mvfile()
 
     def mkdir(self): #フォルダ作成部分
-        folder_paths =[f"results/camera_result/first_spm",
-                       f"results/camera_result/first_spm/learn{self.learncount}",
-                       f"results/camera_result/first_spm/learn{self.learncount}/evaluate",
-                       f"results/camera_result/first_spm/learn{self.learncount}/processed",
-                       f"results/camera_result/second_spm",
-                       f"results/camera_result/second_spm/learn{self.learncount}",
-                       f"results/camera_result/planning",
-                       f"results/camera_result/planning/learn{self.learncount}",
-                       f"results/camera_result/planning/learn{self.learncount}/planning_npz",
-                       f"results/camera_result/planning/learn{self.learncount}/planning_pics"]
+        folder_paths =[f"results/{self.startTime}",
+                       f"results/{self.startTime}/camera_result",
+                       f"results/{self.startTime}/camera_result/first_spm",
+                       f"results/{self.startTime}/camera_result/first_spm/learn{self.learncount}",
+                       f"results/{self.startTime}/camera_result/first_spm/learn{self.learncount}/evaluate",
+                       f"results/{self.startTime}/camera_result/first_spm/learn{self.learncount}/processed",
+                       f"results/{self.startTime}/camera_result/second_spm",
+                       f"results/{self.startTime}/camera_result/second_spm/learn{self.learncount}",
+                       f"results/{self.startTime}/camera_result/planning",
+                       f"results/{self.startTime}/camera_result/planning/learn{self.learncount}",
+                       f"results/{self.startTime}/camera_result/planning/learn{self.learncount}/planning_npz",
+                       f"results/{self.startTime}/camera_result/planning/learn{self.learncount}/planning_pics"]
 
         for folder_path in folder_paths:
             if not os.path.exists(folder_path):
                 os.mkdir(folder_path)
+
+    def mkfile(self):
+        control_path = open(f'results/{self.startTime}/control_result.txt', 'w')
+        control_path.close()
+        planning_path = open(f'results/{self.startTime}/planning_result.txt', 'w')
+        planning_path.close()
+
+    def mvfile(self):
+        pre_data = sorted(glob("../../pre_data/*"))
+        dest_dir = f"results/{self.startTime}/camera_result/second_spm/learn{self.learncount}"
+        for file in pre_data:
+            shutil.copy2(file, dest_dir)
     
     def writeData(self): #ログデータ作成。\マークを入れることで改行してもコードを続けて書くことができる
         print_datalog = str(self.timer) + ","\
@@ -149,7 +167,7 @@ class Cansat():
                   + "lV:"+str(round(self.MotorL.velocity,3)).rjust(6) + ","\
                   + "Camera:" + str(self.camerastate)
         
-        with open('results/control_result.txt',"a")  as test: # [mode] x:ファイルの新規作成、r:ファイルの読み込み、w:ファイルへの書き込み、a:ファイルへの追記
+        with open(f'results/{self.startTime}/control_result.txt',"a")  as test: # [mode] x:ファイルの新規作成、r:ファイルの読み込み、w:ファイルへの書き込み、a:ファイルへの追記
             test.write(datalog + '\n')
 
     def writeSparseData(self,risk): #ログデータ作成。\マークを入れることで改行してもコードを続けて書くことができる   
@@ -158,14 +176,21 @@ class Cansat():
                     + "Time:"+str(self.gps.Time) + ","\
                     + "Lat:"+str(self.gps.Lat).rjust(6) + ","\
                     + "Lng:"+str(self.gps.Lon).rjust(6) + ","\
-                    + "Risk:"+str(risk).rjust(6) + ","\
                     + "Goal Distance:"+str(self.gps.gpsdis).rjust(6) + ","\
-                    + "Goal Angle:"+str(self.gps.gpsdegrees).rjust(6) + ","\
+                    + "Goal Angle:"+str(self.gps.gpsdegrees).rjust(6) + ",\n"\
+                    + "    "\
+                    +"q:"+str(self.bno055.ex).rjust(6) + ","\
+                    + "Risk:"+str(np.array(self.risk).reshape(1,-1)).rjust(6) + ","\
+                    + "threadshold_risk:"+str(self.threshold_risk).rjust(6) + ","\
+                    + "max_risk:"+str(self.max_risk).rjust(6)+","\
+                    + "boolean_risk:"+str(self.boolean_risk).rjust(6)+","\
+                    + "    "\
+                    + "Plan:"+str(self.plan_str) + ","\
                     + "rV:"+str(round(self.MotorR.velocity,3)).rjust(6) + ","\
                     + "lV:"+str(round(self.MotorL.velocity,3)).rjust(6) + ","\
-                    + "q:"+str(self.bno055.ex).rjust(6)# + ","\
-            now=str(self.startDateTime).replace(" ","_").replace(":","-").replace(".","_")[:22]
-            with open(f'results/planning_result{now}.txt',"a")  as test: # [mode] x:ファイルの新規作成、r:ファイルの読み込み、w:ファイルへの書き込み、a:ファイルへの追記
+
+
+            with open(f'results/{self.startTime}/planning_result.txt',"a")  as test: # [mode] x:ファイルの新規作成、r:ファイルの読み込み、w:ファイルへの書き込み、a:ファイルへの追記
                 test.write(datalog_sparse + '\n')
                 print("### SPARSE LOG ###",datalog_sparse)
 
@@ -201,7 +226,7 @@ class Cansat():
             exit()    
  
     def sensor(self): #セットアップ終了後
-        self.timer = int(1000*(time.time() - self.startTime)) #経過時間 (ms)
+        self.timer = int(1000*(time.time() - self.startTime_time)) #経過時間 (ms)
         self.gps.gpsread()
         self.bno055.bnoread()
         self.ax=round(self.bno055.ax,3)
@@ -308,7 +333,7 @@ class Cansat():
         MUST READ:
             1: This IntelliSence
             2: line 331~359 for learn state
-            3: line 393=425 for evaluate state
+            3: line 393~425 for evaluate state
         ------
         EXPLANATION
         ---
@@ -354,7 +379,7 @@ class Cansat():
             if relearning['relearn_state']:  # 再学習に用いる画像パスの指定
                 # 一つ前のlearncountファイルの-f3枚目を指定
                 try:
-                    importPath = sorted(glob(f"results/camera_result/planning/learn{self.learncount-1}/planning_pics/planningimg*.jpg"))[-relearning['f3']]
+                    importPath = sorted(glob(f"results/{self.startTime}/camera_result/planning/learn{self.learncount-1}/planning_pics/planningimg*.jpg"))[-relearning['f3']]
                 except IndexError:
                     # ここで学習枚数足りなかったら動作指定（あきらめて１回目と同じ動きするのか、再学習をあきらめるか）
                     print('There are not enough number of pics for ReLearning.')
@@ -369,7 +394,7 @@ class Cansat():
                 if self.camerafirst == 0:
                     self.cap = cv2.VideoCapture(0)
                     ret, firstimg = self.cap.read()
-                    cv2.imwrite(f"results/camera_result/first_spm/learn{self.learncount}/firstimg{self.firstlearnimgcount}.jpg",firstimg)
+                    cv2.imwrite(f"results/{self.startTime}/camera_result/first_spm/learn{self.learncount}/firstimg{self.firstlearnimgcount}.jpg",firstimg)
                     self.camerastate = "captured!"
                     self.sensor()
                     self.camerastate = 0
@@ -380,16 +405,20 @@ class Cansat():
                     再撮影をする場合はここに記載
                     '''
                 
-                importPath = f"results/camera_result/first_spm/learn{self.learncount}/firstimg{self.firstlearnimgcount-1}.jpg"
+                importPath = f"results/{self.startTime}/camera_result/first_spm/learn{self.learncount}/firstimg{self.firstlearnimgcount-1}.jpg"
             
-            processed_Dir = f"results/camera_result/first_spm/learn{self.learncount}/processed"
+            processed_Dir = f"results/{self.startTime}/camera_result/first_spm/learn{self.learncount}/processed"
             iw = IntoWindow(importPath, processed_Dir, Save) #画像の特徴抽出のインスタンス生成
+            self.img=cv2.imread(importPath, 1)
+            self.img = self.img[int(0.25*self.img.shape[0]):int(0.75*self.img.shape[0])]
+            cv2.imwrite(importPath, self.img)
+            
             # processing img
             fmg_list = iw.feature_img(frame_num=now) #特徴抽出。リストに特徴画像が入る 
             for fmg in fmg_list:#それぞれの特徴画像に対して処理
                 # breakout by windows
-                iw_list, window_size = iw.breakout(iw.read_img(fmg)) #ブレイクアウト
-                feature_name = str(re.findall(self.saveDir + f"/camera_result/first_spm/learn{self.learncount}/processed/(.*)_.*_", fmg)[0])
+                iw_list, window_size = iw.breakout(cv2.imread(fmg, cv2.IMREAD_GRAYSCALE)) #ブレイクアウト
+                feature_name = str(re.findall(self.saveDir + f"/{self.startTime}/camera_result/first_spm/learn{self.learncount}/processed/(.*)_.*_", fmg)[0])
                 # print("FEATURED BY: ",feature_name)
 
                 for win in range(int(np.prod(iw_shape))): #それぞれのウィンドウに対して学習を実施
@@ -401,16 +430,18 @@ class Cansat():
                         # cv2.imwrite(save_name, iw_list[win])
             self.learn_state = False
 
-        else:#20枚撮影
-            self.spm_f_eval(PIC_COUNT=PIC_COUNT, now=now, iw_shape=iw_shape, relearning=relearning) #第2段階用の画像を撮影
+        else:# PIC_COUNT枚撮影
             if self.state == 4:  # 再学習時にステート操作が必要なら追記
+                self.spm_f_eval(PIC_COUNT=50, now=now, iw_shape=iw_shape, relearning=relearning) #第2段階用の画像を撮影
                 self.state = 5
                 self.laststate = 5
+            else:
+                self.spm_f_eval(PIC_COUNT=PIC_COUNT, now=now, iw_shape=iw_shape, relearning=relearning) #第2段階用の画像を撮影
 
     def spm_f_eval(self, PIC_COUNT=1, now="TEST", iw_shape=(2,3),feature_names=None, relearning:dict=dict(relearn_state=False,f1=ct.const.f1,f3=ct.const.f3)):#第一段階学習&評価。npzファイル作成が目的
         if relearning['relearn_state']:
             try:
-                second_img_paths = sorted(glob(f"results/camera_result/first_spm/learn{self.learncount-1}/evaluate/evaluateimg*.jpg"))[-relearning['f3']+1:-relearning['f1']]
+                second_img_paths = sorted(glob(f"results/{self.startTime}/camera_result/first_spm/learn{self.learncount-1}/evaluate/evaluateimg*.jpg"))[-relearning['f3']+1:-relearning['f1']]
             except IndexError:
                 # ここで学習枚数足りなかったら動作指定（あきらめて１回目と同じ動きするのか、再学習をあきらめるか）
                 print('There are not enough number of pics for ReLearning.')
@@ -419,33 +450,45 @@ class Cansat():
         if not relearning['relearn_state']:
         # self.cap = cv2.VideoCapture(0)
             for i in range(PIC_COUNT):
-                ret,self.secondimg = self.cap.read()
+                try:
+                    ret,self.secondimg = self.cap.read()
+                    print("done:",i)
+                except:
+                    pass
                 if self.state == 4:
-                    save_file = f"results/camera_result/first_spm/learn{self.learncount}/evaluate/evaluateimg{time.time():.0f}.jpg"
+                    save_file = f"results/{self.startTime}/camera_result/first_spm/learn{self.learncount}/evaluate/evaluateimg{time.time():.2f}.jpg"
                 elif self.state == 6:
-                    save_file = f"results/camera_result/planning/learn{self.learncount}/planning_pics/planningimg{time.time():.0f}.jpg"
+                    save_file = f"results/{self.startTime}/camera_result/planning/learn{self.learncount}/planning_pics/planningimg{time.time():.2f}.jpg"
 
                 cv2.imwrite(save_file,self.secondimg)
                 self.firstevalimgcount += 1
                 
                 if self.state == 4:
-                    self.MotorR.go(70)#走行
-                    self.MotorL.go(70)#走行
-                    self.stuck_detection()
-                    time.sleep(0.4)
-                    self.MotorR.stop()
-                    self.MotorL.stop()
-                    if i%10 == 0: #10枚撮影する毎にセンサの値取得
-                        self.camerastate = "captured!"
-                        self.sensor()
-                        self.camerastate = 0
+                    # self.MotorR.go(74)#走行
+                    # self.MotorL.go(70)#走行
+                    # # self.stuck_detection()
+                    # time.sleep(0.1)
+                    # self.MotorR.stop()
+                    # self.MotorL.stop()
+                    # if i%10 == 0: #10枚撮影する毎にセンサの値取得
+                    #     self.camerastate = "captured!"
+                    #     self.sensor()
+                    #     self.camerastate = 0
+                    # state4の学習時にもBNOベースで走行
+                    self.sensor()
+                    self.planning(np.array([0,0,0,0,0,0]))
+                    self.stuck_detection()#ここは注意
+#                     print(f"{fmg_list.index(fmg)} fmg evaluated")
                 
             if not PIC_COUNT == 1:
-                second_img_paths = sorted(glob(f"results/camera_result/first_spm/learn{self.learncount}/evaluate/evaluateimg*.jpg"))
+                second_img_paths = sorted(glob(f"results/{self.startTime}/camera_result/first_spm/learn{self.learncount}/evaluate/evaluateimg*.jpg"))
             else:
                 second_img_paths = [save_file]
         
         for importPath in second_img_paths:
+            self.GREEN_LED.led_on()
+            self.RED_LED.led_on()
+            self.BLUE_LED.led_off()
         
             feature_values = {}
 
@@ -457,32 +500,39 @@ class Cansat():
             tempDir_name = self.tempDir.name
             
             iw = IntoWindow(importPath, tempDir_name, False) #画像の特徴抽出のインスタンス生成
+            self.img=cv2.imread(importPath, 1)
+            self.img = self.img[int(0.25*self.img.shape[0]):int(0.75*self.img.shape[0])]
+            cv2.imwrite(importPath, self.img)
             
-            if self.state == 4: #ステートが4の場合はセンサの値取得
-                self.sensor()
-            
-            if feature_names == None:#第一段階学習モード
+            #if self.state == 4: #ステートが4の場合はセンサの値取得
+                #self.sensor()
+            print(feature_names)
+            if feature_names == None: #第一段階学習モード
                 self.camerastate = "captured!"
                 fmg_list = iw.feature_img(frame_num=now,feature_names=feature_names) #特徴抽出。リストに特徴画像が入る
                 
                 for fmg in fmg_list:#それぞれの特徴画像に対して処理
-                    iw_list, window_size = iw.breakout(iw.read_img(fmg)) #ブレイクアウト
+                    iw_list, window_size = iw.breakout(cv2.imread(fmg,cv2.IMREAD_GRAYSCALE)) #ブレイクアウト
                     feature_name = str(re.findall(tempDir_name + f"/(.*)_.*_", fmg)[0])
                     
                     # print("FEATURED BY: ",feature_name)
                     
+                    D, ksvd = self.dict_list[feature_name]
                     for win in range(int(np.prod(iw_shape))): #それぞれのウィンドウに対して評価を実施
-                        D, ksvd = self.dict_list[feature_name]
 
-                        ei = EvaluateImg(iw_list[win])
-                        img_rec = ei.reconstruct(D, ksvd, window_size)
-                        saveName = self.saveDir + f"/camera_result/first_spm/learn{self.learncount}/processed/difference"
-                        if not os.path.exists(saveName):
-                            os.mkdir(saveName)
-                        saveName = self.saveDir + f"/camera_result/first_spm/learn{self.learncount}/processed/difference/{now}"
-                        if not os.path.exists(saveName):
-                            os.mkdir(saveName)
-                        ave, med, var, mode, kurt, skew = ei.evaluate(iw_list[win], img_rec, win+1, feature_name, now, self.saveDir)
+                        # win_1~3は特徴量算出を行わない
+                        if win not in [0,1,2]:
+                            ei = EvaluateImg(iw_list[win])
+                            img_rec = ei.reconstruct(D, ksvd, window_size)
+                            saveName = self.saveDir + f"/{self.startTime}/camera_result/first_spm/learn{self.learncount}/processed/difference"
+                            if not os.path.exists(saveName):
+                                os.mkdir(saveName)
+                            saveName = self.saveDir + f"/{self.startTime}/camera_result/first_spm/learn{self.learncount}/processed/difference/{now}"
+                            if not os.path.exists(saveName):
+                                os.mkdir(saveName)
+                            ave, med, var, mode, kurt, skew = ei.evaluate(iw_list[win], img_rec, win+1, feature_name, now, self.saveDir)
+                        else :
+                            ave, med, var, mode, kurt, skew = 0, 0, 0, 0, 0, 0
 
                         feature_values[feature_name][f'win_{win+1}'] = {}
                         feature_values[feature_name][f'win_{win+1}']["var"] = ave  # 平均値
@@ -494,7 +544,7 @@ class Cansat():
                 
                 self.camerastate = 0
                        
-            else: #第一段階評価モード。runningで使うための部
+            else: #第一段階評価モード。runningで使うための部 # ここ変える
                 feature_list = ["normalRGB","enphasis","edge","hsv","red","blue","green","purple","emerald","yellow"]
                 features = []
                 
@@ -507,39 +557,34 @@ class Cansat():
                 fmg_list = iw.feature_img(frame_num=now,feature_names=features) # 特徴抽出。リストに特徴画像が入る
 
                 for fmg in fmg_list: #それぞれの特徴画像に対して処理
-                    iw_list, window_size = iw.breakout(iw.read_img(fmg)) # ブレイクアウトにより画像を6分割
+                    iw_list, window_size = iw.breakout(cv2.imread(fmg,cv2.IMREAD_GRAYSCALE)) # ブレイクアウトにより画像を6分割
                     feature_name = str(re.findall(tempDir_name + f"/(.*)_.*_", fmg)[0]) # 特徴処理のみ抽出
                     # print("FEATURED BY: ",feature_name)
-                    for win in range(int(np.prod(iw_shape))): #それぞれのウィンドウに対して評価を実施                            
-                        if feature_name in feature_names[win]: #ウィンドウに含まれいていた場合
+                    for win in range(int(np.prod(iw_shape))): #それぞれのウィンドウに対して評価を実施
+                        if feature_name in feature_names[win] and win not in [0,1,2]: #ウィンドウに含まれいていた場合
                             D, ksvd = self.dict_list[feature_name]
                             ei = EvaluateImg(iw_list[win])
                             img_rec = ei.reconstruct(D, ksvd, window_size)
-                            saveName = self.saveDir + f"/camera_result/first_spm/learn{self.learncount}/processed/difference"
+                            saveName = self.saveDir + f"/{self.startTime}/camera_result/first_spm/learn{self.learncount}/processed/difference"
     #                         if not os.path.exists(saveName):
     #                             os.mkdir(saveName)
     #                         saveName = self.saveDir + f"/camera_result/first_spm/learn{self.learncount}/processed/difference/{now}"
     #                         if not os.path.exists(saveName):
     #                             os.mkdir(saveName)
                             ave, med, var, mode, kurt, skew = ei.evaluate(iw_list[win], img_rec, win+1, feature_name, now, self.saveDir)
-    #                         
-                            feature_values[feature_name][f'win_{win+1}'] = {}
-                            feature_values[feature_name][f'win_{win+1}']["var"] = ave  # 平均値
-                            feature_values[feature_name][f'win_{win+1}']["med"] = med  # 中央値
-                            feature_values[feature_name][f'win_{win+1}']["ave"] = var  # 分散値
-                            feature_values[feature_name][f'win_{win+1}']["mode"] = mode  # 最頻値
-                            feature_values[feature_name][f'win_{win+1}']["kurt"] = kurt  # 尖度
-                            feature_values[feature_name][f'win_{win+1}']["skew"] = skew  # 歪度
-                            
+
                         else:
-                            feature_values[feature_name][f'win_{win+1}'] = {}
-                            feature_values[feature_name][f'win_{win+1}']["var"] = 0  # 平均値
-                            feature_values[feature_name][f'win_{win+1}']["med"] = 0  # 中央値
-                            feature_values[feature_name][f'win_{win+1}']["ave"] = 0  # 分散値
-                            feature_values[feature_name][f'win_{win+1}']["mode"] = 0  # 最頻値
-                            feature_values[feature_name][f'win_{win+1}']["kurt"] = 0  # 尖度
-                            feature_values[feature_name][f'win_{win+1}']["skew"] = 0  # 歪度
-                                    
+                            ave, med, var, mode, kurt, skew = 0, 0, 0, 0, 0, 0
+
+
+                        feature_values[feature_name][f'win_{win+1}'] = {}
+                        feature_values[feature_name][f'win_{win+1}']["var"] = ave  # 平均値
+                        feature_values[feature_name][f'win_{win+1}']["med"] = med  # 中央値
+                        feature_values[feature_name][f'win_{win+1}']["ave"] = var  # 分散値
+                        feature_values[feature_name][f'win_{win+1}']["mode"] = mode  # 最頻値
+                        feature_values[feature_name][f'win_{win+1}']["kurt"] = kurt  # 尖度
+                        feature_values[feature_name][f'win_{win+1}']["skew"] = skew  # 歪度
+                                
                     for feature_name in feature_list:
                         if feature_name not in features:
                             for win in range(int(np.prod(iw_shape))): #それぞれのウィンドウに対して評価を実施
@@ -551,18 +596,29 @@ class Cansat():
                                 feature_values[feature_name][f'win_{win+1}']["kurt"] = 0  # 尖度
                                 feature_values[feature_name][f'win_{win+1}']["skew"] = 0  # 歪度
 
+                    if fmg != fmg_list[-1] and type(self.risk) == np.ndarray:
+                        self.sensor()
+                        self.planning(self.risk)
+                        self.stuck_detection()#ここは注意
+#                     print(f"{fmg_list.index(fmg)} fmg evaluated")
+                    
+            self.BLUE_LED.led_on()
             # npzファイル形式で計算結果保存
             if self.state == 4:
-                self.savenpz_dir = self.saveDir + f"/camera_result/second_spm/learn{self.learncount}/"
+                # self.savenpz_dir = "/home/pi/Desktop/wolvez2022/pre_data/"
+                self.savenpz_dir = self.saveDir + f"/{self.startTime}/camera_result/second_spm/learn{self.learncount}/"
             elif self.state == 6:
-                self.savenpz_dir = self.saveDir + f"/camera_result/planning/learn{self.learncount}/planning_npz/"
+                self.savenpz_dir = self.saveDir + f"/{self.startTime}/camera_result/planning/learn{self.learncount}/planning_npz/"
             
             # 保存時のファイル名指定（現在は時間）
-            now=str(datetime.now())[:19].replace(" ","_").replace(":","-")
+            now=str(datetime.now())[:21].replace(" ","_").replace(":","-")
 #             print("feature_values:",feature_values)
             # print("shape:",len(feature_values))
             np.savez_compressed(self.savenpz_dir + now,array_1=np.array([feature_values])) #npzファイル作成
             self.tempDir.cleanup()
+        self.GREEN_LED.led_on()
+        self.RED_LED.led_on()
+        self.BLUE_LED.led_off()
     
     def spm_second(self): #スパースモデリング第二段階実施
         if self.spmsecondTime == 0: #時刻を取得してLEDをステートに合わせて光らせる
@@ -571,7 +627,7 @@ class Cansat():
             self.BLUE_LED.led_on()
             self.GREEN_LED.led_on()
             
-        npz_dir = f"results/camera_result/second_spm/learn{self.learncount}/*"
+        npz_dir = f"results/{self.startTime}/camera_result/second_spm/learn{self.learncount}/*"
         train_npz = sorted(glob(npz_dir))
         spm2_prepare = SPM2Open_npz()
         data_list_all_win,label_list_all_win = spm2_prepare.unpack(train_npz)
@@ -627,7 +683,7 @@ class Cansat():
 
     def running(self,model_master,scaler_master,feature_names): #経路計画&走行
         time_pre = time.time()
-        planning_dir = f"results/camera_result/planning/learn{self.learncount}/planning_npz/*"
+        planning_dir = f"results/{self.startTime}/camera_result/planning/learn{self.learncount}/planning_npz/*"
         planning_npz = sorted(glob(planning_dir))
         
         #保存時のファイル名指定（現在は時間）
@@ -649,21 +705,24 @@ class Cansat():
             spm2_predict = SPM2Evaluate()
             spm2_predict.start(model_master,test_data_list_all_win,test_label_list_all_win,scaler_master,self.risk_list) #第二段階の評価を実施
             self.risk = spm2_predict.get_score()
-            self.risk = np.array(self.risk).reshape(2,3) #win1~win6の危険度マップ作成
+            self.risk = np.array([self.risk[i][0][0] for i in range(6)])
+            self.risk_list.append(self.risk)
+            self.risk_list_below.append(self.risk[3:])
+#             self.risk = np.array(self.risk).reshape(2,3) #win1~win6の危険度マップ作成
             
             if len(self.risk_list) >= ct.const.MOVING_AVERAGE:
                 self.risk_list = self.risk_list[1:]
             
-
-    #         # 走行
-            for i in range(self.risk.shape[0]):
-                for j in range(self.risk.shape[1]):
-                    if self.risk[i][j] >= 100:
-                        self.risk[i][j] = 100
-                    elif self.risk[i][j] <= -100:
-                        self.risk[i][j] = -100
+            print("===== Risk Map =====")
+            # for i in range(self.risk.shape[0]):
+            #     for j in range(self.risk.shape[1]):
+            #         if self.risk[i][j] >= 100:
+            #             self.risk[i][j] = 100
+            #         elif self.risk[i][j] <= -100:
+            #             self.risk[i][j] = -100
             print(np.round(self.risk))
     #         # 走行
+            self.sensor()
             self.planning(self.risk)
             self.stuck_detection()#ここは注意
             time_now = time.time()
@@ -690,7 +749,8 @@ class Cansat():
         self.x = self.gps.gpsdis*math.cos(math.radians(self.gps.gpsdegrees))
         self.y = self.gps.gpsdis*math.sin(math.radians(self.gps.gpsdegrees))
         theta_goal = self.gps.gpsdegrees
-        phi = theta_goal-self.bno055.ex
+        # phi = theta_goal-self.bno055.ex
+        phi = - self.bno055.ex  # 雨用にbnoの値だけをとってくる
         
         if phi < -180:
             phi += 360
@@ -700,7 +760,7 @@ class Cansat():
         print("distance:", self.gps.gpsdis)
 
         dir_run = self.calc_dir(risk,phi)
-        
+        print(f"###Plan:{self.plan_str}, risk:{risk}, boolean_risk:{self.boolean_risk}")
         if dir_run == 0:
 #             print("Left")
             self.MotorR.go(70)
@@ -735,39 +795,72 @@ class Cansat():
             direction_goal = 0
 #             print("ゴール方向："+str(direction_goal)+" -> 左に曲がりたい")
         return direction_goal
+    
+    def safe_or_not(self,lower_risk):
+        """
+        ・入力:下半分のwindowのリスク行列（3*1または1*3？ここはロバストに作ります）
+        ・出力:危険=1、安全=0の(入力と同じ次元)
+        """
+        self.threshold_risk = np.average(np.array(self.risk_list_below))+2*np.std(np.array(self.risk_list_below))
+#         if len(self.risk_list_below)<=100:
+#             self.threshold_risk = np.average(np.array(self.risk_list_below))+2*np.std(np.array(self.risk_list_below))
+#         else:
+#             self.threshold_risk = np.average(np.array(self.risk_list_below[-100:]))+2*np.std(np.array(self.risk_list_below[-100:]))
+        
+        try:
+            self.max_risk=np.max(np.array(self.risk_list_below))
+#             if len(self.risk_list_below)<=100:
+#                 self.max_risk=np.max(np.array(self.risk_list_below))
+#             else:
+#                 self.max_risk=np.max(np.array(self.risk_list_below[-100:]))
+            
+        except Exception:
+            self.max_risk=1000
+        answer_mtx=np.zeros(3)
+        for i, risk_scaler in enumerate(lower_risk):
+            if risk_scaler >= self.threshold_risk or risk_scaler >= self.max_risk:
+                answer_mtx[i]=1
+        return answer_mtx
 
     def calc_dir(self,risk,phi):
-        # 危険度の閾値を決定
-        threshold_risk = ct.const.PLANNING_RISK_THRE
-        lower_risk = risk[1,:]
-        direction_goal = self.decide_direction(phi)
+
+        lower_risk = [risk[i] for i in range(3,6)]
         
-        if np.amin(lower_risk) >= threshold_risk:
-            print("前方に安全なルートはありません。90度回転して新たな経路を探索します。")
-            direction_real = 3
-        else:
-            if lower_risk[direction_goal] <= threshold_risk:   #ゴール方向の危険度が閾値以下の場合
-                print("go for goal")
-                direction_real = direction_goal
+        
+        self.boolean_risk = list(self.safe_or_not(lower_risk))
+        
+        direction_goal = self.decide_direction(phi)
+        dir_run = 0
+        if self.boolean_risk == [0, 0, 0]:
+            self.plan_str = "to goal"
+            dir_run = direction_goal
+        elif self.boolean_risk == [1, 0, 0]:
+            self.plan_str = "avoid to right"
+            dir_run = 2
+        elif self.boolean_risk == [0, 1, 0]:
+            if lower_risk[0] > lower_risk[2]:
+                self.plan_str = "avoid to right"
+                dir_run = 2
             else:
-                print("ゴール方向が安全ではありません。別ルートを探索します。")
-                if direction_goal == 0:
-                    if lower_risk[1] <= lower_risk[2]:
-                        direction_real = 1
-                    else:
-                        direction_real = 2
-                elif direction_goal == 1:
-                    if lower_risk[0] <= lower_risk[2]:
-                        direction_real = 0
-                    else:
-                        direction_real = 2
-                elif direction_goal == 2:
-                    if lower_risk[0] <= lower_risk[1]:
-                        direction_real = 0
-                    else:
-                        direction_real = 1
+                self.plan_str = "avoid to left"
+                dir_run = 0
+        elif self.boolean_risk == [0, 0, 1]:
+            self.plan_str = "avoid to left"
+            dir_run = 0
+        elif self.boolean_risk == [1, 1, 0]:
+            self.plan_str = "avoid to right"
+            dir_run = 2
+        elif self.boolean_risk == [1, 0, 1]:
+            self.plan_str = "turning to avoid"
+            dir_run = 3
+        elif self.boolean_risk == [0, 1, 1]:
+            self.plan_str = "avoid to left"
+            dir_run = 0
+        elif self.boolean_risk == [1, 1, 1]:
+            self.plan_str = "turning to avoid"
+            dir_run = 3
                         
-        return direction_real
+        return dir_run
             
     def sendLoRa(self): #通信モジュールの送信を行う関数
         datalog = str(self.state) + ","\

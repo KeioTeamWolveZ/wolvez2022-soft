@@ -1,5 +1,4 @@
 import cv2
-from pyrsistent import s
 from FEATURE import Feature_img
 import tempfile
 
@@ -80,6 +79,6 @@ class ReadFeaturedImg():
     def read_img(self, path):
         #print("===== func read_img starts =====")
         self.img=cv2.imread(path,cv2.IMREAD_GRAYSCALE)
-        self.img = self.img[int(0.5*self.img.shape[0]):]
+        self.img = self.img[int(0.25*self.img.shape[0]):int(0.75*self.img.shape[0])]
         # 読み込めないエラーが生じた際のロバスト性も検討したい
         return self.img

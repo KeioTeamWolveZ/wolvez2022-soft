@@ -35,7 +35,7 @@ try:
               +"ez="+str(bno055.ez)
         print(euler) 
               
-        time.sleep(1)
+        time.sleep(0.5)
 except KeyboardInterrupt:
     GPIO.cleanup()
     pass
