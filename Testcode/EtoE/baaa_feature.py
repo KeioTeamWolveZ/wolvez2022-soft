@@ -254,7 +254,10 @@ class Feature_img():
                 b = float(self.org_img[i][j][0])
                 g = float(self.org_img[i][j][1])
                 r = float(self.org_img[i][j][2])
-                grvi = (g-r)/(g+r)     # ここがGRVIの計算式
+                if g+r != 0:
+                    grvi = (g-r)/(g+r)     # ここがGRVIの計算式
+                else:
+                    grvi = 0
                 self.grvi_list_np[i][j] = int(grvi)
                 self.output_img[i][j] = np.uint8(self.grvi_list_np[i][j])
         self.save_name = self.sav_d + f"/grvi_{self.frame_num}.jpg"
@@ -272,7 +275,10 @@ class Feature_img():
                 b = float(self.org_img[i][j][0])
                 g = float(self.org_img[i][j][1])
                 r = float(self.org_img[i][j][2])
-                ior = r/b     # ここがGRVIの計算式
+                if b != 0:
+                    ior = r/b     # ここがGRVIの計算式
+                else:
+                    ior = r
                 self.ior_list_np[i][j] = int(ior)
                 self.output_img[i][j] = np.uint8(self.ior_list_np[i][j])
         self.save_name = self.sav_d + f"/ior_{self.frame_num}.jpg"
