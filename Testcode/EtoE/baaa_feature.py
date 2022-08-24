@@ -1,3 +1,4 @@
+from pickletools import int4
 import cv2
 import numpy as np
 import os
@@ -81,7 +82,7 @@ class ReadFeaturedImg():
     def read_img(self, path):
         #print("===== func read_img starts =====")
         self.img=cv2.imread(path,cv2.IMREAD_GRAYSCALE)
-        self.img = self.img[int(0.225*self.img.shape[0]):int(0.75*self.img.shape[0])int(0.75*self.img.shape[0])]
+        self.img = self.img[int(0.225*self.img.shape[0]):int(0.75*self.img.shape[0])]
         # 読み込めないエラーが生じた際のロバスト性も検討したい
         return self.img
 
@@ -254,7 +255,7 @@ class Feature_img():
                 g = float(self.org_img[i][j][1])
                 r = float(self.org_img[i][j][2])
                 grvi = (g-r)/(g+r)     # ここがGRVIの計算式
-                self.grvi_list_np[i][j] = grvi
+                self.grvi_list_np[i][j] = int(grvi)
                 self.output_img[i][j] = np.uint8(self.grvi_list_np[i][j])
         self.save_name = self.sav_d + f"/grvi_{self.frame_num}.jpg"
         cv2.imwrite(self.save_name, self.output_img) 
@@ -272,7 +273,7 @@ class Feature_img():
                 g = float(self.org_img[i][j][1])
                 r = float(self.org_img[i][j][2])
                 ior = r/b     # ここがGRVIの計算式
-                self.ior_list_np[i][j] = ior
+                self.ior_list_np[i][j] = int(ior)
                 self.output_img[i][j] = np.uint8(self.ior_list_np[i][j])
         self.save_name = self.sav_d + f"/ior_{self.frame_num}.jpg"
         cv2.imwrite(self.save_name, self.output_img) 
