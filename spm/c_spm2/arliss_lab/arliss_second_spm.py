@@ -22,11 +22,11 @@ class SPM2Open_npz():  # second_spm.pyとして実装済み
             label_list_all_time.append(label_list_per_pic)
         data_list_all_time = np.array(data_list_all_time)
         label_list_all_time = np.array(label_list_all_time)
-        print("フレーム数 : ", len(files))
+        print(f"フレーム数 : {len(files)}")
         try:
             print(f"window数 : {len(data_list_all_time[0])}")
         except IndexError:
-            print("npz内部にデータを確認できませんでした。破損等がないか確認してください。")
+            print("npz内部にデータを確認できませんでした。")
 
         print("===== windowごとに集計 =====")
         self.data_list_all_win=[]
@@ -164,10 +164,10 @@ class SPM2Evaluate():  # 藤井さんの行動計画側に移設予定
         self.test_label_list_all_win = test_label_list_all_win
         self.scaler_master = scaler_master
         if len(self.model_master) != len(self.test_data_list_all_win):
-            print("学習済みモデルのウィンドウ数と、テストデータのウィンドウ数が一致しません")
-            return None
+            print("学習済みモデルのウィンドウ数と、テストデータのウィンドウ数が一致しません。")
+            print(f"モデルのウィンドウ数 : {len(self.model_master)}")
+            print(f"テストデータのウィンドウ数 : {len(self.test_data_list_all_win)}")
         self.test()
-        print(len(self.score_master))
         return self.score_master
 
     def test(self):
