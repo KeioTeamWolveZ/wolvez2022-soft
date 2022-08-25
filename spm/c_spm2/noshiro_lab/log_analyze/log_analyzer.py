@@ -6,7 +6,7 @@ log_path=f"/Users/hayashidekazuyuki/Desktop/Git_Win_Air/wolvez2022/spm/c_spm2/no
 csv_path=f"/Users/hayashidekazuyuki/Desktop/Git_Win_Air/wolvez2022/spm/c_spm2/noshiro_lab/log_analyze/results/risk_no{no}.csv"
 
 with open(log_path) as f:
-    for line in f:
+    for i,line in enumerate(f):
         start1="Risk:[["
         end1="]"
         start2="["
@@ -34,8 +34,9 @@ with open(log_path) as f:
             data_6win.append(data2)
         
         if len(data_6win)==2:
-            data_6win=np.array(data_6win).flatten()
             print(data_6win)        
+            if i==0:
+                first_numbers=data_6win
             with open(csv_path,'a') as f2:
                 writer = csv.writer(f2)
                 writer.writerow(data_6win)
