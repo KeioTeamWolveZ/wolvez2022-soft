@@ -106,45 +106,45 @@ class SPM2Learn():  # second_spm.pyとして実装済み
             self.scaler_master.append("")
 
     def fit(self):
-        try:
-            train_X2=self.data_list_all_win[0]
-            train_X_memorization=self.data_list_all_win[0]
-            train_y2=np.full((train_X_memorization.shape[0],1),ct.const.SPMSECOND_MIN)
-            train_y2[-int(self.f1f2_array_window_custom[0][1]):int(
-                    -self.f1f2_array_window_custom[0][0])] = ct.const.SPMSECOND_MAX
-            self.scaler_master[0] = self.standardization_master[0].fit(train_X2)
+    #     try:
+    #         train_X2=self.data_list_all_win[0]
+    #         train_X_memorization=self.data_list_all_win[0]
+    #         train_y2=np.full((train_X_memorization.shape[0],1),ct.const.SPMSECOND_MIN)
+    #         train_y2[-int(self.f1f2_array_window_custom[0][1]):int(
+    #                 -self.f1f2_array_window_custom[0][0])] = ct.const.SPMSECOND_MAX
+    #         self.scaler_master[0] = self.standardization_master[0].fit(train_X2)
 
-            for win_no, win in enumerate(self.data_list_all_win[1:]):
-                win_no+=1
-                train_X2=np.vstack([train_X2,win])
-                self.scaler_master[win_no] = self.standardization_master[win_no].fit(train_X2)
-                train_X = self.scaler_master[win_no].transform(train_X2)
-                train_y2_win = np.full((train_X_memorization.shape[0], 1), ct.const.SPMSECOND_MIN)
-                train_y2_win[-int(self.f1f2_array_window_custom[win_no][1]):int(
-                    -self.f1f2_array_window_custom[win_no][0])] = ct.const.SPMSECOND_MAX
-                train_y2=np.vstack([train_y2,train_y2_win])
-                print(train_y2.shape)
+    #         for win_no, win in enumerate(self.data_list_all_win[1:]):
+    #             win_no+=1
+    #             train_X2=np.vstack([train_X2,win])
+    #             self.scaler_master[win_no] = self.standardization_master[win_no].fit(train_X2)
+    #             train_X = self.scaler_master[win_no].transform(train_X2)
+    #             train_y2_win = np.full((train_X_memorization.shape[0], 1), ct.const.SPMSECOND_MIN)
+    #             train_y2_win[-int(self.f1f2_array_window_custom[win_no][1]):int(
+    #                 -self.f1f2_array_window_custom[win_no][0])] = ct.const.SPMSECOND_MAX
+    #             train_y2=np.vstack([train_y2,train_y2_win])
+    #             print(train_y2.shape)
 
-    #             train_X=train_X2
-            print("SPM2 will be excetuted by integrated model across all windows")
-            train_X=train_X
-            train_y=train_y2
-            for win_no, win in enumerate(self.data_list_all_win):
-                self.model_master[win_no].fit(train_X, train_y)
+    # #             train_X=train_X2
+    #         print("SPM2 will be excetuted by integrated model across all windows")
+    #         train_X=train_X
+    #         train_y=train_y2
+    #         for win_no, win in enumerate(self.data_list_all_win):
+    #             self.model_master[win_no].fit(train_X, train_y)
             
-        except Exception as e:
-            print(e)
-            print("SPM2 will be excecuted by each model for each window")
-            for win_no, win in enumerate(self.data_list_all_win):
-                train_X = win
-                self.scaler_master[win_no] = self.standardization_master[win_no].fit(train_X)
-                train_X = self.scaler_master[win_no].transform(train_X)
-                train_y = np.full((train_X.shape[0], 1), ct.const.SPMSECOND_MIN)
-                # print(self.f1f2_array_window_custom[win_no][0])
-                train_y[-int(self.f1f2_array_window_custom[win_no][1]):int(
-                    -self.f1f2_array_window_custom[win_no][0])] = ct.const.SPMSECOND_MAX
-                # print(train_X.shape, train_y.shape)
-                self.model_master[win_no].fit(train_X, train_y)
+        # except Exception as e:
+            # print(e)
+        print("SPM2 will be excecuted by each model for each window")
+        for win_no, win in enumerate(self.data_list_all_win):
+            train_X = win
+            self.scaler_master[win_no] = self.standardization_master[win_no].fit(train_X)
+            train_X = self.scaler_master[win_no].transform(train_X)
+            train_y = np.full((train_X.shape[0], 1), ct.const.SPMSECOND_MIN)
+            # print(self.f1f2_array_window_custom[win_no][0])
+            train_y[-int(self.f1f2_array_window_custom[win_no][1]):int(
+                -self.f1f2_array_window_custom[win_no][0])] = ct.const.SPMSECOND_MAX
+            # print(train_X.shape, train_y.shape)
+            self.model_master[win_no].fit(train_X, train_y)
 
 
     def get_nonzero_w(self):
