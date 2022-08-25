@@ -544,7 +544,7 @@ class Cansat():
                 self.camerastate = 0
                        
             else: #第一段階評価モード。runningで使うための部 # ここ変える
-                feature_list = ["normalRGB","enphasis","edge","hsv","red","blue","green","purple","emerald","yellow"]
+                feature_list = ["normalRGB","enphasis","edge","vari","rgbvi","grvi","ior","hsv","red","blue","green","purple","emerald","yellow"]
                 features = []
                 
                 for feature in feature_names:# windowgoto
