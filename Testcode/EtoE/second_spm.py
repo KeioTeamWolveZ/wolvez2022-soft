@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.linear_model import Lasso
@@ -7,13 +9,11 @@ from pprint import pprint
 from sklearn.preprocessing import StandardScaler
 from scipy import signal
 from datetime import datetime
-import constant as ct
 
 
 class SPM2Open_npz():  # second_spm.pyとして実装済み
     def unpack(self, files):
-#         print("===== npzファイルの解体 =====")
-#         print("読み込むフレーム数 : ", len(files))
+        print("===== npzファイルの解体 =====")
         data_list_all_time = []
         label_list_all_time = []
         for file in files:
@@ -21,47 +21,54 @@ class SPM2Open_npz():  # second_spm.pyとして実装済み
             data_list_all_time.append(data_per_pic)
             label_list_all_time.append(label_list_per_pic)
         data_list_all_time = np.array(data_list_all_time)
-        label_list_all_time = np.array(label_list_all_time,dtype=object)
+        label_list_all_time = np.array(label_list_all_time)
+        print(f"フレーム数 : {len(files)}")
+        try:
+            print(f"window数 : {len(data_list_all_time[0])}")
+        except IndexError:
+            print("npz内部にデータを確認できませんでした。")
 
-#         print("===== windowごとに集計 =====")
-#         print("window数 : 6 (固定中。変更の場合はコード編集が必要）")
-        self.data_list_all_win = [[], [], [], [], [], []]
-        self.label_list_all_win = [[], [], [], [], [], []]
+        print("===== windowごとに集計 =====")
+        self.data_list_all_win=[]
+        self.label_list_all_win=[]
+        for i in range(len(data_list_all_time[0])):
+            self.data_list_all_win.append([])
+            self.label_list_all_win.append([])
         for pic, lab_pic in zip(data_list_all_time, label_list_all_time):
             for win_no, (win, label_win) in enumerate(zip(pic, lab_pic)):
-                win = np.array(win)
-                label_win = np.array(label_win)
                 self.data_list_all_win[win_no].append(win.flatten())
                 self.label_list_all_win[win_no].append(label_win.flatten())
                 # print(train_X.shape)
                 pass
+        self.data_list_all_win = np.array(self.data_list_all_win)
+        self.label_list_all_win = np.array(self.label_list_all_win)
 
-        self.data_list_all_win = np.array(self.data_list_all_win,dtype=object)
-        self.label_list_all_win = np.array(self.label_list_all_win,dtype=object)
-
-#         print(f"画像加工の種類 : {win.shape[0]}種類")
-#         print(f"ヒストグラム特徴量の種類 : {win.shape[1]}種類")
-#         print(f"--- >>  合計 : {win.flatten().shape[0]}種類")
-#         print("===== 終了 =====")
+        print(f"画像加工の種類 : {win.shape[0]}種類")
+        print(f"ヒストグラム特徴量の種類 : {win.shape[1]}種類")
+        print(f"--- >>  合計 : {win.flatten().shape[0]}種類")
+        print("===== 終了 =====")
 
         return self.data_list_all_win, self.label_list_all_win
 
     def load(self, file):
         pic = np.load(file, allow_pickle=True)['array_1'][0]
+        num_win=len(pic[next(iter(pic))])
+        list_master=[]
+        list_master_label=[]
+        for i in range(num_win):
+            list_master.append([])
+            list_master_label.append([])
         feature_keys = list(pic.keys())
-        list_master = [[], [], [], [], [], []]
-        list_master_label = [[], [], [], [], [], []]
         for f_key in feature_keys:
             window_keys = list(pic[f_key].keys())
             for i, w_key in enumerate(window_keys):
                 # print(list(pic[f_key][w_key].values()))
                 list_master[i].append(list(pic[f_key][w_key].values()))
-                labels=[]
+                labels = []
                 for feature in list(pic[f_key][w_key].keys()):
-                    # labels.append(f"{w_key}-{f_key}-{feature}")
-                    labels.append(f"{f_key}")
+                    labels.append(f"{w_key}-{f_key}-{feature}")
                 list_master_label[i].append(labels)
-        list_master = np.array(list_master,dtype=object)
+        list_master = np.array(list_master)
         return list_master, list_master_label
 
 
@@ -77,20 +84,23 @@ class SPM2Learn():  # second_spm.pyとして実装済み
     dataからmodelを作る。
     """
 
-    def start(self, data_list_all_win, label_list_all_win, f1, f2, alpha=1.0, f1f2_array_window_custom=None) -> None:
+    def start(self, data_list_all_win, label_list_all_win, alpha=1.0, fps=30, stack_appear=23, stack_disappear=27, stack_info=None) -> None:
+        self.fps = fps
         self.data_list_all_win = data_list_all_win
         self.label_list_all_win = label_list_all_win
         self.alpha = alpha
         # print(data_list_all_win.shape)#(win,pic_num,feature)=(6,886,30)
-        if f1f2_array_window_custom == None:
-            self.f1 = f1
-            self.f2 = f2
-            self.f1f2_array_window_custom = np.zeros((self.data_list_all_win.shape[0], 2))
-            self.f1f2_array_window_custom[:, 0] = int(self.f1)
-            self.f1f2_array_window_custom[:, 1] = int(self.f2)
-            # pprint(self.f1f2_array_window_custom)
+        if stack_info == None:
+            self.stack_appear = stack_appear
+            self.stack_disappear = stack_disappear
+            self.stack_appear_frame = stack_appear*fps
+            self.stack_disappear_frame = stack_disappear*fps
+            self.stack_info = np.zeros((self.data_list_all_win.shape[0], 2))
+            self.stack_info[:, 0] = int(self.stack_appear_frame)
+            self.stack_info[:, 1] = int(self.stack_disappear_frame)
+            # pprint(self.stack_info)
         else:
-            self.f1f2_array_window_custom = f1f2_array_window_custom
+            self.stack_info = stack_info*self.fps
             pass
         self.initialize_model()
         self.fit()
@@ -101,52 +111,24 @@ class SPM2Learn():  # second_spm.pyとして実装済み
         self.standardization_master = []
         self.scaler_master = []
         for i in range(self.data_list_all_win.shape[0]):
-            self.model_master.append(Lasso(alpha=self.alpha,max_iter=100000))
+            self.model_master.append(Lasso(alpha=self.alpha, max_iter=100000))
             self.standardization_master.append(StandardScaler())
             self.scaler_master.append("")
 
     def fit(self):
-    #     try:
-    #         train_X2=self.data_list_all_win[0]
-    #         train_X_memorization=self.data_list_all_win[0]
-    #         train_y2=np.full((train_X_memorization.shape[0],1),ct.const.SPMSECOND_MIN)
-    #         train_y2[-int(self.f1f2_array_window_custom[0][1]):int(
-    #                 -self.f1f2_array_window_custom[0][0])] = ct.const.SPMSECOND_MAX
-    #         self.scaler_master[0] = self.standardization_master[0].fit(train_X2)
-
-    #         for win_no, win in enumerate(self.data_list_all_win[1:]):
-    #             win_no+=1
-    #             train_X2=np.vstack([train_X2,win])
-    #             self.scaler_master[win_no] = self.standardization_master[win_no].fit(train_X2)
-    #             train_X = self.scaler_master[win_no].transform(train_X2)
-    #             train_y2_win = np.full((train_X_memorization.shape[0], 1), ct.const.SPMSECOND_MIN)
-    #             train_y2_win[-int(self.f1f2_array_window_custom[win_no][1]):int(
-    #                 -self.f1f2_array_window_custom[win_no][0])] = ct.const.SPMSECOND_MAX
-    #             train_y2=np.vstack([train_y2,train_y2_win])
-    #             print(train_y2.shape)
-
-    # #             train_X=train_X2
-    #         print("SPM2 will be excetuted by integrated model across all windows")
-    #         train_X=train_X
-    #         train_y=train_y2
-    #         for win_no, win in enumerate(self.data_list_all_win):
-    #             self.model_master[win_no].fit(train_X, train_y)
-            
-        # except Exception as e:
-            # print(e)
-        print("SPM2 will be excecuted by each model for each window")
         for win_no, win in enumerate(self.data_list_all_win):
             train_X = win
-            self.scaler_master[win_no] = self.standardization_master[win_no].fit(train_X)
+            self.scaler_master[win_no] = self.standardization_master[win_no].fit(
+                train_X)
             train_X = self.scaler_master[win_no].transform(train_X)
-            train_y = np.full((train_X.shape[0], 1), ct.const.SPMSECOND_MIN)
-            # print(self.f1f2_array_window_custom[win_no][0])
-            train_y[-int(self.f1f2_array_window_custom[win_no][1]):int(
-                -self.f1f2_array_window_custom[win_no][0])] = ct.const.SPMSECOND_MAX
+            train_y = np.full((train_X.shape[0], 1), -100)
+            # print(self.stack_info[win_no][0])
+            train_y[int(self.stack_info[win_no][0]):int(
+                self.stack_info[win_no][1])] = 100
             # print(train_X.shape, train_y.shape)
             self.model_master[win_no].fit(train_X, train_y)
-
-
+            pass
+        pass
     def get_nonzero_w(self):
         self.nonzero_w = []
         self.nonzero_w_label = []
@@ -156,64 +138,63 @@ class SPM2Learn():  # second_spm.pyとして実装済み
             weight = win_model.coef_
             labels = labels[0]
             for (w, label) in zip(weight, labels):
-                if abs(w) > 1:
+                if w > 1:
+                    print("weight: \n", weight.shape)
+                    print("labels: \n", labels.shape)
                     self.nonzero_w[win_no].append(w)
                     self.nonzero_w_label[win_no].append(label)
-                    
         self.nonzero_w_num = np.array([
-            [len(self.nonzero_w_label[0]), len(self.nonzero_w_label[1]), len(self.nonzero_w_label[2])],
-            [len(self.nonzero_w_label[3]), len(self.nonzero_w_label[4]), len(self.nonzero_w_label[5])]
+            [len(self.nonzero_w_label[0]), len(
+                self.nonzero_w_label[1]), len(self.nonzero_w_label[2])],
+            [len(self.nonzero_w_label[3]), len(
+                self.nonzero_w_label[4]), len(self.nonzero_w_label[5])]
         ])
         return self.nonzero_w, self.nonzero_w_label, self.nonzero_w_num
 
-  
+"""
     def get_data(self):
-        return self.model_master,self.label_list_all_win,self.scaler_master
-
+        return self.model_master, self.label_list_all_win, self.scaler_master
+"""
 
 
 class SPM2Evaluate():  # 藤井さんの行動計画側に移設予定
-    def start(self, model_master, test_data_list_all_win, test_label_list_all_win, scaler_master,score_master_mother):
+    def start(self, model_master, test_data_list_all_win, test_label_list_all_win, scaler_master):
         self.model_master = model_master
         self.test_data_list_all_win = test_data_list_all_win
         self.test_label_list_all_win = test_label_list_all_win
         self.scaler_master = scaler_master
-        self.score_master_mother=score_master_mother
         if len(self.model_master) != len(self.test_data_list_all_win):
-            print("学習済みモデルのウィンドウ数と、テストデータのウィンドウ数が一致しません")
-            return None
+            print("学習済みモデルのウィンドウ数と、テストデータのウィンドウ数が一致しません。")
+            print(f"モデルのウィンドウ数 : {len(self.model_master)}")
+            print(f"テストデータのウィンドウ数 : {len(self.test_data_list_all_win)}")
         self.test()
         return self.score_master
 
     def test(self):
+        # print(self.test_data_list_all_win)
         self.score_master = []
         for win_no in range(np.array(self.test_data_list_all_win).shape[0]):
             self.score_master.append([])
         for test_no in range(np.array(self.test_data_list_all_win).shape[1]):
             for win_no, win in enumerate(self.test_data_list_all_win):
                 test_X = win[test_no]
+                # print(f"test_X win_no\n: {win_no}",test_X)
                 test_X = self.scaler_master[win_no].transform(
                     test_X.reshape(1, -1))
                 score = self.model_master[win_no].predict(
                     test_X.reshape(1, -1))
+                # print(score)
                 self.score_master[win_no].append(score)
                 weight = self.model_master[win_no].coef_
-        #self.apply_moving_average()
 
-    def apply_moving_average(self):
-        if self.score_master_mother==[]:
-            pass
-        else:        
-            self.score_master_np=np.array(self.score_master)    
-            self.score_master_mother.append(self.score_master_np)
-            self.score_master_mother=np.array(self.score_master_mother)
-            self.score_master=self.score_master_mother.mean(axis=0)
-            self.score_master=self.score_master.tolist()
-     
+                pass
+        # pprint(self.score_master[0])
+
+    """        
     def get_score(self):
         return self.score_master
         # pprint(self.score_master[0])
-
+    """
 
     def plot(self, save_dir):
         for i, win_score in enumerate(self.score_master):
@@ -228,7 +209,8 @@ class SPM2Evaluate():  # 藤井さんの行動計画側に移設予定
         global train_mov_code, test_mov_code, alpha
         plt.title(f"{train_mov_code} -->> {test_mov_code}  alpha={alpha}")
         plt.legend()
-        name = str(datetime.now()).replace(" ", "").replace(":", "").replace("-", "").replace(".", "")[:16]
+        name = str(datetime.now()).replace(" ", "").replace(
+            ":", "").replace("-", "").replace(".", "")[:16]
         plt.savefig(save_dir+f"/cca{train_mov_code}{test_mov_code}_{name}.jpg")
         plt.cla()
 
@@ -257,12 +239,20 @@ class SPM2Evaluate():  # 藤井さんの行動計画側に移設予定
             labels = labels[0]
             for (w, label) in zip(weight, labels):
                 if w > 1:
-#                     print("weight: \n", weight.shape)
-#                     print("labels: \n", labels.shape)
+                    print("weight: \n", weight.shape)
+                    print("labels: \n", labels.shape)
                     self.nonzero_w[win_no].append(w)
                     self.nonzero_w_label[win_no].append(label)
         self.nonzero_w_num = np.array([
-            [len(self.nonzero_w_label[0]), len(self.nonzero_w_label[1]), len(self.nonzero_w_label[2])],
-            [len(self.nonzero_w_label[3]), len(self.nonzero_w_label[4]), len(self.nonzero_w_label[5])]
+            [len(self.nonzero_w_label[0]), len(
+                self.nonzero_w_label[1]), len(self.nonzero_w_label[2])],
+            [len(self.nonzero_w_label[3]), len(
+                self.nonzero_w_label[4]), len(self.nonzero_w_label[5])]
         ])
         return self.nonzero_w, self.nonzero_w_label, self.nonzero_w_num
+
+npz_path="/Users/hayashidekazuyuki/Desktop/Git_Win_Air/wolvez2022/Testcode/EtoE/results/camera_result/planning/learn1/planning_npz"
+files=glob.glob(npz_path+"/*")
+spm2_prepare = SPM2Open_npz()
+
+spm2_prepare.unpack(files)
