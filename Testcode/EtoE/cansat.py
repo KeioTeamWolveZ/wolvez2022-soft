@@ -175,16 +175,15 @@ class Cansat():
             datalog_sparse =  str(self.timer) + ","\
                     + "Time:"+str(self.gps.Time) + ","\
                     + "Lat:"+str(self.gps.Lat).rjust(6) + ","\
-                    + "Lng:"+str(self.gps.Lon).rjust(6) + ","\
+                    + "Lng:"+str(self.gps.Lon).rjust(6) + ",\n"\
                     + "Goal Distance:"+str(self.gps.gpsdis).rjust(6) + ","\
-                    + "Goal Angle:"+str(self.gps.gpsdegrees).rjust(6) + ",\n"\
+                    + "Goal Angle:"+str(self.gps.gpsdegrees).rjust(6) + ","\
                     + "    "\
-                    +"q:"+str(self.bno055.ex).rjust(6) + ","\
-                    + "Risk:"+str(np.array(self.risk).reshape(1,-1)).rjust(6) + ","\
-                    + "threadshold_risk:"+str(self.threshold_risk).rjust(6) + ","\
-                    + "max_risk:"+str(self.max_risk).rjust(6)+","\
-                    + "boolean_risk:"+str(self.boolean_risk).rjust(6)+","\
-                    + "    "\
+                    + "q:"+str(self.bno055.ex).rjust(6) + ",\n"\
+                    + "Risk:"+str(np.round(self.risk,decimals=3)).rjust(6) + ","\
+                    + "threadshold_risk:"+str(round(self.threshold_risk,3)).rjust(6) + ","\
+                    + "max_risk:"+str(round(self.max_risk,3)).rjust(6)+","\
+                    + "boolean_risk:"+str(np.round(self.boolean_risk,decimals=3)).rjust(6)+",\n"\
                     + "Plan:"+str(self.plan_str) + ","\
                     + "rV:"+str(round(self.MotorR.velocity,3)).rjust(6) + ","\
                     + "lV:"+str(round(self.MotorL.velocity,3)).rjust(6) + ","\
@@ -192,7 +191,8 @@ class Cansat():
 
             with open(f'results/{self.startTime}/planning_result.txt',"a")  as test: # [mode] x:ファイルの新規作成、r:ファイルの読み込み、w:ファイルへの書き込み、a:ファイルへの追記
                 test.write(datalog_sparse + '\n')
-                print("### SPARSE LOG ###",datalog_sparse)
+                print("### SPARSE LOG ## ")
+                print(datalog_sparse)
 
 
     def sequence(self):
@@ -432,7 +432,7 @@ class Cansat():
 
         else:# PIC_COUNT枚撮影
             if self.state == 4:  # 再学習時にステート操作が必要なら追記
-                self.spm_f_eval(PIC_COUNT=50, now=now, iw_shape=iw_shape, relearning=relearning) #第2段階用の画像を撮影
+                self.spm_f_eval(PIC_COUNT=ct.const.SPMFIRST_PIC_COUNT, now=now, iw_shape=iw_shape, relearning=relearning) #第2段階用の画像を撮影
                 self.state = 5
                 self.laststate = 5
             else:
@@ -515,6 +515,7 @@ class Cansat():
                     feature_name = str(re.findall(tempDir_name + f"/(.*)_.*_", fmg)[0])
                     
                     # print("FEATURED BY: ",feature_name)
+                    feature_values[feature_name] = {}
                     
                     D, ksvd = self.dict_list[feature_name]
                     for win in range(int(np.prod(iw_shape))): #それぞれのウィンドウに対して評価を実施
@@ -532,7 +533,7 @@ class Cansat():
                             ave, med, var, mode, kurt, skew = ei.evaluate(iw_list[win], img_rec, win+1, feature_name, now, self.saveDir)
                         else :
                             ave, med, var, mode, kurt, skew = 0, 0, 0, 0, 0, 0
-
+                        
                         feature_values[feature_name][f'win_{win+1}'] = {}
                         feature_values[feature_name][f'win_{win+1}']["var"] = ave  # 平均値
                         feature_values[feature_name][f'win_{win+1}']["med"] = med  # 中央値
@@ -544,7 +545,8 @@ class Cansat():
                 self.camerastate = 0
                        
             else: #第一段階評価モード。runningで使うための部 # ここ変える
-                feature_list = ["normalRGB","enphasis","edge","vari","rgbvi","grvi","ior","hsv","red","blue","green","purple","emerald","yellow"]
+#                 feature_list = ["normalRGB","enphasis","edge","vari","rgbvi","grvi","ior","hsv","red","blue","green","purple","emerald","yellow"]
+                feature_list = ["normalRGB","enphasis","edge","hsv","red","blue","green","purple","emerald","yellow"]
                 features = []
                 
                 for feature in feature_names:# windowgoto
@@ -697,9 +699,9 @@ class Cansat():
             self.GREEN_LED.led_on()
         else:
             SPM2_predict_prepare = SPM2Open_npz()
-            print("ROI start")
-            print(planning_npz)
-            print("ROI ended")
+#             print("ROI start")
+#             print(planning_npz)
+#             print("ROI ended")
             test_data_list_all_win,test_label_list_all_win = SPM2_predict_prepare.unpack([planning_npz[-1]]) #作成したnpzファイルを取得
             spm2_predict = SPM2Evaluate()
             spm2_predict.start(model_master,test_data_list_all_win,test_label_list_all_win,scaler_master,self.risk_list) #第二段階の評価を実施
@@ -748,8 +750,8 @@ class Cansat():
         self.x = self.gps.gpsdis*math.cos(math.radians(self.gps.gpsdegrees))
         self.y = self.gps.gpsdis*math.sin(math.radians(self.gps.gpsdegrees))
         theta_goal = self.gps.gpsdegrees
-        # phi = theta_goal-self.bno055.ex
-        phi = - self.bno055.ex  # 雨用にbnoの値だけをとってくる
+        phi = theta_goal - self.bno055.ex
+#         phi = - self.bno055.ex  # 雨用にbnoの値だけをとってくる
         
         if phi < -180:
             phi += 360
@@ -759,7 +761,7 @@ class Cansat():
         print("distance:", self.gps.gpsdis)
 
         dir_run = self.calc_dir(risk,phi)
-        print(f"###Plan:{self.plan_str}, risk:{risk}, boolean_risk:{self.boolean_risk}")
+        print(f"###Plan:{self.plan_str}, risk:{np.round(risk,decimals=3)}, boolean_risk:{self.boolean_risk}")
         if dir_run == 0:
 #             print("Left")
             self.MotorR.go(70)
@@ -784,10 +786,10 @@ class Cansat():
         self.writeSparseData(risk)
 
     def decide_direction(self,phi):
-        if phi >= 20:
+        if phi >= 10:
             direction_goal = 2
 #             print("ゴール方向："+str(direction_goal)+" -> 右に曲がりたい")
-        elif phi > -20 and phi < 20:
+        elif phi > -10 and phi < 10:
             direction_goal = 1
 #             print("ゴール方向："+str(direction_goal)+" -> 直進したい")
         else:
@@ -801,6 +803,7 @@ class Cansat():
         ・出力:危険=1、安全=0の(入力と同じ次元)
         """
         self.threshold_risk = np.average(np.array(self.risk_list_below))+2*np.std(np.array(self.risk_list_below))
+
 #         if len(self.risk_list_below)<=100:
 #             self.threshold_risk = np.average(np.array(self.risk_list_below))+2*np.std(np.array(self.risk_list_below))
 #         else:

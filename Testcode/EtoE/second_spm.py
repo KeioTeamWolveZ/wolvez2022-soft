@@ -22,7 +22,7 @@ class SPM2Open_npz():  # second_spm.pyとして実装済み
             data_per_pic, label_list_per_pic = self.load(file)
             data_list_all_time.append(data_per_pic)
             label_list_all_time.append(label_list_per_pic)
-        data_list_all_time = np.array(data_list_all_time)
+        data_list_all_time = np.array(data_list_all_time,dtype=object)
         label_list_all_time = np.array(label_list_all_time,dtype=object)
         print(f"フレーム数 : {len(files)}")
         try:
@@ -39,7 +39,7 @@ class SPM2Open_npz():  # second_spm.pyとして実装済み
         for pic, lab_pic in zip(data_list_all_time, label_list_all_time):
             for win_no, (win, label_win) in enumerate(zip(pic, lab_pic)):
                 self.data_list_all_win[win_no].append(win.flatten())
-                self.label_list_all_win[win_no].append(label_win.flatten())
+                self.label_list_all_win[win_no].append(np.array(label_win).flatten())
                 # print(train_X.shape)
                 pass
         self.data_list_all_win = np.array(self.data_list_all_win)
@@ -148,7 +148,7 @@ class SPM2Learn():  # second_spm.pyとして実装済み
         print("SPM2 will be excecuted by each model for each window")
         for win_no, win in enumerate(self.data_list_all_win):
             train_X = win
-            print(train_X)
+#             print("### train_X ###",train_X,len(train_X))
             self.scaler_master[win_no] = self.standardization_master[win_no].fit(train_X)
             train_X = self.scaler_master[win_no].transform(train_X)
             train_y = np.full((train_X.shape[0], 1), ct.const.SPMSECOND_MIN)
