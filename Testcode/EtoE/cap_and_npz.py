@@ -106,6 +106,8 @@ class Npz_maker():
                     os.mkdir(f"../npz_maker/{T:.0f}/dict_pic")
                 if not os.path.exists(f"../npz_maker/{T:.0f}/processed_pic"):
                     os.mkdir(f"../npz_maker/{T:.0f}/processed_pic")
+                if not os.path.exists(f"../npz_maker/{T:.0f}/learning"):
+                    os.mkdir(f"../npz_maker/{T:.0f}/learning")
                 if self.camerafirst == 0:
                     self.cap = cv2.VideoCapture(0)
                     ret, firstimg = self.cap.read()
@@ -145,7 +147,7 @@ class Npz_maker():
                         ld = LearnDict(iw_list[win])
                         D, ksvd = ld.generate() #辞書獲得
                         self.dict_list[feature_name] = [D, ksvd]
-                        save_name = self.saveDir + f"/learn{self.learncount}/learnimg/{feature_name}_part_{win+1}_{now}.jpg"
+                        save_name = self.saveDir + f"../npz_maker/{T:.0f}/learnimg/{feature_name}_part_{win+1}_{now}.jpg"
                         # cv2.imwrite(save_name, iw_list[win])
             self.learn_state = False
 
