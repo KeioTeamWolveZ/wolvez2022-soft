@@ -1,15 +1,11 @@
+import os
 import csv
 import numpy as np
 import matplotlib.pyplot as plt
-no=4
-csv_path=f"/Users/hayashidekazuyuki/Desktop/Git_Win_Air/wolvez2022/spm/c_spm2/noshiro_lab/log_analyze/results/risk_{no}_thre.csv"
-fig_path=f"/Users/hayashidekazuyuki/Desktop/Git_Win_Air/wolvez2022/spm/c_spm2/noshiro_lab/log_analyze/results/risk_{no}_thre.jpg"
-# with open(csv_path) as f:
-#     reader = csv.reader(f)
-#     for row in reader:
-#         csv_data_master.append(row)
-
-# csv_data_master=np.array(csv_data_master)
+no=5
+current_dir=os.getcwd()
+csv_path=current_dir+f"/spm/c_spm2/noshiro_lab/log_analyze/results/risk_no{no}_thre.csv"
+fig_path=current_dir+f"/spm/c_spm2/noshiro_lab/log_analyze/results/risk_{no}_thre.jpg"
 
 csv_data_master=np.loadtxt(csv_path, delimiter=',')
 csv_data_master=csv_data_master.T
