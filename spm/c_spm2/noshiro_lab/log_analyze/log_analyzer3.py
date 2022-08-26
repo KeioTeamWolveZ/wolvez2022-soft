@@ -1,7 +1,9 @@
 import numpy as np
 import csv
 
+
 no=5
+
 log_path=f"/Users/hayashidekazuyuki/Desktop/Git_Win_Air/wolvez2022/spm/c_spm2/noshiro_lab/log_analyze/log/planning_no{no}.txt"
 csv_path=f"/Users/hayashidekazuyuki/Desktop/Git_Win_Air/wolvez2022/spm/c_spm2/noshiro_lab/log_analyze/results/risk_no{no}_thre.csv"
 
