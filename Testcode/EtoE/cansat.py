@@ -746,12 +746,17 @@ class Cansat():
             sys.exit()
     
     def planning(self,risk):
-        self.gps.vincenty_inverse(float(self.gps.Lat),float(self.gps.Lon),self.goallat,self.goallon) #距離:self.gps.gpsdis 方位角:self.gps.gpsdegrees
+        """
+        回避試験用にGPS・BNOを使用せず、SPMのみを使った方向決定を行います。
+        """
+        # self.gps.vincenty_inverse(float(self.gps.Lat),float(self.gps.Lon),self.goallat,self.goallon) #距離:self.gps.gpsdis 方位角:self.gps.gpsdegrees"""ここをコメントアウト"""
         self.x = self.gps.gpsdis*math.cos(math.radians(self.gps.gpsdegrees))
         self.y = self.gps.gpsdis*math.sin(math.radians(self.gps.gpsdegrees))
         theta_goal = self.gps.gpsdegrees
         phi = theta_goal - self.bno055.ex
 #         phi = - self.bno055.ex  # 雨用にbnoの値だけをとってくる
+
+        phi = 0 # 回避試験用
         
         if phi < -180:
             phi += 360
@@ -802,7 +807,8 @@ class Cansat():
         ・入力:下半分のwindowのリスク行列（3*1または1*3？ここはロバストに作ります）
         ・出力:危険=1、安全=0の(入力と同じ次元)
         """
-        self.threshold_risk = np.average(np.array(self.risk_list_below))+2*np.std(np.array(self.risk_list_below))
+        self.threshold_risk = np.average(np.array(self.risk_list_below))+np.std(np.array(self.risk_list_below))
+        # self.threshold_risk = np.average(np.array(self.risk_list_below))+2*np.std(np.array(self.risk_list_below))
 
 #         if len(self.risk_list_below)<=100:
 #             self.threshold_risk = np.average(np.array(self.risk_list_below))+2*np.std(np.array(self.risk_list_below))
@@ -863,7 +869,15 @@ class Cansat():
             dir_run = 3
                         
         return dir_run
-            
+    
+    def calc_dir2(self,risk,phi):
+        lower_risk = [risk[i] for i in range(3,6)]
+        min_index=lower_risk.index(min(lower_risk))
+        max_index=lower_risk.index(max(lower_risk))
+        
+
+
+
     def sendLoRa(self): #通信モジュールの送信を行う関数
         datalog = str(self.state) + ","\
                   + str(self.gps.Time) + ","\
