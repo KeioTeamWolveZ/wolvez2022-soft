@@ -148,6 +148,7 @@ class SPM2Learn():  # second_spm.pyとして実装済み
         print("SPM2 will be excecuted by each model for each window")
         for win_no, win in enumerate(self.data_list_all_win):
             train_X = win
+            print(train_X)
             self.scaler_master[win_no] = self.standardization_master[win_no].fit(train_X)
             train_X = self.scaler_master[win_no].transform(train_X)
             train_y = np.full((train_X.shape[0], 1), ct.const.SPMSECOND_MIN)
@@ -277,3 +278,15 @@ class SPM2Evaluate():  # 藤井さんの行動計画側に移設予定
             [len(self.nonzero_w_label[3]), len(self.nonzero_w_label[4]), len(self.nonzero_w_label[5])]
         ])
         return self.nonzero_w, self.nonzero_w_label, self.nonzero_w_num
+
+npz_path="/Users/hayashidekazuyuki/Desktop/Git_Win_Air/wolvez2022/Testcode/EtoE/results/camera_result/planning/learn1/planning_npz"
+files=glob.glob(npz_path+"/*")
+spm2_prepare = SPM2Open_npz()
+
+data_list_all_win,label_list_all_win=spm2_prepare.unpack(files) 
+spm2_learn=SPM2Learn()
+model_master, label_list_all_win, scaler_master=spm2_learn.start(data_list_all_win,label_list_all_win,f1=1,f2=10,alpha=5.0)
+
+spm2_eval=SPM2Evaluate()
+score_master_mother=[]
+spm2_eval.start(model_master, data_list_all_win,label_list_all_win, scaler_master,score_master_mother)
