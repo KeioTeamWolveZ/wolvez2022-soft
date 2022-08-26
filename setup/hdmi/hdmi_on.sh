@@ -1,0 +1,1 @@
+sudo /opt/vc/bin/tvservice -p
