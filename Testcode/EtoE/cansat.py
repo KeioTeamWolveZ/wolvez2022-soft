@@ -639,7 +639,7 @@ class Cansat():
         f2 = ct.const.f2
 
         # ウィンドウによってスタックすると教示する時間帯を変える場合はnp.arrayを定義
-        f1f2_array_window_custom = None
+        f1f2_array_window_custom = np.array([[21,50],[11,40],[1,30],[21,50],[11,40],[1,30],])
         """
             f1f2_array_window_custom=np.array([[12., 18.],
                 [12., 18.],

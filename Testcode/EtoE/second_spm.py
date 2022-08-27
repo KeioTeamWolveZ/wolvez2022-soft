@@ -93,7 +93,7 @@ class SPM2Learn():  # second_spm.pyとして実装済み
         self.label_list_all_win = label_list_all_win
         self.alpha = alpha
         # print(data_list_all_win.shape)#(win,pic_num,feature)=(6,886,30)
-        if f1f2_array_window_custom == None:
+        if f1f2_array_window_custom.any() == None:
             self.f1 = f1
             self.f2 = f2
             self.f1f2_array_window_custom = np.zeros((self.data_list_all_win.shape[0], 2))
