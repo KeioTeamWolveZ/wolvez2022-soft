@@ -46,4 +46,5 @@ except KeyboardInterrupt:
     time.sleep(1)
     GPIO.cleanup()
     time.sleep(1)
-    GPIO.cleanup() 
+    GPIO.cleanup()
+    
