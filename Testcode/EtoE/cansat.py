@@ -141,16 +141,16 @@ class Cansat():
     def writeData(self): #ログデータ作成。\マークを入れることで改行してもコードを続けて書くことができる
         print_datalog = str(self.timer) + ","\
                   + "state:"+str(self.state)+ ","\
-                  + "Time:"+str(self.gps.Time) + ","\
-                  + "Lat:"+str(self.gps.Lat).rjust(6) + ","\
-                  + "Lng:"+str(self.gps.Lon).rjust(6) + ","\
-                  + "ax:"+str(round(self.ax,6)).rjust(6) + ","\
-                  + "ay:"+str(round(self.ay,6)).rjust(6) + ","\
-                  + "az:"+str(round(self.az,6)).rjust(6) + ","\
-                  + "q:" + str(self.ex).rjust(6) + ","\
-                  + "rV:" + str(round(self.MotorR.velocity,2)).rjust(4) + ","\
-                  + "lV:" + str(round(self.MotorL.velocity,2)).rjust(4) + ","\
-                  + "Camera:" + str(self.camerastate)
+#                   + "Time:"+str(self.gps.Time) + ","\
+#                   + "Lat:"+str(self.gps.Lat).rjust(6) + ","\
+#                   + "Lng:"+str(self.gps.Lon).rjust(6) + ","\
+#                   + "ax:"+str(round(self.ax,6)).rjust(6) + ","\
+#                   + "ay:"+str(round(self.ay,6)).rjust(6) + ","\
+#                   + "az:"+str(round(self.az,6)).rjust(6) + ","\
+#                   + "q:" + str(self.ex).rjust(6) + ","\
+#                   + "rV:" + str(round(self.MotorR.velocity,2)).rjust(4) + ","\
+#                   + "lV:" + str(round(self.MotorL.velocity,2)).rjust(4) + ","\
+#                   + "Camera:" + str(self.camerastate)
 
         print(print_datalog)
      
@@ -191,7 +191,7 @@ class Cansat():
 
             with open(f'results/{self.startTime}/planning_result.txt',"a")  as test: # [mode] x:ファイルの新規作成、r:ファイルの読み込み、w:ファイルへの書き込み、a:ファイルへの追記
                 test.write(datalog_sparse + '\n')
-                print("### SPARSE LOG ## ")
+#                 print("### SPARSE LOG ## ")
 #                 print(datalog_sparse)
 
 
@@ -639,7 +639,7 @@ class Cansat():
         f2 = ct.const.f2
 
         # ウィンドウによってスタックすると教示する時間帯を変える場合はnp.arrayを定義
-        f1f2_array_window_custom = None
+        f1f2_array_window_custom = np.array([[21,50],[11,40],[1,30],[21,50],[11,40],[1,30]])
         """
             f1f2_array_window_custom=np.array([[12., 18.],
                 [12., 18.],
@@ -661,6 +661,7 @@ class Cansat():
             )
             t[s]で入力すること。
         """
+#         spm2_learn.start(data_list_all_win,label_list_all_win,f1+ct.const.SPMFIRST_PIC_COUNT, f2+ct.const.SPMFIRST_PIC_COUNT,alpha=5.0,f1f2_array_window_custom=f1f2_array_window_custom) #どっちかは外すのがいいのか
         spm2_learn.start(data_list_all_win,label_list_all_win,f1+ct.const.SPMFIRST_PIC_COUNT, f2+ct.const.SPMFIRST_PIC_COUNT,alpha=5.0,f1f2_array_window_custom=f1f2_array_window_custom) #どっちかは外すのがいいのか
         model_master,label_list_all_win,scaler_master=spm2_learn.get_data()
         nonzero_w, nonzero_w_label, nonzero_w_num = spm2_learn.get_nonzero_w()
@@ -691,7 +692,7 @@ class Cansat():
         now=str(datetime.now())[:19].replace(" ","_").replace(":","-")
         
         self.spm_f_eval(now = now,feature_names = feature_names) #第一段階と同様の処理実施。特徴処理を行なってnpzファイル作成
-        print("time1:",time.time()-time_pre)
+#         print("time1:",time.time()-time_pre)
         if self.runningTime == 0:
             self.runningTime = time.time()
             self.RED_LED.led_on()
@@ -727,7 +728,7 @@ class Cansat():
             self.planning(self.risk)
             self.stuck_detection()#ここは注意
             time_now = time.time()
-            print("calc time:",time_now-time_pre)
+#             print("calc time:",time_now-time_pre)
             if self.gps.gpsdis <= ct.const.FINISH_DIS_THRE:
                 self.state = 7
                 self.laststate = 7
