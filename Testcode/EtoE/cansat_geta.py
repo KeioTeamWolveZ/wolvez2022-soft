@@ -706,10 +706,9 @@ class Cansat():
             test_data_list_all_win,test_label_list_all_win = SPM2_predict_prepare.unpack([planning_npz[-1]]) #作成したnpzファイルを取得
             spm2_predict = SPM2Evaluate()
             try:
-                self.geta=self.geta
                 spm2_predict.start(model_master,test_data_list_all_win,test_label_list_all_win,scaler_master,self.risk_list,self.geta) #第二段階の評価を実施
                 self.risk,self.geta = spm2_predict.get_score()
-            except NameError:
+            except AttributeError:
                 spm2_predict.start(model_master,test_data_list_all_win,test_label_list_all_win,scaler_master,self.risk_list) #第二段階の評価を実施
                 self.risk,self.geta = spm2_predict.get_score()
                 
