@@ -192,7 +192,7 @@ class Cansat():
             with open(f'results/{self.startTime}/planning_result.txt',"a")  as test: # [mode] x:ファイルの新規作成、r:ファイルの読み込み、w:ファイルへの書き込み、a:ファイルへの追記
                 test.write(datalog_sparse + '\n')
                 print("### SPARSE LOG ## ")
-                print(datalog_sparse)
+#                 print(datalog_sparse)
 
 
     def sequence(self):
@@ -763,7 +763,7 @@ class Cansat():
         elif phi > 180:
             phi -= 360
 #         print("theta_goal:",theta_goal,"ex:",self.bno055.ex)
-        print("distance:", self.gps.gpsdis)
+#         print("distance:", self.gps.gpsdis)
 
         dir_run = self.calc_dir(risk,phi)
         print(f"###Plan:{self.plan_str}, risk:{np.round(risk,decimals=3)}, boolean_risk:{self.boolean_risk}")
