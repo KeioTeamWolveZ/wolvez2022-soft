@@ -35,8 +35,8 @@ const.RUNNING_MOTOR_VREF = 70
 const.STUCK_MOTOR_VREF = 100
 
 ## Variables
-const.GPS_GOAL_LAT = 35.5559391
-const.GPS_GOAL_LON = 139.6525889
+const.GPS_GOAL_LAT = 35.5553391
+const.GPS_GOAL_LON = 139.6551065
 const.f1 = 1 # 136
 const.f2 = 50 # 196
 const.f3 = 776

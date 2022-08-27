@@ -133,7 +133,7 @@ class Cansat():
         planning_path.close()
 
     def mvfile(self):
-        pre_data = sorted(glob("../../pre_data/*"))
+        pre_data = sorted(glob("../../pre_data_old2/*"))
         dest_dir = f"results/{self.startTime}/camera_result/second_spm/learn{self.learncount}"
         for file in pre_data:
             shutil.copy2(file, dest_dir)
@@ -180,7 +180,7 @@ class Cansat():
                     + "Goal Angle:"+str(self.gps.gpsdegrees).rjust(6) + ","\
                     + "    "\
                     + "q:"+str(self.bno055.ex).rjust(6) + ",\n"\
-                    + "Risk:"+str(np.round(self.risk,decimals=3)).rjust(6) + ","\
+                    + "Risk:"+str(np.round(self.risk[3:],decimals=3)).rjust(6) + ","\
                     + "threadshold_risk:"+str(round(self.threshold_risk,3)).rjust(6) + ","\
                     + "max_risk:"+str(round(self.max_risk,3)).rjust(6)+","\
                     + "boolean_risk:"+str(np.round(self.boolean_risk,decimals=3)).rjust(6)+",\n"\
@@ -505,7 +505,7 @@ class Cansat():
             cv2.imwrite(importPath, self.img)
             
             #if self.state == 4: #ステートが4の場合はセンサの値取得
-                #self.sensor()
+                #self.sensor() 
             if feature_names == None: #第一段階学習モード
                 self.camerastate = "captured!"
                 fmg_list = iw.feature_img(frame_num=now,feature_names=feature_names) #特徴抽出。リストに特徴画像が入る
@@ -766,14 +766,23 @@ class Cansat():
 #             print("Left")
             self.MotorR.go(70)
             self.MotorL.go(50)
+            time.sleep(0.5)
+            self.MotorR.stop()
+            self.MotorL.stop()
         elif dir_run == 1:
 #             print("Straight")
             self.MotorR.go(60)
             self.MotorL.go(60)
+            time.sleep(0.5)
+            self.MotorR.stop()
+            self.MotorL.stop()
         elif dir_run == 2:
 #             print("Right")
             self.MotorR.go(50)
             self.MotorL.go(70)
+            time.sleep(0.5)
+            self.MotorR.stop()
+            self.MotorL.stop()
         elif dir_run == 3:
 #             print("Stop")
             self.MotorR.back(60)
@@ -781,6 +790,8 @@ class Cansat():
             time.sleep(0.5)
             self.MotorR.go(60)
             self.MotorL.go(60)
+            self.MotorR.stop()
+            self.MotorL.stop()
             time.sleep(1)
         
         self.writeSparseData(risk)
