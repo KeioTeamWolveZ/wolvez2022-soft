@@ -20,6 +20,7 @@ class SPM2Open_npz():  # second_spm.pyとして実装済み
             data_per_pic, label_list_per_pic = self.load(file)
             data_list_all_time.append(data_per_pic)
             label_list_all_time.append(label_list_per_pic)
+        print(len(data_list_all_time[0][0]))
         data_list_all_time = np.array(data_list_all_time)
         label_list_all_time = np.array(label_list_all_time)
         print(f"フレーム数 : {len(files)}")
@@ -251,7 +252,7 @@ class SPM2Evaluate():  # 藤井さんの行動計画側に移設予定
         ])
         return self.nonzero_w, self.nonzero_w_label, self.nonzero_w_num
 
-npz_path="/Users/hayashidekazuyuki/Desktop/Git_Win_Air/wolvez2022/Testcode/EtoE/results/camera_result/planning/learn1/planning_npz"
+npz_path="/Users/hayashidekazuyuki/Desktop/Git_Win_Air/wolvez2022/spm/c_spm2/arliss_lab/learn1"
 files=glob.glob(npz_path+"/*")
 spm2_prepare = SPM2Open_npz()
 
