@@ -27,18 +27,21 @@ import constant as ct
 
 
 # npz作成枚数指定（評価用写真撮影枚数指定）
-NPZ_COUNT = 50
+NPZ_COUNT = 10
 
 
 class Npz_maker():
     global NPZ_COUNT
+    learn_state = True
+    dict_list = {}
+    saveDir = "/home/pi/Desktop/wolvez2022/Testcode/npz_maker"
     
     def __init___(self):
         self.learn_state = True
     
     def spm_first(self, PIC_COUNT:int=1, relearning:dict=dict(relearn_state=False,f1=ct.const.f1,f3=ct.const.f3)): #ステート4。スパースモデリング第一段階実施。
-        if self.spmfirstTime == 0: #時刻を取得してLEDをステートに合わせて光らせる
-            self.spmfirstTime = time.time()
+#         if self.spmfirstTime == 0: #時刻を取得してLEDをステートに合わせて光らせる
+        self.spmfirstTime = time.time()
             # self.RED_LED.led_on()
             # self.BLUE_LED.led_on()
             # self.GREEN_LED.led_off()
@@ -86,9 +89,9 @@ class Npz_maker():
         feature_values = {}
 
         if self.learn_state:
-            print(f"=====LEARNING PHASE{self.learncount}=====")
+            print("=====LEARNING PHASE=====")
         else:
-            print(f"=====EVALUATING PHASE{self.learncount}=====")
+            print("=====EVALUATING PHASE=====")
         
         if self.learn_state: #学習モデル獲得     
             if relearning['relearn_state']:  # 再学習に用いる画像パスの指定
@@ -106,23 +109,25 @@ class Npz_maker():
                 再学習の段階でcamerafirstの値を指定することで
                 辞書再作成用の画像撮影の有無を決定
                 '''
-                self.T = time.time()
-                if not os.path.exists(f"../npz_maker/{self.T:.0f}"):
-                    os.mkdir(f"../npz_maker/{self.T:.0f}")
-                if not os.path.exists(f"../npz_maker/{self.T:.0f}/dict_pic"):
-                    os.mkdir(f"../npz_maker/{self.T:.0f}/dict_pic")
-                if not os.path.exists(f"../npz_maker/{self.T:.0f}/processed_pic"):
-                    os.mkdir(f"../npz_maker/{self.T:.0f}/processed_pic")
-                if not os.path.exists(f"../npz_maker/{self.T:.0f}/learning"):
-                    os.mkdir(f"../npz_maker/{self.T:.0f}/learning")
-                if not os.path.exists(f"../npz_maker/{self.T:.0f}/evaluate"):
-                    os.mkdir(f"../npz_maker/{self.T:.0f}/evaluate")
-                if not os.path.exists(f"../npz_maker/{self.T:.0f}/NPZ"):
-                    os.mkdir(f"../npz_maker/{self.T:.0f}/NPZ")
+                self.T = str(datetime.now())[:19].replace(" ","_").replace(":","-")
+                if not os.path.exists(f"/home/pi/Desktop/wolvez2022/Testcode/npz_maker"):
+                    os.mkdir(f"/home/pi/Desktop/wolvez2022/Testcode/npz_maker")
+                if not os.path.exists(f"/home/pi/Desktop/wolvez2022/Testcode/npz_maker/{self.T}"):
+                    os.mkdir(f"/home/pi/Desktop/wolvez2022/Testcode/npz_maker/{self.T}")
+                if not os.path.exists(f"/home/pi/Desktop/wolvez2022/Testcode/npz_maker/{self.T}/dict_pic"):
+                    os.mkdir(f"/home/pi/Desktop/wolvez2022/Testcode/npz_maker/{self.T}/dict_pic")
+                if not os.path.exists(f"/home/pi/Desktop/wolvez2022/Testcode/npz_maker/{self.T}/processed_pic"):
+                    os.mkdir(f"/home/pi/Desktop/wolvez2022/Testcode/npz_maker/{self.T}/processed_pic")
+                if not os.path.exists(f"/home/pi/Desktop/wolvez2022/Testcode/npz_maker/{self.T}/learning"):
+                    os.mkdir(f"/home/pi/Desktop/wolvez2022/Testcode/npz_maker/{self.T}/learning")
+                if not os.path.exists(f"/home/pi/Desktop/wolvez2022/Testcode/npz_maker/{self.T}/evaluate"):
+                    os.mkdir(f"/home/pi/Desktop/wolvez2022/Testcode/npz_maker/{self.T}/evaluate")
+                if not os.path.exists(f"/home/pi/Desktop/wolvez2022/Testcode/npz_maker/{self.T}/NPZ"):
+                    os.mkdir(f"/home/pi/Desktop/wolvez2022/Testcode/npz_maker/{self.T}/NPZ")
                 # if self.camerafirst == 0:
                 self.cap = cv2.VideoCapture(0)
                 ret, firstimg = self.cap.read()
-                cv2.imwrite(f"../npz_maker/{self.T:.0f}/dict_pic/first.jpg",firstimg)
+                cv2.imwrite(f"/home/pi/Desktop/wolvez2022/Testcode/npz_maker/{self.T}/dict_pic/first.jpg",firstimg)
                 self.camerastate = "captured!"
                 # self.sensor()
                 self.camerastate = 0
@@ -133,9 +138,9 @@ class Npz_maker():
                     # 再撮影をする場合はここに記載
                     # '''
                 
-                importPath = f"../npz_maker/{self.T:.0f}/dict_pic/first.jpg"
+                importPath = f"/home/pi/Desktop/wolvez2022/Testcode/npz_maker/{self.T}/dict_pic/first.jpg"
             
-            processed_Dir = f"../npz_maker/{self.T:.0f}/processed_pic"
+            processed_Dir = f"/home/pi/Desktop/wolvez2022/Testcode/npz_maker/{self.T}/processed_pic"
             iw = IntoWindow(importPath, processed_Dir, Save) #画像の特徴抽出のインスタンス生成
             self.img=cv2.imread(importPath, 1)
             self.img = self.img[int(0.25*self.img.shape[0]):int(0.75*self.img.shape[0])]
@@ -158,7 +163,7 @@ class Npz_maker():
                         ld = LearnDict(iw_list[win])
                         D, ksvd = ld.generate() #辞書獲得
                         self.dict_list[feature_name] = [D, ksvd]
-                        save_name = self.saveDir + f"../npz_maker/{self.T:.0f}/learnimg/{feature_name}_part_{win+1}_{now}.jpg"
+#                         save_name = self.saveDir + f"/home/pi/Desktop/wolvez2022/Testcode/npz_maker/{self.T}/learnimg/{feature_name}_part_{win+1}_{now}.jpg"
                         # cv2.imwrite(save_name, iw_list[win])
             self.learn_state = False
 
@@ -188,7 +193,7 @@ class Npz_maker():
                 except:
                     pass
                 # if self.state == 4:
-                save_file = f"../npz_maker/{self.T:.0f}/evaluate/evaluateimg{time.time():.2f}.jpg"
+                save_file = f"/home/pi/Desktop/wolvez2022/Testcode/npz_maker/{self.T}/evaluate/evaluateimg{time.time():.2f}.jpg"
                 # elif self.state == 6:
                 #     save_file = f"results/{self.startTime}/camera_result/planning/learn{self.learncount}/planning_pics/planningimg{time.time():.2f}.jpg"
 
@@ -214,7 +219,7 @@ class Npz_maker():
 #                     print(f"{fmg_list.index(fmg)} fmg evaluated")
                 
             if not PIC_COUNT == 1:
-                second_img_paths = sorted(glob(f"../npz_maker/{self.T:.0f}/evaluate/evaluateimg*.jpg"))
+                second_img_paths = sorted(glob(f"/home/pi/Desktop/wolvez2022/Testcode/npz_maker/{self.T}/evaluate/evaluateimg*.jpg"))
             else:
                 second_img_paths = [save_file]
         
@@ -256,10 +261,10 @@ class Npz_maker():
                         if win not in [0,1,2]:
                             ei = EvaluateImg(iw_list[win])
                             img_rec = ei.reconstruct(D, ksvd, window_size)
-                            saveName = f"../npz_maker/{self.T:.0f}/processed/difference"
+                            saveName = f"/home/pi/Desktop/wolvez2022/Testcode/npz_maker/{self.T}/processed_pic/difference"
                             if not os.path.exists(saveName):
                                 os.mkdir(saveName)
-                            saveName = f"../npz_maker/{self.T:.0f}/processed/difference/{now}"
+                            saveName = f"/home/pi/Desktop/wolvez2022/Testcode/npz_maker/{self.T}/processed_pic/difference/{now}"
                             if not os.path.exists(saveName):
                                 os.mkdir(saveName)
                             ave, med, var, mode, kurt, skew = ei.evaluate(iw_list[win], img_rec, win+1, feature_name, now, self.saveDir)
@@ -298,7 +303,7 @@ class Npz_maker():
                             D, ksvd = self.dict_list[feature_name]
                             ei = EvaluateImg(iw_list[win])
                             img_rec = ei.reconstruct(D, ksvd, window_size)
-                            saveName = f"../npz_maker/{self.T:.0f}/processed/difference"
+                            saveName = f"/home/pi/Desktop/wolvez2022/Testcode/npz_maker/{self.T}/processed/difference"
     #                         if not os.path.exists(saveName):
     #                             os.mkdir(saveName)
     #                         saveName = self.saveDir + f"/camera_result/first_spm/learn{self.learncount}/processed/difference/{now}"
@@ -338,18 +343,18 @@ class Npz_maker():
             # self.BLUE_LED.led_on()
             # npzファイル形式で計算結果保存
             # if self.state == 4:
-            #     # self.savenpz_dir = "/home/pi/Desktop/wolvez2022/pre_data/"
+            #     # self.savenpz_dir = "//home/pi/Desktop/wolvez2022/pre_data/"
             #     self.savenpz_dir = self.saveDir + f"/{self.startTime}/camera_result/second_spm/learn{self.learncount}/"
             # elif self.state == 6:
             #     self.savenpz_dir = self.saveDir + f"/{self.startTime}/camera_result/planning/learn{self.learncount}/planning_npz/"
-            self.savenpz_dir = f"../npz_maker/{self.T:.0f}/NPZ/"
+            self.savenpz_dir = f"/home/pi/Desktop/wolvez2022/Testcode/npz_maker/{self.T}/NPZ/"
             # 保存時のファイル名指定（現在は時間）
             now=str(datetime.now())[:21].replace(" ","_").replace(":","-")
 #             print("feature_values:",feature_values)
             # print("shape:",len(feature_values))
             np.savez_compressed(self.savenpz_dir + now,array_1=np.array([feature_values])) #npzファイル作成
             self.tempDir.cleanup()
-            print(f"MADE {k} NPZ")
+            print(f"MADE {k+1} NPZ")
         # self.GREEN_LED.led_on()
         # self.RED_LED.led_on()
         # self.BLUE_LED.led_off()
