@@ -25,16 +25,23 @@ from lora import lora
 from led import led
 import constant as ct
 
+
+# npz作成枚数指定（評価用写真撮影枚数指定）
+NPZ_COUNT = 50
+
+
 class Npz_maker():
-    # def __init__(self):
-        
+    global NPZ_COUNT
+    
+    def __init___(self):
+        self.learn_state = True
     
     def spm_first(self, PIC_COUNT:int=1, relearning:dict=dict(relearn_state=False,f1=ct.const.f1,f3=ct.const.f3)): #ステート4。スパースモデリング第一段階実施。
         if self.spmfirstTime == 0: #時刻を取得してLEDをステートに合わせて光らせる
             self.spmfirstTime = time.time()
-            self.RED_LED.led_on()
-            self.BLUE_LED.led_on()
-            self.GREEN_LED.led_off()
+            # self.RED_LED.led_on()
+            # self.BLUE_LED.led_on()
+            # self.GREEN_LED.led_off()
         '''
         CHECK POINT
         ---
@@ -99,32 +106,36 @@ class Npz_maker():
                 再学習の段階でcamerafirstの値を指定することで
                 辞書再作成用の画像撮影の有無を決定
                 '''
-                T = time.time()
-                if not os.path.exists(f"../npz_maker/{T:.0f}"):
-                    os.mkdir(f"../npz_maker/{T:.0f}")
-                if not os.path.exists(f"../npz_maker/{T:.0f}/dict_pic"):
-                    os.mkdir(f"../npz_maker/{T:.0f}/dict_pic")
-                if not os.path.exists(f"../npz_maker/{T:.0f}/processed_pic"):
-                    os.mkdir(f"../npz_maker/{T:.0f}/processed_pic")
-                if not os.path.exists(f"../npz_maker/{T:.0f}/learning"):
-                    os.mkdir(f"../npz_maker/{T:.0f}/learning")
-                if self.camerafirst == 0:
-                    self.cap = cv2.VideoCapture(0)
-                    ret, firstimg = self.cap.read()
-                    cv2.imwrite(f"../npz_maker/{T:.0f}/dict_pic/first.jpg",firstimg)
-                    self.camerastate = "captured!"
-                    self.sensor()
-                    self.camerastate = 0
-                    self.firstlearnimgcount += 1
-                    self.camerafirst = 1
-                elif self.camerafirst == 2:
-                    '''
-                    再撮影をする場合はここに記載
-                    '''
+                self.T = time.time()
+                if not os.path.exists(f"../npz_maker/{self.T:.0f}"):
+                    os.mkdir(f"../npz_maker/{self.T:.0f}")
+                if not os.path.exists(f"../npz_maker/{self.T:.0f}/dict_pic"):
+                    os.mkdir(f"../npz_maker/{self.T:.0f}/dict_pic")
+                if not os.path.exists(f"../npz_maker/{self.T:.0f}/processed_pic"):
+                    os.mkdir(f"../npz_maker/{self.T:.0f}/processed_pic")
+                if not os.path.exists(f"../npz_maker/{self.T:.0f}/learning"):
+                    os.mkdir(f"../npz_maker/{self.T:.0f}/learning")
+                if not os.path.exists(f"../npz_maker/{self.T:.0f}/evaluate"):
+                    os.mkdir(f"../npz_maker/{self.T:.0f}/evaluate")
+                if not os.path.exists(f"../npz_maker/{self.T:.0f}/NPZ"):
+                    os.mkdir(f"../npz_maker/{self.T:.0f}/NPZ")
+                # if self.camerafirst == 0:
+                self.cap = cv2.VideoCapture(0)
+                ret, firstimg = self.cap.read()
+                cv2.imwrite(f"../npz_maker/{self.T:.0f}/dict_pic/first.jpg",firstimg)
+                self.camerastate = "captured!"
+                # self.sensor()
+                self.camerastate = 0
+                # self.firstlearnimgcount += 1
+                self.camerafirst = 1
+                # elif self.camerafirst == 2:
+                    # '''
+                    # 再撮影をする場合はここに記載
+                    # '''
                 
-                importPath = f"../npz_maker/{T:.0f}/dict_pic/first.jpg"
+                importPath = f"../npz_maker/{self.T:.0f}/dict_pic/first.jpg"
             
-            processed_Dir = f"../npz_maker/{T:.0f}/processed_pic"
+            processed_Dir = f"../npz_maker/{self.T:.0f}/processed_pic"
             iw = IntoWindow(importPath, processed_Dir, Save) #画像の特徴抽出のインスタンス生成
             self.img=cv2.imread(importPath, 1)
             self.img = self.img[int(0.25*self.img.shape[0]):int(0.75*self.img.shape[0])]
@@ -147,25 +158,25 @@ class Npz_maker():
                         ld = LearnDict(iw_list[win])
                         D, ksvd = ld.generate() #辞書獲得
                         self.dict_list[feature_name] = [D, ksvd]
-                        save_name = self.saveDir + f"../npz_maker/{T:.0f}/learnimg/{feature_name}_part_{win+1}_{now}.jpg"
+                        save_name = self.saveDir + f"../npz_maker/{self.T:.0f}/learnimg/{feature_name}_part_{win+1}_{now}.jpg"
                         # cv2.imwrite(save_name, iw_list[win])
             self.learn_state = False
 
         else:# PIC_COUNT枚撮影
-            if self.state == 4:  # 再学習時にステート操作が必要なら追記
-                self.spm_f_eval(PIC_COUNT=50, now=now, iw_shape=iw_shape, relearning=relearning) #第2段階用の画像を撮影
-                self.state = 5
-                self.laststate = 5
-            else:
-                self.spm_f_eval(PIC_COUNT=PIC_COUNT, now=now, iw_shape=iw_shape, relearning=relearning) #第2段階用の画像を撮影
+            # if self.state == 4:  # 再学習時にステート操作が必要なら追記
+            self.spm_f_eval(PIC_COUNT=NPZ_COUNT, now=now, iw_shape=iw_shape, relearning=relearning) #第2段階用の画像を撮影
+                # self.state = 5
+                # self.laststate = 5
+            # else:
+            #     self.spm_f_eval(PIC_COUNT=PIC_COUNT, now=now, iw_shape=iw_shape, relearning=relearning) #第2段階用の画像を撮影
 
     def spm_f_eval(self, PIC_COUNT=1, now="TEST", iw_shape=(2,3),feature_names=None, relearning:dict=dict(relearn_state=False,f1=ct.const.f1,f3=ct.const.f3)):#第一段階学習&評価。npzファイル作成が目的
-        if relearning['relearn_state']:
-            try:
-                second_img_paths = sorted(glob(f"results/{self.startTime}/camera_result/first_spm/learn{self.learncount-1}/evaluate/evaluateimg*.jpg"))[-relearning['f3']+1:-relearning['f1']]
-            except IndexError:
+        # if relearning['relearn_state']:
+            # try:
+            #     second_img_paths = sorted(glob(f"results/{self.startTime}/camera_result/first_spm/learn{self.learncount-1}/evaluate/evaluateimg*.jpg"))[-relearning['f3']+1:-relearning['f1']]
+            # except IndexError:
                 # ここで学習枚数足りなかったら動作指定（あきらめて１回目と同じ動きするのか、再学習をあきらめるか）
-                print('There are not enough number of pics for ReLearning.')
+                # print('There are not enough number of pics for ReLearning.')
                 # relearning['relearn_state'] = False  # 再学習用に画像を1枚
         
         if not relearning['relearn_state']:
@@ -173,18 +184,19 @@ class Npz_maker():
             for i in range(PIC_COUNT):
                 try:
                     ret,self.secondimg = self.cap.read()
-                    print("done:",i)
+                    print("Captured:",i+1)
                 except:
                     pass
-                if self.state == 4:
-                    save_file = f"results/{self.startTime}/camera_result/first_spm/learn{self.learncount}/evaluate/evaluateimg{time.time():.2f}.jpg"
-                elif self.state == 6:
-                    save_file = f"results/{self.startTime}/camera_result/planning/learn{self.learncount}/planning_pics/planningimg{time.time():.2f}.jpg"
+                # if self.state == 4:
+                save_file = f"../npz_maker/{self.T:.0f}/evaluate/evaluateimg{time.time():.2f}.jpg"
+                # elif self.state == 6:
+                #     save_file = f"results/{self.startTime}/camera_result/planning/learn{self.learncount}/planning_pics/planningimg{time.time():.2f}.jpg"
 
                 cv2.imwrite(save_file,self.secondimg)
-                self.firstevalimgcount += 1
+                time.sleep(5)
+                # self.firstevalimgcount += 1
                 
-                if self.state == 4:
+                # if self.state == 4:
                     # self.MotorR.go(74)#走行
                     # self.MotorL.go(70)#走行
                     # # self.stuck_detection()
@@ -196,20 +208,20 @@ class Npz_maker():
                     #     self.sensor()
                     #     self.camerastate = 0
                     # state4の学習時にもBNOベースで走行
-                    self.sensor()
-                    self.planning(np.array([0,0,0,0,0,0]))
-                    self.stuck_detection()#ここは注意
+                    # self.sensor()
+                    # self.planning(np.array([0,0,0,0,0,0]))
+                    # self.stuck_detection()#ここは注意
 #                     print(f"{fmg_list.index(fmg)} fmg evaluated")
                 
             if not PIC_COUNT == 1:
-                second_img_paths = sorted(glob(f"results/{self.startTime}/camera_result/first_spm/learn{self.learncount}/evaluate/evaluateimg*.jpg"))
+                second_img_paths = sorted(glob(f"../npz_maker/{self.T:.0f}/evaluate/evaluateimg*.jpg"))
             else:
                 second_img_paths = [save_file]
         
-        for importPath in second_img_paths:
-            self.GREEN_LED.led_on()
-            self.RED_LED.led_on()
-            self.BLUE_LED.led_off()
+        for k, importPath in enumerate(second_img_paths):
+            # self.GREEN_LED.led_on()
+            # self.RED_LED.led_on()
+            # self.BLUE_LED.led_off()
         
             feature_values = {}
 
@@ -244,10 +256,10 @@ class Npz_maker():
                         if win not in [0,1,2]:
                             ei = EvaluateImg(iw_list[win])
                             img_rec = ei.reconstruct(D, ksvd, window_size)
-                            saveName = self.saveDir + f"/{self.startTime}/camera_result/first_spm/learn{self.learncount}/processed/difference"
+                            saveName = f"../npz_maker/{self.T:.0f}/processed/difference"
                             if not os.path.exists(saveName):
                                 os.mkdir(saveName)
-                            saveName = self.saveDir + f"/{self.startTime}/camera_result/first_spm/learn{self.learncount}/processed/difference/{now}"
+                            saveName = f"../npz_maker/{self.T:.0f}/processed/difference/{now}"
                             if not os.path.exists(saveName):
                                 os.mkdir(saveName)
                             ave, med, var, mode, kurt, skew = ei.evaluate(iw_list[win], img_rec, win+1, feature_name, now, self.saveDir)
@@ -265,7 +277,8 @@ class Npz_maker():
                 self.camerastate = 0
                        
             else: #第一段階評価モード。runningで使うための部 # ここ変える
-                feature_list = ["normalRGB","enphasis","edge","vari","rgbvi","grvi","ior","hsv","red","blue","green","purple","emerald","yellow"]
+                # feature_list = ["normalRGB","enphasis","edge","vari","rgbvi","grvi","ior","hsv","red","blue","green","purple","emerald","yellow"]
+                feature_list = ["normalRGB","enphasis","edge","hsv","red","blue","green","purple","emerald","yellow"]
                 features = []
                 
                 for feature in feature_names:# windowgoto
@@ -285,7 +298,7 @@ class Npz_maker():
                             D, ksvd = self.dict_list[feature_name]
                             ei = EvaluateImg(iw_list[win])
                             img_rec = ei.reconstruct(D, ksvd, window_size)
-                            saveName = self.saveDir + f"/{self.startTime}/camera_result/first_spm/learn{self.learncount}/processed/difference"
+                            saveName = f"../npz_maker/{self.T:.0f}/processed/difference"
     #                         if not os.path.exists(saveName):
     #                             os.mkdir(saveName)
     #                         saveName = self.saveDir + f"/camera_result/first_spm/learn{self.learncount}/processed/difference/{now}"
@@ -316,26 +329,32 @@ class Npz_maker():
                                 feature_values[feature_name][f'win_{win+1}']["kurt"] = 0  # 尖度
                                 feature_values[feature_name][f'win_{win+1}']["skew"] = 0  # 歪度
 
-                    if fmg != fmg_list[-1] and type(self.risk) == np.ndarray:
-                        self.sensor()
-                        self.planning(self.risk)
-                        self.stuck_detection()#ここは注意
+                    # if fmg != fmg_list[-1] and type(self.risk) == np.ndarray:
+                    #     self.sensor()
+                    #     self.planning(self.risk)
+                    #     self.stuck_detection()#ここは注意
 #                     print(f"{fmg_list.index(fmg)} fmg evaluated")
                     
-            self.BLUE_LED.led_on()
+            # self.BLUE_LED.led_on()
             # npzファイル形式で計算結果保存
-            if self.state == 4:
-                # self.savenpz_dir = "/home/pi/Desktop/wolvez2022/pre_data/"
-                self.savenpz_dir = self.saveDir + f"/{self.startTime}/camera_result/second_spm/learn{self.learncount}/"
-            elif self.state == 6:
-                self.savenpz_dir = self.saveDir + f"/{self.startTime}/camera_result/planning/learn{self.learncount}/planning_npz/"
-            
+            # if self.state == 4:
+            #     # self.savenpz_dir = "/home/pi/Desktop/wolvez2022/pre_data/"
+            #     self.savenpz_dir = self.saveDir + f"/{self.startTime}/camera_result/second_spm/learn{self.learncount}/"
+            # elif self.state == 6:
+            #     self.savenpz_dir = self.saveDir + f"/{self.startTime}/camera_result/planning/learn{self.learncount}/planning_npz/"
+            self.savenpz_dir = f"../npz_maker/{self.T:.0f}/NPZ/"
             # 保存時のファイル名指定（現在は時間）
             now=str(datetime.now())[:21].replace(" ","_").replace(":","-")
 #             print("feature_values:",feature_values)
             # print("shape:",len(feature_values))
             np.savez_compressed(self.savenpz_dir + now,array_1=np.array([feature_values])) #npzファイル作成
             self.tempDir.cleanup()
-        self.GREEN_LED.led_on()
-        self.RED_LED.led_on()
-        self.BLUE_LED.led_off()
+            print(f"MADE {k} NPZ")
+        # self.GREEN_LED.led_on()
+        # self.RED_LED.led_on()
+        # self.BLUE_LED.led_off()
+
+if __name__ == '__main__':
+    mknpz = Npz_maker()
+    mknpz.spm_first()
+    mknpz.spm_first()
