@@ -24,10 +24,11 @@ from gps import GPS
 from lora import lora
 from led import led
 import constant as ct
+import motor
 
 
 # npz作成枚数指定（評価用写真撮影枚数指定）
-NPZ_COUNT = 10
+NPZ_COUNT = 50
 
 
 class Npz_maker():
@@ -35,6 +36,10 @@ class Npz_maker():
     learn_state = True
     dict_list = {}
     saveDir = "/home/pi/Desktop/wolvez2022/Testcode/npz_maker"
+    GPIO.setwarnings(False)
+    MotorR = motor.motor(ct.const.RIGHT_MOTOR_IN1_PIN,ct.const.RIGHT_MOTOR_IN2_PIN,ct.const.RIGHT_MOTOR_VREF_PIN)
+    MotorL = motor.motor(ct.const.LEFT_MOTOR_IN1_PIN,ct.const.LEFT_MOTOR_IN2_PIN,ct.const.LEFT_MOTOR_VREF_PIN)
+
     
     def __init___(self):
         self.learn_state = True
@@ -202,12 +207,12 @@ class Npz_maker():
                 # self.firstevalimgcount += 1
                 
                 # if self.state == 4:
-                    # self.MotorR.go(74)#走行
-                    # self.MotorL.go(70)#走行
-                    # # self.stuck_detection()
-                    # time.sleep(0.1)
-                    # self.MotorR.stop()
-                    # self.MotorL.stop()
+#                 self.MotorR.go(80)#走行
+#                 self.MotorL.go(90)#走行
+#                 # self.stuck_detection()
+#                 time.sleep(0.1)
+#                 self.MotorR.stop()
+#                 self.MotorL.stop()
                     # if i%10 == 0: #10枚撮影する毎にセンサの値取得
                     #     self.camerastate = "captured!"
                     #     self.sensor()
@@ -360,6 +365,10 @@ class Npz_maker():
         # self.BLUE_LED.led_off()
 
 if __name__ == '__main__':
-    mknpz = Npz_maker()
-    mknpz.spm_first()
-    mknpz.spm_first()
+    try:
+        mknpz = Npz_maker()
+        mknpz.spm_first()
+        mknpz.spm_first()
+    except KeyboardInterrupt:
+        MotorR.stop()
+        MotorL.stop()
