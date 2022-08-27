@@ -749,7 +749,7 @@ class Cansat():
         """
         回避試験用にGPS・BNOを使用せず、SPMのみを使った方向決定を行います。
         """
-        # self.gps.vincenty_inverse(float(self.gps.Lat),float(self.gps.Lon),self.goallat,self.goallon) #距離:self.gps.gpsdis 方位角:self.gps.gpsdegrees"""ここをコメントアウト"""
+        self.gps.vincenty_inverse(float(self.gps.Lat),float(self.gps.Lon),self.goallat,self.goallon) #距離:self.gps.gpsdis 方位角:self.gps.gpsdegrees"""ここをコメントアウト"""
         self.x = self.gps.gpsdis*math.cos(math.radians(self.gps.gpsdegrees))
         self.y = self.gps.gpsdis*math.sin(math.radians(self.gps.gpsdegrees))
         theta_goal = self.gps.gpsdegrees
