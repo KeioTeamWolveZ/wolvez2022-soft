@@ -8,6 +8,7 @@ from spmimage.decomposition import KSVD
 from bbaa_learn_dict import LearnDict
 from spmimage.feature_extraction.image import reconstruct_from_simple_patches_2d
 import matplotlib.pyplot as plt
+from math import sqrt
 
 class IntoWindow(ReadFeaturedImg):
     def __init__(self, importPath:str=None, saveDir:str=None, Save:bool=False):
@@ -157,4 +158,4 @@ class EvaluateImg(LearnDict):
         #print("average: ",np.average(diff))
         #print("median: ",np.median(diff))
         #print("variance: ",np.var(diff))
-        return np.average(diff),np.median(diff),np.var(diff),mode,diff_df.kurt().to_numpy()[0],diff_df.skew().to_numpy()[0]
+        return np.average(diff),np.median(diff),sqrt(np.var(diff)),mode,diff_df.kurt().to_numpy()[0],diff_df.skew().to_numpy()[0]
