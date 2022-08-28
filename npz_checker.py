@@ -1,14 +1,15 @@
+import os
 import numpy as np
 import glob
 import matplotlib.pyplot as plt
 import sys
 
-dir_path = sorted(glob.glob('pre_data_new_10/*'))
-feature_name = 'normalRGB'
-win = 5
+
+# 読み込むフォルダを指定
+FOLDER = 'pre_data_new_10'
 
 class FetureValueHistory():
-    
+    global FOLDER
 
     def __init__(self, dir_path:str=None):
         self.file_path = sorted(glob.glob(dir_path+'/*'))
@@ -32,7 +33,6 @@ class FetureValueHistory():
         return all_data
     
     def get_data(self, data:dict):
-        print(data)
         for key in self.keys:
             self.values_dict[key].append(data[key])
         return self.values_dict
@@ -53,18 +53,30 @@ class FetureValueHistory():
             # plt.subplot(int(f'23{i+1}'))
             plt.plot(self.frame, self.values_dict[key], label=key)
             # plt.title(key)
+        plt.xlabel('frame')
+        plt.ylabel('value')
         plt.legend()
-        plt.title('Feature Values History')
-        plt.show()
+        plt.grid(True)
+        plt.title(f'{FOLDER} Feature Values History\n{self.feature_name} win{self.win}')
+        # plt.show()
+        plt.savefig(f'npz_checker/{FOLDER}/{self.feature_name}-win{self.win}.jpg')
+        plt.close()
 
-FVH = FetureValueHistory('pre_data_new_14')
 if len(sys.argv) >= 2:
     feature_name = sys.argv[1]
+    FVH = FetureValueHistory(FOLDER)
+    FVH.set_params(name=feature_name)
+    FVH.data_logger()
 else:
-    print('Specify a feature name.')
-    sys.exit()
-FVH.set_params(name=feature_name)
-FVH.data_logger()
+    if not os.path.exists(f'npz_checker/{FOLDER}'):
+        os.mkdir(f'npz_checker/{FOLDER}')
+    default_names = ["normalRGB","enphasis","edge","hsv","red","blue","green","purple","emerald","yellow"]
+    # default_names = ["normalRGB","enphasis","edge","vari","rgbvi","grvi","ior","hsv","red","blue","green","purple","emerald","yellow"]
+    for name in default_names:
+        for win in [4,5,6]:
+            FVH = FetureValueHistory(FOLDER)
+            FVH.set_params(name=name, win=win)
+            FVH.data_logger()
 
 # print(dir_path)
 # dir_path = dir_path[-1] #ここまでが最新時間のフォルダまでのパスとなる．

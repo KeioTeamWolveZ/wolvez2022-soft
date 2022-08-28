@@ -493,6 +493,7 @@ class Cansat():
             feature_values = {}
 
             default_names = ["normalRGB","enphasis","edge","hsv","red","blue","green","purple","emerald","yellow"]
+            # default_names = ["normalRGB","enphasis","edge","vari","rgbvi","grvi","ior","hsv","red","blue","green","purple","emerald","yellow"]
             for keys in default_names:
                 feature_values[keys] = {}
             
