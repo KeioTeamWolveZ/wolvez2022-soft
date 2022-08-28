@@ -4,3 +4,4 @@ __pycache__/
 .DS_Store
 *.jpg
 spm/c_spm2/noshiro_lab/log_analyze/log/0827
+/spm/c_spm2/noshiro_lab/log_analyze/results/0827
