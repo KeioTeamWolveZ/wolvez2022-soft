@@ -536,9 +536,9 @@ class Cansat():
                             ave, med, var, mode, kurt, skew = 0, 0, 0, 0, 0, 0
                         
                         feature_values[feature_name][f'win_{win+1}'] = {}
-                        feature_values[feature_name][f'win_{win+1}']["var"] = ave  # 平均値
+                        feature_values[feature_name][f'win_{win+1}']["var"] = var  # 平均値
                         feature_values[feature_name][f'win_{win+1}']["med"] = med  # 中央値
-                        feature_values[feature_name][f'win_{win+1}']["ave"] = var  # 分散値
+                        feature_values[feature_name][f'win_{win+1}']["ave"] = ave  # 分散値
                         feature_values[feature_name][f'win_{win+1}']["mode"] = mode  # 最頻値
                         feature_values[feature_name][f'win_{win+1}']["kurt"] = kurt  # 尖度
                         feature_values[feature_name][f'win_{win+1}']["skew"] = skew  # 歪度
@@ -580,9 +580,9 @@ class Cansat():
 
 
                         feature_values[feature_name][f'win_{win+1}'] = {}
-                        feature_values[feature_name][f'win_{win+1}']["var"] = ave  # 平均値
+                        feature_values[feature_name][f'win_{win+1}']["var"] = var  # 平均値
                         feature_values[feature_name][f'win_{win+1}']["med"] = med  # 中央値
-                        feature_values[feature_name][f'win_{win+1}']["ave"] = var  # 分散値
+                        feature_values[feature_name][f'win_{win+1}']["ave"] = ave  # 分散値
                         feature_values[feature_name][f'win_{win+1}']["mode"] = mode  # 最頻値
                         feature_values[feature_name][f'win_{win+1}']["kurt"] = kurt  # 尖度
                         feature_values[feature_name][f'win_{win+1}']["skew"] = skew  # 歪度
