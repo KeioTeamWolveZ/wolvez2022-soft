@@ -108,12 +108,12 @@ def spm_first(img_path=False,npz_dir=None, learn_state=False,patch_size=(40,71),
                     #    feature_values[feature_name]["med"] = med
                     #    feature_values[feature_name]["ave"] = var
                     
-                    if  win == 0:
+                    if  feature_name not in feature_values:
                         feature_values[feature_name] = {}
                     feature_values[feature_name][f'win_{win+1}'] = {}
-                    feature_values[feature_name][f'win_{win+1}']["var"] = ave
+                    feature_values[feature_name][f'win_{win+1}']["var"] = var
                     feature_values[feature_name][f'win_{win+1}']["med"] = med
-                    feature_values[feature_name][f'win_{win+1}']["ave"] = var
+                    feature_values[feature_name][f'win_{win+1}']["ave"] = ave
                     feature_values[feature_name][f'win_{win+1}']["mode"] = mode
                     feature_values[feature_name][f'win_{win+1}']["kurt"] = kurt  # 尖度
                     feature_values[feature_name][f'win_{win+1}']["skew"] = skew  # 歪度

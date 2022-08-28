@@ -6,6 +6,7 @@ from sklearn.preprocessing import StandardScaler
 from spmimage.feature_extraction.image import reconstruct_from_simple_patches_2d
 import matplotlib.pyplot as plt
 import datetime
+from math import sqrt
 
 class EvaluateImg(LearnDict):
     def __init__(self, eval_img:np.ndarray,patch_size=(5,5),n_components=20,transform_n_nonzero_coefs=3,max_iter=15):
@@ -75,4 +76,4 @@ class EvaluateImg(LearnDict):
         # print("average: ",np.average(diff))
         # print("median: ",np.median(diff))
         # print("variance: ",np.var(diff))
-        return np.average(diff),np.median(diff),np.var(diff),mode,diff_df.kurt().to_numpy()[0],diff_df.skew().to_numpy()[0]
+        return np.average(diff),np.median(diff),sqrt(np.var(diff)),mode,diff_df.kurt().to_numpy()[0],diff_df.skew().to_numpy()[0]
