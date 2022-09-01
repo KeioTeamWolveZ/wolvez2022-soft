@@ -832,7 +832,8 @@ class Cansat():
             self.max_risk=1000
         answer_mtx=np.zeros(3)
         for i, risk_scaler in enumerate(lower_risk):
-            if risk_scaler >= self.threshold_risk or risk_scaler >= self.max_risk:
+            # if risk_scaler >= self.threshold_risk or risk_scaler >= self.max_risk:
+            if risk_scaler >= self.threshold_risk:  # max_riskの条件式を削除
                 answer_mtx[i]=1
         return answer_mtx
 
