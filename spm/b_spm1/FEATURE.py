@@ -6,6 +6,8 @@ from PIL import Image
 from matplotlib import pyplot as plt
 from time import time
 
+
+
 class Feature_img():
     save_name = None
     def __init__(self, imp_p, frame_num, saveDir):
@@ -104,12 +106,11 @@ class Feature_img():
                 b = float(self.org_img[i][j][0])
                 g = float(self.org_img[i][j][1])
                 r = float(self.org_img[i][j][2])
-                if b < 125:
-                    vari_d = g+r-b
-                    if vari_d != 0:
-                        vari = (g-r)/(g+r-b)
-                        if vari < 0.0:
-                            vari = 0.0
+                vari_d = g+r-b
+                if vari_d != 0 and b < 125:
+                    vari = (g-r)/(g+r-b)
+                    if vari < 0.0:
+                        vari = 0.0
                 else:
                     vari = 0
                 # vari = vari*255/9.0
@@ -121,7 +122,7 @@ class Feature_img():
         #print("vari min: "+str(np.amin(self.vari_list_np)))
         for i in range(self.org_img.shape[0]):
             for j in range(self.org_img.shape[1]):
-                if (vari_max - vari_min) != 0:
+                if vari_max != vari_min:
                     self.vari_list_np[i][j] = 100*(self.vari_list_np[i][j] - vari_min)/(vari_max - vari_min)
                     if self.vari_list_np[i][j] > 1.0:
                         self.vari_list_np[i][j] = 1.0
@@ -154,11 +155,11 @@ class Feature_img():
                 b = float(self.org_img[i][j][0])
                 g = float(self.org_img[i][j][1])
                 r = float(self.org_img[i][j][2])
-                if g*g+r*b != 0:
+                if g*g+r*b != 0 and g*g-r*b > 0:
                     rgbvi = (g*g-r*b)/(g*g+r*b)     # ここがGRVIの計算式
                 else:
-                    rgbvi = 0 
-                self.vari_list_np[i][j] = int(rgbvi)
+                    rgbvi = 0
+                self.rgbvi_list_np[i][j] = int(rgbvi)
                 self.output_img[i][j] = np.uint8(self.rgbvi_list_np[i][j])
         self.save_name = self.sav_d + f"/rgbvi_{self.frame_num}.jpg"
         cv2.imwrite(self.save_name, self.output_img)
@@ -175,11 +176,11 @@ class Feature_img():
                 b = float(self.org_img[i][j][0])
                 g = float(self.org_img[i][j][1])
                 r = float(self.org_img[i][j][2])
-                if g+r != 0:
+                if g+r != 0 and g-r > 0:
                     grvi = (g-r)/(g+r)     # ここがGRVIの計算式
                 else:
                     grvi = 0
-                self.grvi_list_np[i][j] = int(grvi)
+                self.grvi_list_np[i][j] = int(255*grvi)
                 self.output_img[i][j] = np.uint8(self.grvi_list_np[i][j])
         self.save_name = self.sav_d + f"/grvi_{self.frame_num}.jpg"
         cv2.imwrite(self.save_name, self.output_img) 
@@ -196,9 +197,9 @@ class Feature_img():
                 b = float(self.org_img[i][j][0])
                 r = float(self.org_img[i][j][2])
                 if b != 0:
-                    ior = r/b     # ここがiorの計算式
+                    ior = r/b     # ここがGiorの計算式
                 else:
-                    ior = 0
+                    ior = r
                 self.ior_list_np[i][j] = int(ior)
                 self.output_img[i][j] = np.uint8(self.ior_list_np[i][j])
         self.save_name = self.sav_d + f"/ior_{self.frame_num}.jpg"
@@ -224,6 +225,7 @@ class Feature_img():
         self.org_img = cv2.imread(self.imp_p, 1)
         self.img_gray = cv2.cvtColor(self.org_img, cv2.COLOR_BGR2GRAY)
         self.gray=cv2.Canny(self.img_gray,100,200)
+        # self.gray=cv2.Canny(self.img_gray,200,550)  # アーリスではこちらの値を用いた方が適切かも（エッジ検出感度）
         self.save_name = self.sav_d + f"/edge_{self.frame_num}.jpg"
         cv2.imwrite(self.save_name,self.gray)
         self.output_img_list.append(self.save_name)
