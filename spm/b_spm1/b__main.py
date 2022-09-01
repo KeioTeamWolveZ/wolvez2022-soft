@@ -77,7 +77,7 @@ def spm_first(img_path=False,npz_dir=None, learn_state=False,patch_size=(24,32),
         
         for fmg in fmg_list:
             # breakout by windows
-            iw_list, window_size = iw.breakout(cv2.imread(path,cv2.IMREAD_GRAYSCALE))
+            iw_list, window_size = iw.breakout(cv2.imread(fmg,cv2.IMREAD_GRAYSCALE))
             feature_name = str(re.findall(temp_dir_name + "/(.*)_.*_", fmg)[0])
             print("FEATURED BY: ",feature_name)
             for win in range(6):
