@@ -3,9 +3,9 @@ import glob
 import matplotlib.pyplot as plt
 import sys
 
-dir_path = sorted(glob.glob('pre_data_new_10/*'))
-feature_name = 'normalRGB'
-win = 5
+
+
+FOLDER = 'pre_data_new_10'
 
 class FetureValueHistory():
     
@@ -57,14 +57,13 @@ class FetureValueHistory():
         plt.title('Feature Values History')
         plt.show()
 
-FVH = FetureValueHistory('pre_data_new_14')
 if len(sys.argv) >= 2:
+    FVH = FetureValueHistory(FOLDER)
     feature_name = sys.argv[1]
+    FVH.set_params(name=feature_name)
+    FVH.data_logger()
 else:
-    print('Specify a feature name.')
-    sys.exit()
-FVH.set_params(name=feature_name)
-FVH.data_logger()
+    FVH = FetureValueHistory(FOLDER)
 
 # print(dir_path)
 # dir_path = dir_path[-1] #ここまでが最新時間のフォルダまでのパスとなる．

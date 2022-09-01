@@ -195,10 +195,9 @@ class Feature_img():
             for j in range(self.org_img.shape[1]):
                 ior = 0.0
                 b = float(self.org_img[i][j][0])
-                g = float(self.org_img[i][j][1])
                 r = float(self.org_img[i][j][2])
                 if b != 0:
-                    ior = r/b     # ここがGRVIの計算式
+                    ior = r/b     # ここがGiorの計算式
                 else:
                     ior = r
                 self.ior_list_np[i][j] = int(ior)

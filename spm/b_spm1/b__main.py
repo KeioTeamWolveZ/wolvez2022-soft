@@ -44,7 +44,7 @@ def spm_first(img_path=False,npz_dir=None, learn_state=False,patch_size=(40,71),
     if not os.path.exists(saveName):
         os.mkdir(saveName)
 
-    for path in import_paths:
+    for k, path in enumerate(import_paths):
         start_time = time()
         
         now=str(datetime.now())[:21].replace(" ","_").replace(":","-")
@@ -67,7 +67,7 @@ def spm_first(img_path=False,npz_dir=None, learn_state=False,patch_size=(40,71),
         if learn_state:
             print("=====LEARNING PHASE=====")
         else:
-            print("=====EVALUATING PHASE=====")
+            print(f"=====EVALUATING PHASE {k}th=====")
             
         temp_dir = TemporaryDirectory()
         temp_dir_name = temp_dir.name.replace('//', '/').replace("\\","/")
