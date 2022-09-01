@@ -202,9 +202,9 @@ class Feature_img():
         #self.output_img_list = []
         self.org_img = cv2.imread(self.imp_p, 1)
         self.org_img = cv2.cvtColor(self.org_img, cv2.COLOR_BGR2RGB)
-        kernel = np.array([[0, 2, 0],
-                            [2, -8, 2],
-                            [0, 2, 0]], np.float32)
+        kernel = np.array([[0, 1, 0],
+                            [1, -4, 1],
+                            [0, 1, 0]], np.float32)
         self.output_img = cv2.filter2D(self.org_img, -1, kernel)
         self.save_name = self.sav_d + f"/enphasis_{self.frame_num}.jpg"
         cv2.imwrite(self.save_name, self.output_img)
