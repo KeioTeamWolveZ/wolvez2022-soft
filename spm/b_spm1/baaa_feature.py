@@ -43,14 +43,14 @@ class ReadFeaturedImg():
             self.treat.rg()
         elif feature_name == "normalRGB":
             self.treat.normalRGB()
-        #elif feature_name == "vari":
-            #self.treat.vari()
-        #elif feature_name == "rgbvi":
-            #self.treat.rgbvi()
-        #elif feature_name == "grvi":
-            #self.treat.grvi()
-        #elif feature_name == "ior":
-            #self.treat.ior()
+        elif feature_name == "vari":
+            self.treat.vari()
+        elif feature_name == "rgbvi":
+            self.treat.rgbvi()
+        elif feature_name == "grvi":
+            self.treat.grvi()
+        elif feature_name == "ior":
+            self.treat.ior()
         elif feature_name == "enphasis":
             self.treat.enphasis()
         elif feature_name == "edge":
