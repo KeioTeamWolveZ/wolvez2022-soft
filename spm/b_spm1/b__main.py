@@ -44,7 +44,7 @@ def spm_first(img_path=False,npz_dir=None, learn_state=False,patch_size=(24,32),
     if not os.path.exists(saveName):
         os.mkdir(saveName)
 
-    for path in import_paths:
+    for k, path in enumerate(import_paths):
         start_time = time()
         
         now=str(datetime.now())[:21].replace(" ","_").replace(":","-")
@@ -67,7 +67,7 @@ def spm_first(img_path=False,npz_dir=None, learn_state=False,patch_size=(24,32),
         if learn_state:
             print("=====LEARNING PHASE=====")
         else:
-            print("=====EVALUATING PHASE=====")
+            print(f"=====EVALUATING PHASE {k}th=====")
             
         temp_dir = TemporaryDirectory()
         temp_dir_name = temp_dir.name.replace('//', '/').replace("\\","/")
@@ -77,7 +77,7 @@ def spm_first(img_path=False,npz_dir=None, learn_state=False,patch_size=(24,32),
         
         for fmg in fmg_list:
             # breakout by windows
-            iw_list, window_size = iw.breakout(iw.read_img(fmg))
+            iw_list, window_size = iw.breakout(cv2.imread(path,cv2.IMREAD_GRAYSCALE))
             feature_name = str(re.findall(temp_dir_name + "/(.*)_.*_", fmg)[0])
             print("FEATURED BY: ",feature_name)
             for win in range(6):

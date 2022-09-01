@@ -28,10 +28,10 @@ class ReadFeaturedImg():
         
         if feature_name == None:
             self.treat.normalRGB()
-            #self.treat.vari()
-            #self.treat.rgbvi()
-            #self.treat.grvi()
-            #self.treat.ior()
+            self.treat.vari()
+            self.treat.rgbvi()
+            self.treat.grvi()
+            self.treat.ior()
             self.treat.enphasis()
             self.treat.edge()
             self.treat.hsv()
