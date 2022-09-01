@@ -92,16 +92,19 @@ def spm_first(img_path=False,npz_dir=None, learn_state=False,patch_size=(40,71),
                         
                         params = f"psize_{(str(ld.patch_size[0]).zfill(3),str(ld.patch_size[1]).zfill(3))}-ncom_{str(ld.n_components).zfill(3)}-tcoef_{str(ld.transform_n_nonzero_coefs).zfill(3)}-mxiter_{str(ld.max_iter).zfill(3)}"
                 else:
-                    D, ksvd = dict_list[feature_name]
-                    ei = EvaluateImg(iw_list[win],patch_size=patch_size,n_components=n_components,transform_n_nonzero_coefs=transform_n_nonzero_coefs,max_iter=max_iter)
-                    img_rec = ei.reconstruct(D, ksvd, window_size)
-                    saveName = saveDir + f"/bcba_difference"
-                    if not os.path.exists(saveName):
-                        os.mkdir(saveName)
-                    saveName = saveDir + f"/bcba_difference/{now}"
-                    if not os.path.exists(saveName):
-                        os.mkdir(saveName)
-                    ave, med, var, mode, kurt, skew = ei.evaluate(iw_list[win], img_rec, win+1, feature_name, now, saveDir)
+                    if win+1 in [4,5,6]:
+                        D, ksvd = dict_list[feature_name]
+                        ei = EvaluateImg(iw_list[win],patch_size=patch_size,n_components=n_components,transform_n_nonzero_coefs=transform_n_nonzero_coefs,max_iter=max_iter)
+                        img_rec = ei.reconstruct(D, ksvd, window_size)
+                        saveName = saveDir + f"/bcba_difference"
+                        if not os.path.exists(saveName):
+                            os.mkdir(saveName)
+                        saveName = saveDir + f"/bcba_difference/{now}"
+                        if not os.path.exists(saveName):
+                            os.mkdir(saveName)
+                        ave, med, var, mode, kurt, skew = ei.evaluate(iw_list[win], img_rec, win+1, feature_name, now, saveDir)
+                    else:
+                        ave, med, var, mode, kurt, skew = 0,0,0,0,0,0
                     #if win+1 == int((iw_shape[0]-1)*iw_shape[1]) + int(iw_shape[1]/2) + 1:
                     #    feature_values[feature_name] = {}
                     #    feature_values[feature_name]["var"] = ave
