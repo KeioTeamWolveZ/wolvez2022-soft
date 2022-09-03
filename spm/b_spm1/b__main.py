@@ -5,7 +5,6 @@ import cv2
 import numpy as np
 from datetime import datetime
 from glob import glob
-#from math import prod
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 
 from baba_into_window import IntoWindow
