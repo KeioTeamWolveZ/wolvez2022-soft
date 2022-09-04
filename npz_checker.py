@@ -6,7 +6,7 @@ import sys
 
 
 # 読み込むフォルダを指定
-FOLDER = 'pre_data_new_10'
+FOLDER = 'planning_npz'
 
 class FetureValueHistory():
     global FOLDER
@@ -70,8 +70,8 @@ if len(sys.argv) >= 2:
 else:
     if not os.path.exists(f'npz_checker/{FOLDER}'):
         os.mkdir(f'npz_checker/{FOLDER}')
-    default_names = ["normalRGB","enphasis","edge","hsv","red","blue","green","purple","emerald","yellow"]
-    # default_names = ["normalRGB","enphasis","edge","vari","rgbvi","grvi","ior","hsv","red","blue","green","purple","emerald","yellow"]
+#     default_names = ["normalRGB","enphasis","edge","hsv","red","blue","green","purple","emerald","yellow"]
+    default_names = ["normalRGB","enphasis","edge","vari","rgbvi","grvi","ior","hsv","red","blue","green","purple","emerald","yellow"]
     for name in default_names:
         for win in [4,5,6]:
             FVH = FetureValueHistory(FOLDER)

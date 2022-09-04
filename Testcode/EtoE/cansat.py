@@ -183,12 +183,12 @@ class Cansat():
                     + "    "\
                     + "q:"+str(self.bno055.ex).rjust(6) + ",\n"\
                     + "Risk:"+str(np.round(self.risk[3:],decimals=3)).rjust(6) + ","\
-                    + "threadshold_risk:"+str(round(self.threshold_risk,3)).rjust(6) + ","\
-                    + "max_risk:"+str(round(self.max_risk,3)).rjust(6)+","\
+                    + "threadshold_risk:"+str(np.round(self.threshold_risk,decimals=3)).rjust(6) + ","\
+                    + "max_risk:"+str(np.round(self.max_risk,decimals=3)).rjust(6)+","\
                     + "boolean_risk:"+str(np.round(self.boolean_risk,decimals=3)).rjust(6)+",\n"\
-                    + "Plan:"+str(self.plan_str) + ","\
-                    + "rV:"+str(round(self.MotorR.velocity,3)).rjust(6) + ","\
-                    + "lV:"+str(round(self.MotorL.velocity,3)).rjust(6) + ","\
+#                     + "Plan:"+str(self.plan_str) + ","\
+#                     + "rV:"+str(round(self.MotorR.velocity,3)).rjust(6) + ","\
+#                     + "lV:"+str(round(self.MotorL.velocity,3)).rjust(6)
 
 
             with open(f'results/{self.startTime}/planning_result.txt',"a")  as test: # [mode] x:ファイルの新規作成、r:ファイルの読み込み、w:ファイルへの書き込み、a:ファイルへの追記
