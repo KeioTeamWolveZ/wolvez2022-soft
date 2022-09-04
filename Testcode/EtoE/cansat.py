@@ -86,8 +86,10 @@ class Cansat():
         self.startgps_lon=[]
         self.startgps_lat=[]
         self.risk_list = []
-        self.risk_list_below = []
-        self.max_risk = -10000000
+        # self.risk_list_below = []
+        self.risk_list_below = [[],[],[]]
+        # self.max_risk = -10000000
+        self.max_risk = [-10000000, -10000000, -10000000]
         self.risk = [-100,-100,-100,-100,-100,-100]
 #         self.risk = [[0,0,0],[0,0,0]]
         self.plan_str = "not defined"
@@ -709,7 +711,10 @@ class Cansat():
             self.risk = spm2_predict.get_score()
             self.risk = np.array([self.risk[i][0][0] for i in range(6)])
             self.risk_list.append(self.risk)
-            self.risk_list_below.append(self.risk[3:])
+            # self.risk_list_below.append(self.risk[3:])
+
+            for n in range(3):
+                self.risk_list_below[n].append(self.risk[n+3])
 #             self.risk = np.array(self.risk).reshape(2,3) #win1~win6の危険度マップ作成
             
             if len(self.risk_list) >= ct.const.MOVING_AVERAGE:
@@ -814,7 +819,11 @@ class Cansat():
         ・入力:下半分のwindowのリスク行列（3*1または1*3？ここはロバストに作ります）
         ・出力:危険=1、安全=0の(入力と同じ次元)
         """
-        self.threshold_risk = np.average(np.array(self.risk_list_below))+2*np.std(np.array(self.risk_list_below))
+        # self.threshold_risk = np.average(np.array(self.risk_list_below))+2*np.std(np.array(self.risk_list_below))
+
+        self.threshold_risk = [[],[],[]]
+        for n in range(3):
+            self.threshold_risk[n] = np.average(np.array(self.risk_list_below[n]))+2*np.std(np.array(self.risk_list_below[n]))
 
 #         if len(self.risk_list_below)<=100:
 #             self.threshold_risk = np.average(np.array(self.risk_list_below))+2*np.std(np.array(self.risk_list_below))
@@ -822,18 +831,21 @@ class Cansat():
 #             self.threshold_risk = np.average(np.array(self.risk_list_below[-100:]))+2*np.std(np.array(self.risk_list_below[-100:]))
         
         try:
-            self.max_risk=np.max(np.array(self.risk_list_below))
+            # self.max_risk=np.max(np.array(self.risk_list_below))
+            for n in range(3):
+                self.max_risk[n]=np.max(np.array(self.risk_list_below[n]))
 #             if len(self.risk_list_below)<=100:
 #                 self.max_risk=np.max(np.array(self.risk_list_below))
 #             else:
 #                 self.max_risk=np.max(np.array(self.risk_list_below[-100:]))
             
         except Exception:
-            self.max_risk=1000
+            for n in range(3):
+                self.max_risk[n]=1000
         answer_mtx=np.zeros(3)
         for i, risk_scaler in enumerate(lower_risk):
             # if risk_scaler >= self.threshold_risk or risk_scaler >= self.max_risk:
-            if risk_scaler >= self.threshold_risk:  # max_riskの条件式を削除
+            if risk_scaler >= self.threshold_risk[i]:  # max_riskの条件式を削除
                 answer_mtx[i]=1
         return answer_mtx
 
