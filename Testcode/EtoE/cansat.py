@@ -815,7 +815,7 @@ class Cansat():
         ・出力:危険=1、安全=0の(入力と同じ次元)
         """
         self.threshold_risk = [[],[],[]]
-        for n in range(3)
+        for n in range(3):
             self.threshold_risk[n] = np.average(np.array(self.risk_list_below[n]))+np.std(np.array(self.risk_list_below[n]))
         
         # self.threshold_risk = np.average(np.array(self.risk_list_below))+np.std(np.array(self.risk_list_below))
