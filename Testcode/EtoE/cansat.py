@@ -135,7 +135,7 @@ class Cansat():
         planning_path.close()
 
     def mvfile(self):
-        pre_data = sorted(glob("../../pre_data_old2/*"))
+        pre_data = sorted(glob("../../pre_data/*"))
         dest_dir = f"results/{self.startTime}/camera_result/second_spm/learn{self.learncount}"
         for file in pre_data:
             shutil.copy2(file, dest_dir)
