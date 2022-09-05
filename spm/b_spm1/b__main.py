@@ -148,5 +148,5 @@ if __name__ == "__main__":
     # for patch in range(5,105,5):
     #     for n_components in range(1,patch+1,2):
     #         for transform_n_nonzero_coefs in range(1,n_components+1,2):
-    spm_first(patch_size=(40,71),n_components=n_components,transform_n_nonzero_coefs=transform_n_nonzero_coefs,max_iter=max_iter)
+    spm_first(patch_size=(22,22),n_components=n_components,transform_n_nonzero_coefs=transform_n_nonzero_coefs,max_iter=max_iter)
     #             spm_first(patch_size=(40,71),n_components=n_components,transform_n_nonzero_coefs=transform_n_nonzero_coefs,max_iter=max_iter)
