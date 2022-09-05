@@ -29,7 +29,7 @@ class BNO055:
     OPERATION_MODE_GYRONLY              = 0X03
     OPERATION_MODE_ACCMAG               = 0X04
     OPERATION_MODE_ACCGYRO              = 0X05
-    OPERATION_MODE_MAGGYRO              = 0X06
+    OPERATION_MODE_MAGGYRO              = 0X06 
     OPERATION_MODE_AMG              = 0X07
     OPERATION_MODE_IMUPLUS              = 0X08
     OPERATION_MODE_COMPASS              = 0X09
@@ -197,14 +197,14 @@ class BNO055:
     def __init__(self, sensorId=-1, address=0x28):
         self._sensorId = sensorId
         self._address = address
-#         self._mode = BNO055.OPERATION_MODE_NDOF
+        self._mode = BNO055.OPERATION_MODE_NDOF
         self._mode = BNO055.OPERATION_MODE_COMPASS
         self.ex_ini = 0.0
 
 
     def begin(self, mode=None):
-#         if mode is None: mode = BNO055.OPERATION_MODE_NDOF
-        if mode is None: mode = BNO055.OPERATION_MODE_COMPASS
+        if mode is None: mode = BNO055.OPERATION_MODE_NDOF
+#         if mode is None: mode = BNO055.OPERATION_MODE_COMPASS
         # Open I2C bus
         self._bus = smbus.SMBus(1)
 

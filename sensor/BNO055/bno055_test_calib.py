@@ -25,7 +25,7 @@ try:
             print("### End Calibration")
             print("### Set Zero")
             time.sleep(5)
-#             bno055.bnoInitial()
+            bno055.bnoInitial()
             print("### Finish Setting")
 #             time.sleep(5)
             break
@@ -52,7 +52,7 @@ try:
               +"ez="+str(bno055.ez)
         print(euler) 
         print(bno055.getCalibration())      
-        time.sleep(0.5)
+#         time.sleep(0.5)
 except KeyboardInterrupt:
     GPIO.cleanup()
     pass

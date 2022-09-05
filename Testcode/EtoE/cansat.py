@@ -135,7 +135,7 @@ class Cansat():
         planning_path.close()
 
     def mvfile(self):
-        pre_data = sorted(glob("../../pre_data/*"))
+        pre_data = sorted(glob("../../pre_data_new_14/*"))
         dest_dir = f"results/{self.startTime}/camera_result/second_spm/learn{self.learncount}"
         for file in pre_data:
             shutil.copy2(file, dest_dir)
@@ -183,12 +183,12 @@ class Cansat():
                     + "    "\
                     + "q:"+str(self.bno055.ex).rjust(6) + ",\n"\
                     + "Risk:"+str(np.round(self.risk,decimals=3)).rjust(6) + ","\
-                    + "threadshold_risk:"+str(round(self.threshold_risk,3)).rjust(6) + ","\
-                    + "max_risk:"+str(round(self.max_risk,3)).rjust(6)+","\
+                    + "threadshold_risk:"+str(np.round(self.threshold_risk,decimals=3)).rjust(6) + ","\
+                    + "max_risk:"+str(np.round(self.max_risk,decimals=3)).rjust(6)+","\
                     + "boolean_risk:"+str(np.round(self.boolean_risk,decimals=3)).rjust(6)+",\n"\
                     + "Plan:"+str(self.plan_str) + ","\
-                    + "rV:"+str(round(self.MotorR.velocity,3)).rjust(6) + ","\
-                    + "lV:"+str(round(self.MotorL.velocity,3)).rjust(6) + ","\
+                    + "rV:"+str(np.round(self.MotorR.velocity,decimals=3)).rjust(6) + ","\
+                    + "lV:"+str(np.round(self.MotorL.velocity,decimals=3)).rjust(6) + ","\
 
 
             with open(f'results/{self.startTime}/planning_result.txt',"a")  as test: # [mode] x:ファイルの新規作成、r:ファイルの読み込み、w:ファイルへの書き込み、a:ファイルへの追記
@@ -815,7 +815,7 @@ class Cansat():
         ・出力:危険=1、安全=0の(入力と同じ次元)
         """
         self.threshold_risk = [[],[],[]]
-        for n in range(3)
+        for n in range(3):
             self.threshold_risk[n] = np.average(np.array(self.risk_list_below[n]))+np.std(np.array(self.risk_list_below[n]))
         
         # self.threshold_risk = np.average(np.array(self.risk_list_below))+np.std(np.array(self.risk_list_below))
@@ -837,10 +837,12 @@ class Cansat():
 #                 self.max_risk=np.max(np.array(self.risk_list_below[-100:]))
             
         except Exception:
-            self.max_risk[:]=1000
+            for n in range (3):
+                self.max_risk[n]=1000
         answer_mtx=np.zeros(3)
         for i, risk_scaler in enumerate(lower_risk):
-            if risk_scaler >= self.threshold_risk or risk_scaler >= self.max_risk:
+#             if risk_scaler >= self.threshold_risk or risk_scaler >= self.max_risk:
+            if risk_scaler >= self.threshold_risk[i]:
                 answer_mtx[i]=1
         return answer_mtx
 
