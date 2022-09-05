@@ -32,13 +32,13 @@ try:
     while True:
         if cansat.state != 4: #ステート4の時はセンサの値はcansat.py側で取得する
             cansat.sensor()
-#         time.sleep(0.03)
-#         cansat.sequence()
-#         if cansat.state >= 8:
-#             print("Finished")
-#             cansat.keyboardinterrupt()
-#             GPIO.cleanup()
-#             break
+        time.sleep(0.03)
+        cansat.sequence()
+        if cansat.state >= 8:
+            print("Finished")
+            cansat.keyboardinterrupt()
+            GPIO.cleanup()
+            break
     
 except KeyboardInterrupt:
     print("Finished")

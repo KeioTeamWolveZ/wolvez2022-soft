@@ -225,7 +225,20 @@ class Cansat():
         self.lora.sendDevice.setup_lora()
         if self.bno055.begin() is not True:
             print("Error initializing device")
-            exit()    
+            exit()
+            
+        while True:
+            bno_sys, bno_gyr, bno_acc, bno_mag = self.bno055.getCalibration()
+            print(self.bno055.getCalibration())
+            print(bno_sys)
+            time.sleep(0.1)
+            if bno_mag == 3:
+                print("### End Calibration")
+                print("### Set Zero")
+                time.sleep(5)
+                self.bno055.bnoInitial()
+                print("### Finish Setting")
+                break
  
     def sensor(self): #セットアップ終了後
         self.timer = int(1000*(time.time() - self.startTime_time)) #経過時間 (ms)
@@ -772,23 +785,23 @@ class Cansat():
 #             print("Left")
             self.MotorR.go(70)
             self.MotorL.go(50)
-            time.sleep(0.5)
-            self.MotorR.stop()
-            self.MotorL.stop()
+#             time.sleep(0.5)
+#             self.MotorR.stop()
+#             self.MotorL.stop()
         elif dir_run == 1:
 #             print("Straight")
             self.MotorR.go(60)
             self.MotorL.go(60)
-            time.sleep(0.5)
-            self.MotorR.stop()
-            self.MotorL.stop()
+#             time.sleep(0.5)
+#             self.MotorR.stop()
+#             self.MotorL.stop()
         elif dir_run == 2:
 #             print("Right")
             self.MotorR.go(50)
             self.MotorL.go(70)
-            time.sleep(0.5)
-            self.MotorR.stop()
-            self.MotorL.stop()
+#             time.sleep(0.5)
+#             self.MotorR.stop()
+#             self.MotorL.stop()
         elif dir_run == 3:
 #             print("Stop")
             self.MotorR.back(60)
@@ -796,9 +809,9 @@ class Cansat():
             time.sleep(0.5)
             self.MotorR.go(60)
             self.MotorL.go(60)
+            time.sleep(1)
             self.MotorR.stop()
             self.MotorL.stop()
-            time.sleep(1)
         
         self.writeSparseData(risk)
 
