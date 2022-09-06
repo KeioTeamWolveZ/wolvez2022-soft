@@ -6,7 +6,7 @@ import sys
 
 
 # 読み込むフォルダを指定
-FOLDER = 'pre_data_new_10'
+FOLDER = 'pre_data_new_14'
 
 class FetureValueHistory():
     global FOLDER
@@ -68,6 +68,8 @@ if len(sys.argv) >= 2:
     FVH.set_params(name=feature_name)
     FVH.data_logger()
 else:
+    if not os.path.exists('npz_checker'):
+        os.mkdir('npz_checker')
     if not os.path.exists(f'npz_checker/{FOLDER}'):
         os.mkdir(f'npz_checker/{FOLDER}')
     default_names = ["normalRGB","enphasis","edge","hsv","red","blue","green","purple","emerald","yellow"]
