@@ -54,7 +54,7 @@ def get_average_accum(csv_data_master):
     return accum_aves
 
 for csv_path in csv_paths:
-    no=re.sub(r"\D","",csv_path).replace("2019202220827","")
+    no=re.sub(r"\D","",csv_path).replace("202220827","")
 
     fig_path=current_dir+f"/spm/c_spm2/noshiro_lab/log_analyze/results/0827/graph_bu_nd/risk_{no}_bu_nd.jpg"
 
