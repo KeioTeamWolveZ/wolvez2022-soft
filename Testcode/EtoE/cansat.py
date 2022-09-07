@@ -86,8 +86,10 @@ class Cansat():
         self.startgps_lon=[]
         self.startgps_lat=[]
         self.risk_list = []
-        self.risk_list_below = []
-        self.max_risk = -10000000
+        # self.risk_list_below = []
+        self.risk_list_below = [[],[],[]]
+        # self.max_risk = -10000000
+        self.max_risk = [-10000000, -10000000, -10000000]
         self.risk = [-100,-100,-100,-100,-100,-100]
 #         self.risk = [[0,0,0],[0,0,0]]
         self.plan_str = "not defined"
@@ -133,7 +135,7 @@ class Cansat():
         planning_path.close()
 
     def mvfile(self):
-        pre_data = sorted(glob("../../pre_data_old2/*"))
+        pre_data = sorted(glob("../../pre_data/*"))
         dest_dir = f"results/{self.startTime}/camera_result/second_spm/learn{self.learncount}"
         for file in pre_data:
             shutil.copy2(file, dest_dir)
@@ -181,12 +183,12 @@ class Cansat():
                     + "    "\
                     + "q:"+str(self.bno055.ex).rjust(6) + ",\n"\
                     + "Risk:"+str(np.round(self.risk[3:],decimals=3)).rjust(6) + ","\
-                    + "threadshold_risk:"+str(round(self.threshold_risk,3)).rjust(6) + ","\
-                    + "max_risk:"+str(round(self.max_risk,3)).rjust(6)+","\
+                    + "threadshold_risk:"+str(np.round(self.threshold_risk,decimals=3)).rjust(6) + ","\
+                    + "max_risk:"+str(np.round(self.max_risk,decimals=3)).rjust(6)+","\
                     + "boolean_risk:"+str(np.round(self.boolean_risk,decimals=3)).rjust(6)+",\n"\
-                    + "Plan:"+str(self.plan_str) + ","\
-                    + "rV:"+str(round(self.MotorR.velocity,3)).rjust(6) + ","\
-                    + "lV:"+str(round(self.MotorL.velocity,3)).rjust(6) + ","\
+#                     + "Plan:"+str(self.plan_str) + ","\
+#                     + "rV:"+str(round(self.MotorR.velocity,3)).rjust(6) + ","\
+#                     + "lV:"+str(round(self.MotorL.velocity,3)).rjust(6)
 
 
             with open(f'results/{self.startTime}/planning_result.txt',"a")  as test: # [mode] x:ファイルの新規作成、r:ファイルの読み込み、w:ファイルへの書き込み、a:ファイルへの追記
@@ -223,7 +225,20 @@ class Cansat():
         self.lora.sendDevice.setup_lora()
         if self.bno055.begin() is not True:
             print("Error initializing device")
-            exit()    
+            exit()
+            
+        while True:
+            bno_sys, bno_gyr, bno_acc, bno_mag = self.bno055.getCalibration()
+            print(self.bno055.getCalibration())
+            print(bno_sys)
+            time.sleep(0.1)
+            if bno_mag == 3:
+                print("### End Calibration")
+                print("### Set Zero")
+                time.sleep(5)
+                self.bno055.bnoInitial()
+                print("### Finish Setting")
+                break
  
     def sensor(self): #セットアップ終了後
         self.timer = int(1000*(time.time() - self.startTime_time)) #経過時間 (ms)
@@ -492,7 +507,8 @@ class Cansat():
         
             feature_values = {}
 
-            default_names = ["normalRGB","enphasis","edge","hsv","red","blue","green","purple","emerald","yellow"]
+            # default_names = ["normalRGB","enphasis","edge","hsv","red","blue","green","purple","emerald","yellow"]
+            default_names = ["normalRGB","enphasis","edge","vari","rgbvi","grvi","ior","hsv","red","blue","green","purple","emerald","yellow"]
             for keys in default_names:
                 feature_values[keys] = {}
             
@@ -535,9 +551,9 @@ class Cansat():
                             ave, med, var, mode, kurt, skew = 0, 0, 0, 0, 0, 0
                         
                         feature_values[feature_name][f'win_{win+1}'] = {}
-                        feature_values[feature_name][f'win_{win+1}']["var"] = ave  # 平均値
+                        feature_values[feature_name][f'win_{win+1}']["var"] = var  # 平均値
                         feature_values[feature_name][f'win_{win+1}']["med"] = med  # 中央値
-                        feature_values[feature_name][f'win_{win+1}']["ave"] = var  # 分散値
+                        feature_values[feature_name][f'win_{win+1}']["ave"] = ave  # 分散値
                         feature_values[feature_name][f'win_{win+1}']["mode"] = mode  # 最頻値
                         feature_values[feature_name][f'win_{win+1}']["kurt"] = kurt  # 尖度
                         feature_values[feature_name][f'win_{win+1}']["skew"] = skew  # 歪度
@@ -545,8 +561,8 @@ class Cansat():
                 self.camerastate = 0
                        
             else: #第一段階評価モード。runningで使うための部 # ここ変える
-#                 feature_list = ["normalRGB","enphasis","edge","vari","rgbvi","grvi","ior","hsv","red","blue","green","purple","emerald","yellow"]
-                feature_list = ["normalRGB","enphasis","edge","hsv","red","blue","green","purple","emerald","yellow"]
+                feature_list = ["normalRGB","enphasis","edge","vari","rgbvi","grvi","ior","hsv","red","blue","green","purple","emerald","yellow"]
+                # feature_list = ["normalRGB","enphasis","edge","hsv","red","blue","green","purple","emerald","yellow"]
                 features = []
                 
                 for feature in feature_names:# windowgoto
@@ -579,9 +595,9 @@ class Cansat():
 
 
                         feature_values[feature_name][f'win_{win+1}'] = {}
-                        feature_values[feature_name][f'win_{win+1}']["var"] = ave  # 平均値
+                        feature_values[feature_name][f'win_{win+1}']["var"] = var  # 平均値
                         feature_values[feature_name][f'win_{win+1}']["med"] = med  # 中央値
-                        feature_values[feature_name][f'win_{win+1}']["ave"] = var  # 分散値
+                        feature_values[feature_name][f'win_{win+1}']["ave"] = ave  # 分散値
                         feature_values[feature_name][f'win_{win+1}']["mode"] = mode  # 最頻値
                         feature_values[feature_name][f'win_{win+1}']["kurt"] = kurt  # 尖度
                         feature_values[feature_name][f'win_{win+1}']["skew"] = skew  # 歪度
@@ -597,10 +613,10 @@ class Cansat():
                                 feature_values[feature_name][f'win_{win+1}']["kurt"] = 0  # 尖度
                                 feature_values[feature_name][f'win_{win+1}']["skew"] = 0  # 歪度
 
-                    if fmg != fmg_list[-1] and type(self.risk) == np.ndarray:
-                        self.sensor()
-                        self.planning(self.risk)
-                        self.stuck_detection()#ここは注意
+#                     if fmg != fmg_list[-1] and type(self.risk) == np.ndarray:
+#                         self.sensor()
+#                         self.planning(self.risk)
+#                         self.stuck_detection()#ここは注意
 #                     print(f"{fmg_list.index(fmg)} fmg evaluated")
                     
             self.BLUE_LED.led_on()
@@ -708,7 +724,10 @@ class Cansat():
             self.risk = spm2_predict.get_score()
             self.risk = np.array([self.risk[i][0][0] for i in range(6)])
             self.risk_list.append(self.risk)
-            self.risk_list_below.append(self.risk[3:])
+            # self.risk_list_below.append(self.risk[3:])
+
+            for n in range(3):
+                self.risk_list_below[n].append(self.risk[n+3])
 #             self.risk = np.array(self.risk).reshape(2,3) #win1~win6の危険度マップ作成
             
             if len(self.risk_list) >= ct.const.MOVING_AVERAGE:
@@ -766,23 +785,23 @@ class Cansat():
 #             print("Left")
             self.MotorR.go(70)
             self.MotorL.go(50)
-            time.sleep(0.5)
-            self.MotorR.stop()
-            self.MotorL.stop()
+#             time.sleep(0.5)
+#             self.MotorR.stop()
+#             self.MotorL.stop()
         elif dir_run == 1:
 #             print("Straight")
             self.MotorR.go(60)
             self.MotorL.go(60)
-            time.sleep(0.5)
-            self.MotorR.stop()
-            self.MotorL.stop()
+#             time.sleep(0.5)
+#             self.MotorR.stop()
+#             self.MotorL.stop()
         elif dir_run == 2:
 #             print("Right")
             self.MotorR.go(50)
             self.MotorL.go(70)
-            time.sleep(0.5)
-            self.MotorR.stop()
-            self.MotorL.stop()
+#             time.sleep(0.5)
+#             self.MotorR.stop()
+#             self.MotorL.stop()
         elif dir_run == 3:
 #             print("Stop")
             self.MotorR.back(60)
@@ -790,9 +809,9 @@ class Cansat():
             time.sleep(0.5)
             self.MotorR.go(60)
             self.MotorL.go(60)
+            time.sleep(1)
             self.MotorR.stop()
             self.MotorL.stop()
-            time.sleep(1)
         
         self.writeSparseData(risk)
 
@@ -813,7 +832,11 @@ class Cansat():
         ・入力:下半分のwindowのリスク行列（3*1または1*3？ここはロバストに作ります）
         ・出力:危険=1、安全=0の(入力と同じ次元)
         """
-        self.threshold_risk = np.average(np.array(self.risk_list_below))+2*np.std(np.array(self.risk_list_below))
+        # self.threshold_risk = np.average(np.array(self.risk_list_below))+2*np.std(np.array(self.risk_list_below))
+
+        self.threshold_risk = [[],[],[]]
+        for n in range(3):
+            self.threshold_risk[n] = np.average(np.array(self.risk_list_below[n]))+2*np.std(np.array(self.risk_list_below[n]))
 
 #         if len(self.risk_list_below)<=100:
 #             self.threshold_risk = np.average(np.array(self.risk_list_below))+2*np.std(np.array(self.risk_list_below))
@@ -821,17 +844,21 @@ class Cansat():
 #             self.threshold_risk = np.average(np.array(self.risk_list_below[-100:]))+2*np.std(np.array(self.risk_list_below[-100:]))
         
         try:
-            self.max_risk=np.max(np.array(self.risk_list_below))
+            # self.max_risk=np.max(np.array(self.risk_list_below))
+            for n in range(3):
+                self.max_risk[n]=np.max(np.array(self.risk_list_below[n]))
 #             if len(self.risk_list_below)<=100:
 #                 self.max_risk=np.max(np.array(self.risk_list_below))
 #             else:
 #                 self.max_risk=np.max(np.array(self.risk_list_below[-100:]))
             
         except Exception:
-            self.max_risk=1000
+            for n in range(3):
+                self.max_risk[n]=1000
         answer_mtx=np.zeros(3)
         for i, risk_scaler in enumerate(lower_risk):
-            if risk_scaler >= self.threshold_risk or risk_scaler >= self.max_risk:
+            # if risk_scaler >= self.threshold_risk or risk_scaler >= self.max_risk:
+            if risk_scaler >= self.threshold_risk[i]:  # max_riskの条件式を削除
                 answer_mtx[i]=1
         return answer_mtx
 

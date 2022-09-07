@@ -107,6 +107,8 @@ class Npz_maker():
                 辞書再作成用の画像撮影の有無を決定
                 '''
                 self.T = time.time()
+                if not os.path.exists(f"../npz_maker"):
+                    os.mkdir(f"../npz_maker")
                 if not os.path.exists(f"../npz_maker/{self.T:.0f}"):
                     os.mkdir(f"../npz_maker/{self.T:.0f}")
                 if not os.path.exists(f"../npz_maker/{self.T:.0f}/dict_pic"):

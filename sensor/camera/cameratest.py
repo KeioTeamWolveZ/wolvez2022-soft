@@ -26,12 +26,12 @@ def main(args):
         while True:
             ret, img = cap.read()
             
-            edges = cv2.Canny(img,100,200)
-            for i in range(img.shape[0]):
-                for j in range(img.shape[1]):
-                    print(img[i][j]+10)
+#             edges = cv2.Canny(img,100,200)
+#             for i in range(img.shape[0]):
+#                 for j in range(img.shape[1]):
+#                     print(img[i][j]+10)
 #             writer.write(img)
-#             cv2.imshow('cameratest', edges)
+            cv2.imshow('cameratest', img)
             if cv2.waitKey(10) & 0xFF == ord('q'):
                 break
         

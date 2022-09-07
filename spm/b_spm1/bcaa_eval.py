@@ -1,3 +1,4 @@
+from math import sqrt
 import os
 import numpy as np
 import pandas as pd
@@ -75,4 +76,4 @@ class EvaluateImg(LearnDict):
         # print("average: ",np.average(diff))
         # print("median: ",np.median(diff))
         # print("variance: ",np.var(diff))
-        return np.average(diff),np.median(diff),np.var(diff),mode,diff_df.kurt().to_numpy()[0],diff_df.skew().to_numpy()[0]
+        return np.average(diff),np.median(diff),sqrt(np.var(diff)),mode,diff_df.kurt().to_numpy()[0],diff_df.skew().to_numpy()[0]

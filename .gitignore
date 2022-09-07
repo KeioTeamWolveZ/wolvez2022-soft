@@ -1,4 +1,5 @@
 Testcode/EtoE/results
+setup/ap
 *.pyc
 __pycache__/
 .DS_Store

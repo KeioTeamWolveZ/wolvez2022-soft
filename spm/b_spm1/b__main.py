@@ -5,7 +5,6 @@ import cv2
 import numpy as np
 from datetime import datetime
 from glob import glob
-#from math import prod
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 
 from baba_into_window import IntoWindow
@@ -20,7 +19,7 @@ from time import time
 '''
 
 
-def spm_first(img_path=False,npz_dir=None, learn_state=False,patch_size=(24,32),n_components=5,transform_n_nonzero_coefs=4,max_iter=15):
+def spm_first(img_path=False,npz_dir=None, learn_state=False,patch_size=(40,71),n_components=5,transform_n_nonzero_coefs=4,max_iter=15):
     # 一旦一枚目だけ学習
     learn_state = True
     # import_paths = sorted(glob("../a_prepare/ac_pictures/aca_normal/movie_3/*.jpg"))
@@ -30,7 +29,7 @@ def spm_first(img_path=False,npz_dir=None, learn_state=False,patch_size=(24,32),
         import_paths = sorted(glob(img_path))
     if len(import_paths) > 1000:
         import_paths = import_paths[:1000]
-    import_paths = import_paths# ここの[:10]を外しましたby林出
+    import_paths = import_paths
     dict_list = {}
     saveDir = "b-data"
 
@@ -44,7 +43,7 @@ def spm_first(img_path=False,npz_dir=None, learn_state=False,patch_size=(24,32),
     if not os.path.exists(saveName):
         os.mkdir(saveName)
 
-    for path in import_paths:
+    for k, path in enumerate(import_paths):
         start_time = time()
         
         now=str(datetime.now())[:21].replace(" ","_").replace(":","-")
@@ -67,7 +66,7 @@ def spm_first(img_path=False,npz_dir=None, learn_state=False,patch_size=(24,32),
         if learn_state:
             print("=====LEARNING PHASE=====")
         else:
-            print("=====EVALUATING PHASE=====")
+            print(f"=====EVALUATING PHASE {k}th=====")
             
         temp_dir = TemporaryDirectory()
         temp_dir_name = temp_dir.name.replace('//', '/').replace("\\","/")
@@ -77,7 +76,7 @@ def spm_first(img_path=False,npz_dir=None, learn_state=False,patch_size=(24,32),
         
         for fmg in fmg_list:
             # breakout by windows
-            iw_list, window_size = iw.breakout(iw.read_img(fmg))
+            iw_list, window_size = iw.breakout(cv2.imread(fmg,cv2.IMREAD_GRAYSCALE))
             feature_name = str(re.findall(temp_dir_name + "/(.*)_.*_", fmg)[0])
             print("FEATURED BY: ",feature_name)
             for win in range(6):
@@ -92,28 +91,31 @@ def spm_first(img_path=False,npz_dir=None, learn_state=False,patch_size=(24,32),
                         
                         params = f"psize_{(str(ld.patch_size[0]).zfill(3),str(ld.patch_size[1]).zfill(3))}-ncom_{str(ld.n_components).zfill(3)}-tcoef_{str(ld.transform_n_nonzero_coefs).zfill(3)}-mxiter_{str(ld.max_iter).zfill(3)}"
                 else:
-                    D, ksvd = dict_list[feature_name]
-                    ei = EvaluateImg(iw_list[win],patch_size=patch_size,n_components=n_components,transform_n_nonzero_coefs=transform_n_nonzero_coefs,max_iter=max_iter)
-                    img_rec = ei.reconstruct(D, ksvd, window_size)
-                    saveName = saveDir + f"/bcba_difference"
-                    if not os.path.exists(saveName):
-                        os.mkdir(saveName)
-                    saveName = saveDir + f"/bcba_difference/{now}"
-                    if not os.path.exists(saveName):
-                        os.mkdir(saveName)
-                    ave, med, var, mode, kurt, skew = ei.evaluate(iw_list[win], img_rec, win+1, feature_name, now, saveDir)
+                    if win+1 in [4,5,6]:
+                        D, ksvd = dict_list[feature_name]
+                        ei = EvaluateImg(iw_list[win],patch_size=patch_size,n_components=n_components,transform_n_nonzero_coefs=transform_n_nonzero_coefs,max_iter=max_iter)
+                        img_rec = ei.reconstruct(D, ksvd, window_size)
+                        saveName = saveDir + f"/bcba_difference"
+                        if not os.path.exists(saveName):
+                            os.mkdir(saveName)
+                        saveName = saveDir + f"/bcba_difference/{now}"
+                        if not os.path.exists(saveName):
+                            os.mkdir(saveName)
+                        ave, med, var, mode, kurt, skew = ei.evaluate(iw_list[win], img_rec, win+1, feature_name, now, saveDir)
+                    else:
+                        ave, med, var, mode, kurt, skew = 0,0,0,0,0,0
                     #if win+1 == int((iw_shape[0]-1)*iw_shape[1]) + int(iw_shape[1]/2) + 1:
                     #    feature_values[feature_name] = {}
                     #    feature_values[feature_name]["var"] = ave
                     #    feature_values[feature_name]["med"] = med
                     #    feature_values[feature_name]["ave"] = var
                     
-                    if  win == 0:
+                    if  feature_name not in feature_values:
                         feature_values[feature_name] = {}
                     feature_values[feature_name][f'win_{win+1}'] = {}
-                    feature_values[feature_name][f'win_{win+1}']["var"] = ave
+                    feature_values[feature_name][f'win_{win+1}']["var"] = var
                     feature_values[feature_name][f'win_{win+1}']["med"] = med
-                    feature_values[feature_name][f'win_{win+1}']["ave"] = var
+                    feature_values[feature_name][f'win_{win+1}']["ave"] = ave
                     feature_values[feature_name][f'win_{win+1}']["mode"] = mode
                     feature_values[feature_name][f'win_{win+1}']["kurt"] = kurt  # 尖度
                     feature_values[feature_name][f'win_{win+1}']["skew"] = skew  # 歪度
