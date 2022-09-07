@@ -6,7 +6,7 @@ import sys
 
 
 # 読み込むフォルダを指定
-FOLDER = 'planning_npz'
+FOLDER = 'pre_data_new_14'
 
 class FetureValueHistory():
     global FOLDER
