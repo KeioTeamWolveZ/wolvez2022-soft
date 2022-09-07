@@ -228,7 +228,20 @@ class Cansat():
         self.lora.sendDevice.setup_lora()
         if self.bno055.begin() is not True:
             print("Error initializing device")
-            exit()    
+            exit()
+            
+        while True:
+            bno_sys, bno_gyr, bno_acc, bno_mag = self.bno055.getCalibration()
+            print(self.bno055.getCalibration())
+            print(bno_sys)
+            time.sleep(0.1)
+            if bno_mag == 3:
+                print("### End Calibration")
+                print("### Set Zero")
+                time.sleep(5)
+                self.bno055.bnoInitial()
+                print("### Finish Setting")
+                break
  
     def sensor(self): #セットアップ終了後
         self.timer = int(1000*(time.time() - self.startTime_time)) #経過時間 (ms)
@@ -599,10 +612,10 @@ class Cansat():
                                 feature_values[feature_name][f'win_{win+1}']["kurt"] = 0  # 尖度
                                 feature_values[feature_name][f'win_{win+1}']["skew"] = 0  # 歪度
 
-                    if fmg != fmg_list[-1] and type(self.risk) == np.ndarray:
-                        self.sensor()
-                        self.planning(self.risk)
-                        self.stuck_detection()#ここは注意
+#                     if fmg != fmg_list[-1] and type(self.risk) == np.ndarray:
+#                         self.sensor()
+#                         self.planning(self.risk)
+#                         self.stuck_detection()#ここは注意
 #                     print(f"{fmg_list.index(fmg)} fmg evaluated")
                     
             self.BLUE_LED.led_on()
@@ -641,7 +654,7 @@ class Cansat():
         f2 = ct.const.f2
 
         # ウィンドウによってスタックすると教示する時間帯を変える場合はnp.arrayを定義
-        f1f2_array_window_custom = np.array([[21,50],[11,40],[1,30],[21,50],[11,40],[1,30],])
+        f1f2_array_window_custom = np.array([[21,50],[11,40],[1,30],[21,50],[11,40],[1,30]])
         """
             f1f2_array_window_custom=np.array([[12., 18.],
                 [12., 18.],
@@ -771,23 +784,23 @@ class Cansat():
 #             print("Left")
             self.MotorR.go(70)
             self.MotorL.go(50)
-            time.sleep(0.5)
-            self.MotorR.stop()
-            self.MotorL.stop()
+#             time.sleep(0.5)
+#             self.MotorR.stop()
+#             self.MotorL.stop()
         elif dir_run == 1:
 #             print("Straight")
             self.MotorR.go(60)
             self.MotorL.go(60)
-            time.sleep(0.5)
-            self.MotorR.stop()
-            self.MotorL.stop()
+#             time.sleep(0.5)
+#             self.MotorR.stop()
+#             self.MotorL.stop()
         elif dir_run == 2:
 #             print("Right")
             self.MotorR.go(50)
             self.MotorL.go(70)
-            time.sleep(0.5)
-            self.MotorR.stop()
-            self.MotorL.stop()
+#             time.sleep(0.5)
+#             self.MotorR.stop()
+#             self.MotorL.stop()
         elif dir_run == 3:
 #             print("Stop")
             self.MotorR.back(60)
@@ -795,9 +808,9 @@ class Cansat():
             time.sleep(0.5)
             self.MotorR.go(60)
             self.MotorL.go(60)
+            time.sleep(1)
             self.MotorR.stop()
             self.MotorL.stop()
-            time.sleep(1)
         
         self.writeSparseData(risk)
 
@@ -822,25 +835,25 @@ class Cansat():
 
         self.threshold_risk = [[],[],[]]
         for n in range(3):
-            self.threshold_risk[n] = np.average(np.array(self.risk_list_below[n]))+2*np.std(np.array(self.risk_list_below[n]))
+            self.threshold_risk[n] =np.average(np.array(self.risk_list_below[n]))+2*np.std(np.array(self.risk_list_below[n]))
 
 #         if len(self.risk_list_below)<=100:
 #             self.threshold_risk = np.average(np.array(self.risk_list_below))+2*np.std(np.array(self.risk_list_below))
 #         else:
 #             self.threshold_risk = np.average(np.array(self.risk_list_below[-100:]))+2*np.std(np.array(self.risk_list_below[-100:]))
         
-        try:
+        # try:
             # self.max_risk=np.max(np.array(self.risk_list_below))
-            for n in range(3):
-                self.max_risk[n]=np.max(np.array(self.risk_list_below[n]))
+            # for n in range(3):
+            #     self.max_risk[n]=np.max(np.array(self.risk_list_below[n]))
 #             if len(self.risk_list_below)<=100:
 #                 self.max_risk=np.max(np.array(self.risk_list_below))
 #             else:
 #                 self.max_risk=np.max(np.array(self.risk_list_below[-100:]))
             
-        except Exception:
-            for n in range(3):
-                self.max_risk[n]=1000
+        # except Exception:
+        #     for n in range(3):
+        #         self.max_risk[n]=1000
         answer_mtx=np.zeros(3)
         for i, risk_scaler in enumerate(lower_risk):
             # if risk_scaler >= self.threshold_risk or risk_scaler >= self.max_risk:
