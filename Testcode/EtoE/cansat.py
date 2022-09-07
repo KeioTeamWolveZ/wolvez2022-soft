@@ -102,6 +102,9 @@ class Cansat():
         self.firstevalimgcount = 0
         self.countstuckLoop = 0
 
+        # spm1用変数定義
+        # self.default_names = ["normalRGB","enphasis","edge","hsv","red","blue","green","purple","emerald","yellow"]  # 10特徴量
+        self.default_names = ["normalRGB","enphasis","edge","vari","rgbvi","grvi","ior","hsv","red","blue","green","purple","emerald","yellow"]  # 14特徴量
         self.dict_list = {}
         self.goallat = ct.const.GPS_GOAL_LAT
         self.goallon = ct.const.GPS_GOAL_LON
@@ -494,9 +497,7 @@ class Cansat():
         
             feature_values = {}
 
-            # default_names = ["normalRGB","enphasis","edge","hsv","red","blue","green","purple","emerald","yellow"]
-            default_names = ["normalRGB","enphasis","edge","vari","rgbvi","grvi","ior","hsv","red","blue","green","purple","emerald","yellow"]
-            for keys in default_names:
+            for keys in self.default_names:
                 feature_values[keys] = {}
             
             self.tempDir = TemporaryDirectory()
@@ -548,8 +549,6 @@ class Cansat():
                 self.camerastate = 0
                        
             else: #第一段階評価モード。runningで使うための部 # ここ変える
-                feature_list = ["normalRGB","enphasis","edge","vari","rgbvi","grvi","ior","hsv","red","blue","green","purple","emerald","yellow"]
-                # feature_list = ["normalRGB","enphasis","edge","hsv","red","blue","green","purple","emerald","yellow"]
                 features = []
                 
                 for feature in feature_names:# windowgoto
@@ -589,7 +588,7 @@ class Cansat():
                         feature_values[feature_name][f'win_{win+1}']["kurt"] = kurt  # 尖度
                         feature_values[feature_name][f'win_{win+1}']["skew"] = skew  # 歪度
                                 
-                    for feature_name in feature_list:
+                    for feature_name in self.default_names:
                         if feature_name not in features:
                             for win in range(int(np.prod(iw_shape))): #それぞれのウィンドウに対して評価を実施
                                 feature_values[feature_name][f'win_{win+1}'] = {}
