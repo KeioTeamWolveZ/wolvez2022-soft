@@ -655,7 +655,7 @@ class Cansat():
         f2 = ct.const.f2
 
         # ウィンドウによってスタックすると教示する時間帯を変える場合はnp.arrayを定義
-        f1f2_array_window_custom = np.array([[21,50],[11,40],[1,30],[21,50],[11,40],[1,30],])
+        f1f2_array_window_custom = np.array([[21,50],[11,40],[1,30],[21,50],[11,40],[1,30]])
         """
             f1f2_array_window_custom=np.array([[12., 18.],
                 [12., 18.],
@@ -836,25 +836,25 @@ class Cansat():
 
         self.threshold_risk = [[],[],[]]
         for n in range(3):
-            self.threshold_risk[n] = np.average(np.array(self.risk_list_below[n]))+2*np.std(np.array(self.risk_list_below[n]))
+            self.threshold_risk[n] =np.average(np.array(self.risk_list_below[n]))+2*np.std(np.array(self.risk_list_below[n]))
 
 #         if len(self.risk_list_below)<=100:
 #             self.threshold_risk = np.average(np.array(self.risk_list_below))+2*np.std(np.array(self.risk_list_below))
 #         else:
 #             self.threshold_risk = np.average(np.array(self.risk_list_below[-100:]))+2*np.std(np.array(self.risk_list_below[-100:]))
         
-        try:
+        # try:
             # self.max_risk=np.max(np.array(self.risk_list_below))
-            for n in range(3):
-                self.max_risk[n]=np.max(np.array(self.risk_list_below[n]))
+            # for n in range(3):
+            #     self.max_risk[n]=np.max(np.array(self.risk_list_below[n]))
 #             if len(self.risk_list_below)<=100:
 #                 self.max_risk=np.max(np.array(self.risk_list_below))
 #             else:
 #                 self.max_risk=np.max(np.array(self.risk_list_below[-100:]))
             
-        except Exception:
-            for n in range(3):
-                self.max_risk[n]=1000
+        # except Exception:
+        #     for n in range(3):
+        #         self.max_risk[n]=1000
         answer_mtx=np.zeros(3)
         for i, risk_scaler in enumerate(lower_risk):
             # if risk_scaler >= self.threshold_risk or risk_scaler >= self.max_risk:
