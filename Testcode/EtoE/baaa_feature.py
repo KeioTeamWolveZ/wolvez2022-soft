@@ -256,7 +256,6 @@ class Feature_img():
         for i in range(self.org_img.shape[0]):
             for j in range(self.org_img.shape[1]):
                 grvi = 0.0
-                b = float(self.org_img[i][j][0])
                 g = float(self.org_img[i][j][1])
                 r = float(self.org_img[i][j][2])
                 if g+r != 0 and g-r > 0:
@@ -278,7 +277,6 @@ class Feature_img():
             for j in range(self.org_img.shape[1]):
                 ior = 0.0
                 b = float(self.org_img[i][j][0])
-                g = float(self.org_img[i][j][1])
                 r = float(self.org_img[i][j][2])
                 if b != 0:
                     ior = r/b     # ここがGRVIの計算式
