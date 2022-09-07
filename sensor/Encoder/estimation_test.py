@@ -37,7 +37,20 @@ print("cansat-y :",y,"[m]")
 print("cansat-q :",q,"[rad]")
 
 try:
+    while True:
+        bno_sys, bno_gyr, bno_acc, bno_mag = bno055.getCalibration()
+        print(bno055.getCalibration())
+        print(bno_sys)
+        time.sleep(0.1)
+        if bno_mag == 3:
+            print("### End Calibration")
+            print("### Set Zero")
+            time.sleep(5)
+            bno055.bnoInitial()
+            print("### Finish Setting")
+            break
     print("motor run")
+    time.sleep(20)
 #     MotorR.stop()
 #     MotorL.stop()
     x_remind.append(0)

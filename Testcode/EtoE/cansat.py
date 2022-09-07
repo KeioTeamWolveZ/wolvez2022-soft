@@ -613,10 +613,10 @@ class Cansat():
                                 feature_values[feature_name][f'win_{win+1}']["kurt"] = 0  # 尖度
                                 feature_values[feature_name][f'win_{win+1}']["skew"] = 0  # 歪度
 
-                    if fmg != fmg_list[-1] and type(self.risk) == np.ndarray:
-                        self.sensor()
-                        self.planning(self.risk)
-                        self.stuck_detection()#ここは注意
+#                     if fmg != fmg_list[-1] and type(self.risk) == np.ndarray:
+#                         self.sensor()
+#                         self.planning(self.risk)
+#                         self.stuck_detection()#ここは注意
 #                     print(f"{fmg_list.index(fmg)} fmg evaluated")
                     
             self.BLUE_LED.led_on()

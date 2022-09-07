@@ -5,7 +5,6 @@ import time
 import threading
 
 class GPS(object):        
-    
     def __init__(self):
         self.mgps = micropyGPS.MicropyGPS(9,'dd') 
         self.Time = 0
@@ -142,13 +141,13 @@ class GPS(object):
         self.gpsdegrees=math.degrees(α1)
         
         return self.gpsdis
-        
-#         return {
-#             'distance': self.gpsdis,           # 距離
-#             'azimuth1': degrees(α1), # 方位角(始点→終点)
-#             'azimuth2': degrees(α2), # 方位角(終点→始点)
-#         }
-    
+    """
+        return {
+            'distance': self.gpsdis,           # 距離
+            'azimuth1': degrees(α1), # 方位角(始点→終点)
+            'azimuth2': degrees(α2), # 方位角(終点→始点)
+        }
+    """
 #g = GPS()
 """
 GPS = GPS()
