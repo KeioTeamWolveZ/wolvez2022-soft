@@ -612,11 +612,11 @@ class Cansat():
                                 feature_values[feature_name][f'win_{win+1}']["kurt"] = 0  # 尖度
                                 feature_values[feature_name][f'win_{win+1}']["skew"] = 0  # 歪度
 
-#                     if fmg != fmg_list[-1] and type(self.risk) == np.ndarray:
-#                         self.sensor()
-#                         self.planning(self.risk)
-#                         self.stuck_detection()#ここは注意
-#                     print(f"{fmg_list.index(fmg)} fmg evaluated")
+                    if fmg != fmg_list[-1] and type(self.risk) == np.ndarray:
+                        self.sensor()
+                        self.planning(self.risk)
+                        self.stuck_detection()#ここは注意
+                    print(f"{fmg_list.index(fmg)} fmg evaluated")
                     
             self.BLUE_LED.led_on()
             # npzファイル形式で計算結果保存
@@ -814,6 +814,44 @@ class Cansat():
         
         self.writeSparseData(risk)
 
+    def planning_no_risk(self):
+        self.gps.vincenty_inverse(float(self.gps.Lat),float(self.gps.Lon),self.goallat,self.goallon) #距離:self.gps.gpsdis 方位角:self.gps.gpsdegrees
+        self.x = self.gps.gpsdis*math.cos(math.radians(self.gps.gpsdegrees))
+        self.y = self.gps.gpsdis*math.sin(math.radians(self.gps.gpsdegrees))
+        theta_goal = self.gps.gpsdegrees
+        phi = theta_goal - self.bno055.ex
+
+        if phi < -180:
+            phi += 360
+        elif phi > 180:
+            phi -= 360
+        print("distance:", self.gps.gpsdis)
+
+        dir_run = self.calc_dir_no_risk(phi)
+        print(f"###Plan:{self.plan_str}, risk: !!! NO CONSIDER !!!, boolean_risk:{self.boolean_risk}")
+        if dir_run == 0:
+
+            self.MotorR.go(70)
+            self.MotorL.go(50)
+        elif dir_run == 1:
+            self.MotorR.go(60)
+            self.MotorL.go(60)
+
+        elif dir_run == 2:
+            self.MotorR.go(50)
+            self.MotorL.go(70)
+        elif dir_run == 3:
+            self.MotorR.back(60)
+            self.MotorL.go(60)
+            time.sleep(0.5)
+            self.MotorR.go(60)
+            self.MotorL.go(60)
+            time.sleep(1)
+            self.MotorR.stop()
+            self.MotorL.stop()
+        
+        self.writeSparseData(self.risk)
+
     def decide_direction(self,phi):
         if phi >= 10:
             direction_goal = 2
@@ -900,7 +938,16 @@ class Cansat():
             dir_run = 3
                         
         return dir_run
-            
+
+    def calc_dir_no_risk(self,phi):
+        
+        self.boolean_risk = [0, 0, 0]
+        self.plan_str = "to goal"
+        direction_goal = self.decide_direction(phi)
+        dir_run = direction_goal
+                        
+        return dir_run
+
     def sendLoRa(self): #通信モジュールの送信を行う関数
         datalog = str(self.state) + ","\
                   + str(self.gps.Time) + ","\
