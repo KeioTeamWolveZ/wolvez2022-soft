@@ -103,11 +103,12 @@ class Cansat():
         self.countstuckLoop = 0
 
         # spm1用変数定義
-        self.pre_data_folder = "../../pre_data_new_7/*"
+        self.pre_data_folder = "../../pre_data_new_6/*"
         #self.default_names = ["normalRGB","enphasis","edge","hsv","red","blue","green","purple","emerald","yellow"]  # 10特徴画像
         # self.default_names = ["normalRGB","enphasis","edge","vari","rgbvi","grvi","ior","hsv","red","blue","green","purple","emerald","yellow"]  # 14特徴画像
         # self.default_names = ["enphasis","rgbvi","grvi","ior","hsv","red","blue","green","purple","emerald","yellow"]  # 11特徴画像
         self.default_names = ["enphasis","rgbvi","ior","hsv","red","blue","green"]  # 7特徴画像
+        self.default_names = ["enphasis","ior","hsv","red","blue","green"]  # 6特徴画像
         self.dict_list = {}
         self.goallat = ct.const.GPS_GOAL_LAT
         self.goallon = ct.const.GPS_GOAL_LON
