@@ -1,6 +1,7 @@
 import re
 import os
 from tempfile import TemporaryDirectory
+from xml.etree.ElementInclude import default_loader
 import cv2
 import numpy as np
 from datetime import datetime
@@ -72,7 +73,11 @@ def spm_first(img_path=False,npz_dir=None, learn_state=False,patch_size=(40,71),
         temp_dir_name = temp_dir.name.replace('//', '/').replace("\\","/")
         iw = IntoWindow(importPath, temp_dir_name, Save)
         # processing img
-        fmg_list = iw.feature_img(frame_num=now)
+        # self.default_names = ["normalRGB","enphasis","edge","hsv","red","blue","green","purple","emerald","yellow"]  # 10特徴画像
+        # self.default_names = ["normalRGB","enphasis","edge","vari","rgbvi","grvi","ior","hsv","red","blue","green","purple","emerald","yellow"]  # 14特徴画像
+        default_names = ["enphasis","rgbvi","grvi","ior","hsv","red","blue","green","purple","emerald","yellow"]  # 11特徴画像
+        # default_names = ["enphasis","rgbvi","grvi","ior","hsv","red","blue","green"]  # 8特徴画像
+        fmg_list = iw.feature_img(frame_num=now, feature_names=default_names)
         
         for fmg in fmg_list:
             # breakout by windows
