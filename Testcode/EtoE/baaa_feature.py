@@ -236,7 +236,6 @@ class Feature_img():
         b = self.org_img[:,:,0]
         rgbvi = (g*g-r*b)/(g*g+r*b)
         rgbvi[rgbvi == inf] = 0
-        rgbvi[rgbvi == nan] = 0
         self.output_img = rgbvi.astype(int)
         self.output_img = np.array(self.output_img.tolist(), dtype=np.uint8)
         
