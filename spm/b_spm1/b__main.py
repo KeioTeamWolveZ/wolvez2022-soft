@@ -44,10 +44,11 @@ def spm_first(img_path=False,npz_dir=None, learn_state=False,patch_size=(40,71),
     if not os.path.exists(saveName):
         os.mkdir(saveName)
     # self.default_names = ["normalRGB","enphasis","edge","hsv","red","blue","green","purple","emerald","yellow"]  # 10特徴画像
+    default_names = ["enphasis","rgbvi","ior","hsv","r","b","g","purple","emerald","yellow"]  # 10特徴画像neo
     # self.default_names = ["normalRGB","enphasis","edge","vari","rgbvi","grvi","ior","hsv","red","blue","green","purple","emerald","yellow"]  # 14特徴画像
     # default_names = ["enphasis","rgbvi","grvi","ior","hsv","r","b","g","rg","rb","gb"]  # 11特徴画像
     # default_names = ["enphasis","rgbvi","grvi","ior","hsv","r","b","g"]  # 8特徴画像
-    default_names = ["enphasis","rgbvi","ior","hsv","r","b","g"]  # 7特徴画像
+    # default_names = ["enphasis","rgbvi","ior","hsv","r","b","g"]  # 7特徴画像
     # default_names = ["enphasis","ior","hsv","r","b","g"]  # 6特徴画像
 
     for k, path in enumerate(import_paths):
@@ -130,7 +131,7 @@ def spm_first(img_path=False,npz_dir=None, learn_state=False,patch_size=(40,71),
         
                     
         if not learn_state:
-            np.savez_compressed("b-data/bcca_secondinput/pre_data_new_7/"+now,array_1=np.array([feature_values]))
+            np.savez_compressed("b-data/bcca_secondinput/pre_data_new_10r/"+now,array_1=np.array([feature_values]))
             # np.savez_compressed(saveDir + f"/bczz_h_param/{params}",array_1=np.array([feature_values]))
             #with open(saveDir + f"/bcca_secondinput/"+now, "wb") as tf:
             #    pickle.dump(feature_values, tf)
