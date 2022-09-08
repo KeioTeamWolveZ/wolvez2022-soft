@@ -18,7 +18,7 @@ class ReadFeaturedImg():
         #    self.sav_d = tempfile.TemporaryDirectory()
         self.save = Save
     
-    def feature_img(self, frame_num, feature_name=None):
+    def feature_img(self, frame_num, feature_names=None):
         '''Change to treated img
         Args:
             frame_num(int):Frame number or time
@@ -26,7 +26,7 @@ class ReadFeaturedImg():
         '''
         self.treat = Feature_img(self.imp_p, frame_num, self.sav_d)
         
-        if feature_name == None:
+        if feature_names == None:
             self.treat.normalRGB()
             self.treat.vari()
             self.treat.rgbvi()
@@ -41,34 +41,36 @@ class ReadFeaturedImg():
             self.treat.rb()
             self.treat.gb()
             self.treat.rg()
-        elif feature_name == "normalRGB":
-            self.treat.normalRGB()
-        elif feature_name == "vari":
-            self.treat.vari()
-        elif feature_name == "rgbvi":
-            self.treat.rgbvi()
-        elif feature_name == "grvi":
-            self.treat.grvi()
-        elif feature_name == "ior":
-            self.treat.ior()
-        elif feature_name == "enphasis":
-            self.treat.enphasis()
-        elif feature_name == "edge":
-            self.treat.edge()
-        elif feature_name == "hsv":
-            self.treat.hsv()
-        elif feature_name == "r":
-            self.treat.r()
-        elif feature_name == "b":
-            self.treat.b()
-        elif feature_name == "g":
-            self.treat.g()
-        elif feature_name == "rb":
-            self.treat.rb()
-        elif feature_name == "rg":
-            self.treat.rg()
-        elif feature_name == "gb":
-            self.treat.gb()
+        else:
+            for feature_name in feature_names:
+                if feature_name == "normalRGB":
+                    self.treat.normalRGB()
+                elif feature_name == "vari":
+                    self.treat.vari()
+                elif feature_name == "rgbvi":
+                    self.treat.rgbvi()
+                elif feature_name == "grvi":
+                    self.treat.grvi()
+                elif feature_name == "ior":
+                    self.treat.ior()
+                elif feature_name == "enphasis":
+                    self.treat.enphasis()
+                elif feature_name == "edge":
+                    self.treat.edge()
+                elif feature_name == "hsv":
+                    self.treat.hsv()
+                elif feature_name == "r":
+                    self.treat.r()
+                elif feature_name == "b":
+                    self.treat.b()
+                elif feature_name == "g":
+                    self.treat.g()
+                elif feature_name == "rb":
+                    self.treat.rb()
+                elif feature_name == "rg":
+                    self.treat.rg()
+                elif feature_name == "gb":
+                    self.treat.gb()
             
         
         fmg_list = self.treat.output()
