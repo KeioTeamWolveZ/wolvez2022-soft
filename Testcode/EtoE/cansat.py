@@ -103,11 +103,11 @@ class Cansat():
         self.countstuckLoop = 0
 
         # spm1用変数定義
-        self.pre_data_folder = "../../pre_data_new_10/*"
-        self.default_names = ["normalRGB","enphasis","edge","hsv","red","blue","green","purple","emerald","yellow"]  # 10特徴画像
+        self.pre_data_folder = "../../pre_data_new_8/*"
+        #self.default_names = ["normalRGB","enphasis","edge","hsv","red","blue","green","purple","emerald","yellow"]  # 10特徴画像
         # self.default_names = ["normalRGB","enphasis","edge","vari","rgbvi","grvi","ior","hsv","red","blue","green","purple","emerald","yellow"]  # 14特徴画像
         # self.default_names = ["enphasis","rgbvi","grvi","ior","hsv","red","blue","green","purple","emerald","yellow"]  # 11特徴画像
-        # self.default_names = ["enphasis","rgbvi","grvi","ior","hsv","red","blue","green"]  # 8特徴画像
+        self.default_names = ["enphasis","rgbvi","grvi","ior","hsv","red","blue","green"]  # 8特徴画像
         self.dict_list = {}
         self.goallat = ct.const.GPS_GOAL_LAT
         self.goallon = ct.const.GPS_GOAL_LON
@@ -620,7 +620,6 @@ class Cansat():
                         self.sensor()
                         self.planning_no_risk()
                         self.stuck_detection()#ここは注意
-                    print(f"{fmg_list.index(fmg)} fmg evaluated")
                     
             self.BLUE_LED.led_on()
             # npzファイル形式で計算結果保存
