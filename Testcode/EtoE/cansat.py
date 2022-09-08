@@ -104,7 +104,7 @@ class Cansat():
 
         # spm1用変数定義
         self.pre_data_folder = "../../pre_data_new_10r/*"
-        #self.default_names = ["normalRGB","enphasis","edge","hsv","red","blue","green","purple","emerald","yellow"]  # 10特徴画像
+        # self.default_names = ["normalRGB","enphasis","edge","hsv","red","blue","green","purple","emerald","yellow"]  # 10特徴画像
         self.default_names = ["enphasis","rgbvi","ior","hsv","red","blue","green","purple","emerald","yellow"]  # 10特徴画像neo
         # self.default_names = ["normalRGB","enphasis","edge","vari","rgbvi","grvi","ior","hsv","red","blue","green","purple","emerald","yellow"]  # 14特徴画像
         # self.default_names = ["enphasis","rgbvi","grvi","ior","hsv","red","blue","green","purple","emerald","yellow"]  # 11特徴画像
