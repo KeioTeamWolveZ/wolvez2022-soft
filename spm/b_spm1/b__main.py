@@ -47,7 +47,7 @@ def spm_first(img_path=False,npz_dir=None, learn_state=False,patch_size=(40,71),
     # self.default_names = ["normalRGB","enphasis","edge","vari","rgbvi","grvi","ior","hsv","red","blue","green","purple","emerald","yellow"]  # 14特徴画像
     # default_names = ["enphasis","rgbvi","grvi","ior","hsv","r","b","g","rg","rb","gb"]  # 11特徴画像
     # default_names = ["enphasis","rgbvi","grvi","ior","hsv","r","b","g"]  # 8特徴画像
-    default_names = ["enphasis","vari","grvi","ior","hsv","r","b","g"]  # 8特徴画像
+    default_names = ["enphasis","rgbvi","ior","hsv","r","b","g"]  # 7特徴画像
 
     for k, path in enumerate(import_paths):
         start_time = time()
