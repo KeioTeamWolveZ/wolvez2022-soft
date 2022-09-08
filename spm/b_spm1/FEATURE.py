@@ -1,3 +1,4 @@
+from cmath import inf
 import numpy as np
 import cv2
 import os
@@ -189,19 +190,22 @@ class Feature_img():
     # IOR（酸化鉄比）ARLISSで使用できるかも？
     def ior(self):
         self.org_img = cv2.imread(self.imp_p,1)
-        self.ior_list_np = np.ones((self.org_img.shape[0],self.org_img.shape[1]), np.float64)
-        self.output_img = np.ones((self.org_img.shape[0],self.org_img.shape[1]), np.uint8)
-        for i in range(self.org_img.shape[0]):
-            for j in range(self.org_img.shape[1]):
-                ior = 0.0
-                b = float(self.org_img[i][j][0])
-                r = float(self.org_img[i][j][2])
-                if b != 0:
-                    ior = r/b     # ここがGiorの計算式
-                else:
-                    ior = r
-                self.ior_list_np[i][j] = int(ior)
-                self.output_img[i][j] = np.uint8(self.ior_list_np[i][j])
+        # self.ior_list_np = np.ones((self.org_img.shape[0],self.org_img.shape[1]), np.float64)
+        # self.output_img = np.ones((self.org_img.shape[0],self.org_img.shape[1]), np.uint8)
+        ior = self.org_img[:][:][2]/self.org_img[:][:][0]
+        ior[ior==inf] = 0
+        self.output_img = ior.astype(int)
+        # for i in range(self.org_img.shape[0]):
+        #     for j in range(self.org_img.shape[1]):
+        #         ior = 0.0
+        #         b = float(self.org_img[i][j][0])
+        #         r = float(self.org_img[i][j][2])
+        #         if b != 0:
+        #             ior = r/b     # ここがGRVIの計算式
+        #         else:
+        #             ior = r
+        #         self.ior_list_np[i][j] = int(ior)
+        #         self.output_img[i][j] = np.uint8(self.ior_list_np[i][j])
         self.save_name = self.sav_d + f"/ior_{self.frame_num}.jpg"
         cv2.imwrite(self.save_name, self.output_img) 
         self.output_img_list.append(self.save_name)
