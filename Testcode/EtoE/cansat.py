@@ -434,7 +434,7 @@ class Cansat():
             cv2.imwrite(importPath, self.img)
             
             # processing img
-            fmg_list = iw.feature_img(frame_num=now) #特徴抽出。リストに特徴画像が入る 
+            fmg_list = iw.feature_img(frame_num=now, feature_names=self.default_names) #特徴抽出。リストに特徴画像が入る 
             for fmg in fmg_list:#それぞれの特徴画像に対して処理
                 # breakout by windows
                 iw_list, window_size = iw.breakout(cv2.imread(fmg, cv2.IMREAD_GRAYSCALE)) #ブレイクアウト
@@ -527,7 +527,7 @@ class Cansat():
                 #self.sensor() 
             if feature_names == None: #第一段階学習モード
                 self.camerastate = "captured!"
-                fmg_list = iw.feature_img(frame_num=now,feature_names=feature_names) #特徴抽出。リストに特徴画像が入る
+                fmg_list = iw.feature_img(frame_num=now,feature_names=self.default_names) #特徴抽出。リストに特徴画像が入る
                 
                 for fmg in fmg_list:#それぞれの特徴画像に対して処理
                     iw_list, window_size = iw.breakout(cv2.imread(fmg,cv2.IMREAD_GRAYSCALE)) #ブレイクアウト
