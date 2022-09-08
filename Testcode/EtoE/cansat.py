@@ -616,7 +616,7 @@ class Cansat():
 
                     if fmg != fmg_list[-1] and type(self.risk) == np.ndarray:
                         self.sensor()
-                        self.planning(self.risk)
+                        self.planning_no_risk()
                         self.stuck_detection()#ここは注意
                     print(f"{fmg_list.index(fmg)} fmg evaluated")
                     
