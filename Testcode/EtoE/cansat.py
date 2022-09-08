@@ -103,7 +103,7 @@ class Cansat():
         self.countstuckLoop = 0
 
         # spm1用変数定義
-        pre_data_folder = "../../pre_data_new_10/*"
+        self.pre_data_folder = "../../pre_data_new_10/*"
         self.default_names = ["normalRGB","enphasis","edge","hsv","red","blue","green","purple","emerald","yellow"]  # 10特徴画像
         # self.default_names = ["normalRGB","enphasis","edge","vari","rgbvi","grvi","ior","hsv","red","blue","green","purple","emerald","yellow"]  # 14特徴画像
         # self.default_names = ["enphasis","rgbvi","grvi","ior","hsv","red","blue","green","purple","emerald","yellow"]  # 11特徴画像
@@ -115,6 +115,7 @@ class Cansat():
         self.mkdir()
         self.mkfile()
         self.mvfile()
+        self.time_f_eval = 1.0
 
     def mkdir(self): #フォルダ作成部分
         folder_paths =[f"results/{self.startTime}",
@@ -141,7 +142,7 @@ class Cansat():
         planning_path.close()
 
     def mvfile(self):
-        pre_data = sorted(glob(pre_data_folder))
+        pre_data = sorted(glob(self.pre_data_folder))
         dest_dir = f"results/{self.startTime}/camera_result/second_spm/learn{self.learncount}"
         for file in pre_data:
             shutil.copy2(file, dest_dir)
@@ -575,7 +576,7 @@ class Cansat():
                 print("features:",features)
                 fmg_list = iw.feature_img(frame_num=now,feature_names=features) # 特徴抽出。リストに特徴画像が入る
 
-                for fmg in fmg_list: #それぞれの特徴画像に対して処理
+                for fmg_idx,fmg in enumerate(fmg_list): #それぞれの特徴画像に対して処理
                     iw_list, window_size = iw.breakout(cv2.imread(fmg,cv2.IMREAD_GRAYSCALE)) # ブレイクアウトにより画像を6分割
                     feature_name = str(re.findall(tempDir_name + f"/(.*)_.*_", fmg)[0]) # 特徴処理のみ抽出
                     # print("FEATURED BY: ",feature_name)
@@ -615,7 +616,7 @@ class Cansat():
                                 feature_values[feature_name][f'win_{win+1}']["kurt"] = 0  # 尖度
                                 feature_values[feature_name][f'win_{win+1}']["skew"] = 0  # 歪度
 
-                    if fmg != fmg_list[-1] and type(self.risk) == np.ndarray:
+                    if fmg_idx+1 % int(self.time_f_eval+1.0)==0 and type(self.risk) == np.ndarray:
                         self.sensor()
                         self.planning_no_risk()
                         self.stuck_detection()#ここは注意
@@ -748,7 +749,8 @@ class Cansat():
             self.planning(self.risk)
             self.stuck_detection()#ここは注意
             time_now = time.time()
-            print("calc time:",time_now-time_pre)
+            self.time_f_eval=time_now-time_pre
+            print("calc time:",self.time_f_eval)
             if self.gps.gpsdis <= ct.const.FINISH_DIS_THRE:
                 self.state = 7
                 self.laststate = 7
