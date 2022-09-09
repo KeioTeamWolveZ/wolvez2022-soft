@@ -216,14 +216,6 @@ class Feature_img():
                 # print(self.vari_list_np[i][j])
                 # print(np.uint8(self.vari_list_np[i][j]))
                 self.output_img[i][j] = np.uint8(self.vari_list_np[i][j])
-        #print("len(self.vari_list_np): "+str(self.vari_list_np.shape))
-        #print("vari max: "+str(np.amax(self.vari_list_np)))
-        #print("vari min: "+str(np.amin(self.vari_list_np)))
-        #print(self.vari_list_np)
-
-        #cv2.imshow("self.org_img", cv2.resize(self.org_img,dsize=(534,400)))
-        #cv2.imshow("VARI_img",cv2.resize(self.output_img,dsize=(534,460)))
-
         self.save_name = self.sav_d + f"/vari_{self.frame_num}.jpg"
         cv2.imwrite(self.save_name, self.output_img)
         self.output_img_list.append(self.save_name)
@@ -238,21 +230,6 @@ class Feature_img():
         rgbvi[rgbvi == inf] = 0
         self.output_img = rgbvi.astype(int)
         self.output_img = np.array(self.output_img.tolist(), dtype=np.uint8)
-        
-        # self.rgbvi_list_np = np.ones((self.org_img.shape[0],self.org_img.shape[1]), np.float64)
-        # self.output_img = np.ones((self.org_img.shape[0],self.org_img.shape[1]), np.uint8)
-        # for i in range(self.org_img.shape[0]):
-        #     for j in range(self.org_img.shape[1]):
-        #         rgbvi = 0.0
-        #         b = float(self.org_img[i][j][0])
-        #         g = float(self.org_img[i][j][1])
-        #         r = float(self.org_img[i][j][2])
-        #         if g*g+r*b != 0 and g*g-r*b > 0:
-        #             rgbvi = (g*g-r*b)/(g*g+r*b)     # ここがGRVIの計算式
-        #         else:
-        #             rgbvi = 0
-        #         self.rgbvi_list_np[i][j] = int(rgbvi)
-        #         self.output_img[i][j] = np.uint8(self.rgbvi_list_np[i][j])
         self.save_name = self.sav_d + f"/rgbvi_{self.frame_num}.jpg"
         cv2.imwrite(self.save_name, self.output_img)
         self.output_img_list.append(self.save_name)
@@ -260,45 +237,35 @@ class Feature_img():
     # GRVI（緑赤植生指標）
     def grvi(self):
         self.org_img = cv2.imread(self.imp_p,1)
-        self.grvi_list_np = np.ones((self.org_img.shape[0],self.org_img.shape[1]), np.float64)
-        self.output_img = np.ones((self.org_img.shape[0],self.org_img.shape[1]), np.uint8)
-        for i in range(self.org_img.shape[0]):
-            for j in range(self.org_img.shape[1]):
-                grvi = 0.0
-                g = float(self.org_img[i][j][1])
-                r = float(self.org_img[i][j][2])
-                if g+r != 0 and g-r > 0:
-                    grvi = (g-r)/(g+r)     # ここがGRVIの計算式
-                else:
-                    grvi = 0
-                self.grvi_list_np[i][j] = int(255*grvi)
-                self.output_img[i][j] = np.uint8(self.grvi_list_np[i][j])
+        r = self.org_img[:,:,2]
+        g = self.org_img[:,:,1]
+        grvi = (g-r)/(g+r)
+        grvi[grvi==inf] = 0
+        self.output_img = grvi.astype(int)
+        self.output_img = np.array(self.output_img.tolist(), dtype=np.uint8)
+        # self.grvi_list_np = np.ones((self.org_img.shape[0],self.org_img.shape[1]), np.float64)
+        # self.output_img = np.ones((self.org_img.shape[0],self.org_img.shape[1]), np.uint8)
+        # for i in range(self.org_img.shape[0]):
+        #     for j in range(self.org_img.shape[1]):
+        #         grvi = 0.0
+        #         g = float(self.org_img[i][j][1])
+        #         r = float(self.org_img[i][j][2])
+        #         if g+r != 0 and g-r > 0:
+        #             grvi = (g-r)/(g+r)     # ここがGRVIの計算式
+        #         else:
+        #             grvi = 0
+        #         self.grvi_list_np[i][j] = int(255*grvi)
+        #         self.output_img[i][j] = np.uint8(self.grvi_list_np[i][j])
         self.save_name = self.sav_d + f"/grvi_{self.frame_num}.jpg"
         cv2.imwrite(self.save_name, self.output_img) 
         self.output_img_list.append(self.save_name)
 
     # IOR（酸化鉄比）ARLISSで使用できるかも？
     def ior(self):
-        # self.org_img = np.array(Image.open(self.imp_p))
         self.org_img = cv2.imread(self.imp_p, 1)
-        # self.ior_list_np = np.ones((self.org_img.shape[0],self.org_img.shape[1]), np.float64)
-        # self.output_img = np.ones((self.org_img.shape[0],self.org_img.shape[1]), np.uint8)
-        # print(type(self.org_img[:,:,0]))
         ior = self.org_img[:, :, 2]/self.org_img[:, :, 0]
         ior[ior==inf] = 0
         self.output_img = ior.astype(int)
-        # print(self.output_img.shape)
-        # for i in range(self.org_img.shape[0]):
-        #     for j in range(self.org_img.shape[1]):
-        #         ior = 0.0
-        #         b = float(self.org_img[i][j][0])
-        #         r = float(self.org_img[i][j][2])
-        #         if b != 0:
-        #             ior = r/b     # ここがGRVIの計算式
-        #         else:
-        #             ior = r
-        #         self.ior_list_np[i][j] = int(ior)
-        #         self.output_img[i][j] = np.uint8(self.ior_list_np[i][j])
         self.output_img = np.array(self.output_img.tolist(), dtype=np.uint8)
         self.save_name = self.sav_d + f"/ior_{self.frame_num}.jpg"
         cv2.imwrite(self.save_name, self.output_img) 
