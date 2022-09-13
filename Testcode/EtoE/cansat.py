@@ -339,10 +339,16 @@ class Cansat():
             elif self.landstate == 1:
                 self.MotorR.go(ct.const.LANDING_MOTOR_VREF)
                 self.MotorL.go(ct.const.LANDING_MOTOR_VREF)
-
+                
                 self.stuck_detection()
 
+
                 if time.time()-self.pre_motorTime > ct.const.LANDING_MOTOR_TIME_THRE: #5秒間モータ回して分離シートから十分離れる
+                    for percentage in [0.9,0.8,0.7,0.6,0.5]:
+                        self.MotorR.go(ct.const.LANDING_MOTOR_VREF*percentage)
+                        self.MotorL.go(ct.const.LANDING_MOTOR_VREF*percentage)
+                        self.stuck_detection()
+                        time.sleep(0.5)
                     self.MotorR.stop()
                     self.MotorL.stop()
                     self.state = 4
@@ -967,6 +973,15 @@ class Cansat():
         
     def stuck_detection(self):
         # GPSの取得履歴をチェック
+        ## GPSでスタック検知をするための条件
+        """
+        1. gpsを10周期分以上取得すること (enough_amount_of_gps_history==True)
+        2. gpsの中に欠損<NoneTyle>が存在しないこと (no_None_in_gps_history==True)
+        3. gpsの10周期分の道のり（隣接する観測点を点つなぎにしたときの全長）が約5m以下(緯度経度のノルムで0.00005度)以下であること
+           (difference_small==True)
+        ->スタックの回避方法自体は従来のものをコピペ
+        ->スタックでなかった場合の対応はかつてのelseと同様
+        """
         if len(self.gps_history)>=10:
             enough_amount_of_gps_history=True
         else:
@@ -980,9 +995,10 @@ class Cansat():
         
         if no_None_in_gps_history:
             total_difference=0
-            total_difference_thre=1
-            for gps_tuple in self.gps_history[-10:]:
-                total_difference+=np.sqrt((gps_tuple[0]-self.gps_history[-1][0])**2+(gps_tuple[1]-self.gps_history[-1][1]))
+            total_difference_thre=0.00005
+            for i in range(10):
+                i+=1
+                total_difference+=np.sqrt((self.gps_history[-i][0]-self.gps_history[-i-1][0])**2+(self.gps_history[-i][1]-self.gps_history[-i-1][1])**2)
             if total_difference<=total_difference_thre:
                 difference_small=True
             else:
