@@ -982,47 +982,41 @@ class Cansat():
         ->スタックの回避方法自体は従来のものをコピペ
         ->スタックでなかった場合の対応はかつてのelseと同様
         """
-        if len(self.gps_history)>=10:
+        if len(self.startgps_lon)>=15:
             enough_amount_of_gps_history=True
         else:
             enough_amount_of_gps_history=False
         
-        no_None_in_gps_history=True
-        for gps_tuple in self.gps_history[-10:]:
-            if str(type(gps_tuple))=="<class 'NoneType'>":
-                no_None_in_gps_history=False
-                break
-        
-        if no_None_in_gps_history:
-            total_difference=0
-            total_difference_thre=0.00005
-            for i in range(10):
-                i+=1
-                total_difference+=np.sqrt((self.gps_history[-i][0]-self.gps_history[-i-1][0])**2+(self.gps_history[-i][1]-self.gps_history[-i-1][1])**2)
-            if total_difference<=total_difference_thre:
-                difference_small=True
-            else:
-                difference_small=False
+        total_difference=0
+        total_difference_thre=0.00005
+        for i in range(10):
+            i+=1
+            total_difference+=np.sqrt((self.startgps_lon[-i]-self.startgps_lon[-i-1])**2+(self.startgps_lat[-i]-self.startgps_lat[-i-1])**2)
+        if total_difference<=total_difference_thre:
+            difference_small=True
+        else:
+            difference_small=False
 
         
-        if (self.bno055.ax**2+self.bno055.ay**2) <= ct.const.STUCK_ACC_THRE**2:
-            if self.stuckTime == 0:
-                self.stuckTime = time.time()
+        # if (self.bno055.ax**2+self.bno055.ay**2) <= ct.const.STUCK_ACC_THRE**2:
+        #     if self.stuckTime == 0:
+        #         self.stuckTime = time.time()
             
-            if self.countstuckLoop > ct.const.STUCK_COUNT_THRE: #加速度が閾値以下になるケースがある程度続いたらスタックと判定
-                #トルネード実施
-                print("stuck")
-                self.MotorR.go(ct.const.STUCK_MOTOR_VREF)
-                self.MotorL.back(ct.const.STUCK_MOTOR_VREF)
-                time.sleep(2)
-                self.MotorR.stop()
-                self.MotorL.stop()
-                self.countstuckLoop = 0
-                self.stuckTime = 0
+        #     if self.countstuckLoop > ct.const.STUCK_COUNT_THRE: #加速度が閾値以下になるケースがある程度続いたらスタックと判定
+        #         #トルネード実施
+        #         print("stuck")
+        #         self.MotorR.go(ct.const.STUCK_MOTOR_VREF)
+        #         self.MotorL.back(ct.const.STUCK_MOTOR_VREF)
+        #         time.sleep(2)
+        #         self.MotorR.stop()
+        #         self.MotorL.stop()
+        #         self.countstuckLoop = 0
+        #         self.stuckTime = 0
 
-            self.countstuckLoop+= 1
+        #     self.countstuckLoop+= 1
         
-        elif enough_amount_of_gps_history and no_None_in_gps_history and difference_small: # ここにGPS履歴経由のスタック検知を追記
+        if enough_amount_of_gps_history and difference_small: # ここにGPS履歴経由のスタック検知を追記
+        # elif enough_amount_of_gps_history and difference_small: # ここにGPS履歴経由のスタック検知を追記
             #トルネード実施
             print("stuck")
             self.MotorR.go(ct.const.STUCK_MOTOR_VREF)
