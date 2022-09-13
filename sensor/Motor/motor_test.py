@@ -13,9 +13,22 @@ try:
 #     Motor1.back(80)
 #     Motor2.go(80)
 #     time.sleep(0.5)
-    Motor1.go(70)
-    Motor2.go(70)
-    time.sleep(0.58)
+
+    for i in range(5,11):
+        Motor1.go(i*10)
+        Motor2.go(i*10-(3*i/7))
+        time.sleep(0.5)
+
+    time.sleep(5)
+
+    for i in [10,9,8,7,6,5]:
+        Motor1.go(i*10)
+        Motor2.go(i*10-(3*i/7))
+        time.sleep(0.5)
+    Motor1.stop()
+    Motor2.stop()
+#     Motor2.go(100-(3*10/7))
+#     time.sleep(10)
 #     time.sleep(2)
 
     #Motor.back(100)

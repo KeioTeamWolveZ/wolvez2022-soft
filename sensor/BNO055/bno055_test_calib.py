@@ -25,7 +25,7 @@ try:
             print("### End Calibration")
             print("### Set Zero")
             time.sleep(5)
-#             bno055.bnoInitial()
+            bno055.bnoInitial()
             print("### Finish Setting")
 #             time.sleep(5)
             break
