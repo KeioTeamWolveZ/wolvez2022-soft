@@ -103,7 +103,7 @@ class Cansat():
         self.countstuckLoop = 0
 
         # spm1用変数定義
-        self.pre_data_folder = "../../pre_data_new_10r/*"
+        self.pre_data_folder = "../../pre_data_ARLISS/*"
         # self.default_names = ["normalRGB","enphasis","edge","hsv","red","blue","green","purple","emerald","yellow"]  # 10特徴画像
         self.default_names = ["enphasis","rgbvi","ior","hsv","red","blue","green","purple","emerald","yellow"]  # 10特徴画像neo
         # self.default_names = ["normalRGB","enphasis","edge","vari","rgbvi","grvi","ior","hsv","red","blue","green","purple","emerald","yellow"]  # 14特徴画像
@@ -118,6 +118,11 @@ class Cansat():
         self.mkfile()
         self.mvfile()
         self.time_f_eval = 1.0
+        
+        self.pre_Lon=0
+        self.pre_Lat=0
+        self.gpsdis_history=[]
+
 
     def mkdir(self): #フォルダ作成部分
         folder_paths =[f"results/{self.startTime}",
@@ -339,7 +344,13 @@ class Cansat():
 
                 self.stuck_detection()
 
+
                 if time.time()-self.pre_motorTime > ct.const.LANDING_MOTOR_TIME_THRE: #5秒間モータ回して分離シートから十分離れる
+                    for percentage in [0.9,0.8,0.7,0.6,0.5]:
+                        self.MotorR.go(ct.const.LANDING_MOTOR_VREF*percentage)
+                        self.MotorL.go(ct.const.LANDING_MOTOR_VREF*percentage)
+                        self.stuck_detection()
+                        time.sleep(0.5)
                     self.MotorR.stop()
                     self.MotorL.stop()
                     self.state = 4
@@ -963,11 +974,28 @@ class Cansat():
         self.lora.sendData(datalog) #データを送信
         
     def stuck_detection(self):
-        if (self.bno055.ax**2+self.bno055.ay**2) <= ct.const.STUCK_ACC_THRE**2:
-            if self.stuckTime == 0:
-                self.stuckTime = time.time()
-            
-            if self.countstuckLoop > ct.const.STUCK_COUNT_THRE: #加速度が閾値以下になるケースがある程度続いたらスタックと判定
+        # GPSの取得履歴をチェック
+        ## GPSでスタック検知をするための条件
+        """
+        1. gpsを10周期分以上取得すること (enough_amount_of_gps_history==True)
+        2. gpsの中に欠損<NoneTyle>が存在しないこと (no_None_in_gps_history==True)
+        3. gpsの10周期分の道のり（隣接する観測点を点つなぎにしたときの全長）が約5m以下(緯度経度のノルムで0.00005度)以下であること
+           (difference_small==True)
+        ->スタックの回避方法自体は従来のものをコピペ
+        ->スタックでなかった場合の対応はかつてのelseと同様
+        """
+        
+        if self.pre_Lat==0:
+            self.pre_Lon,self.pre_Lat=self.gps.Lon,self.gps.Lat
+        else:
+            self.gps.vincenty_inverse(self.gps.Lon,self.gps.Lat,self.pre_Lon,self.pre_Lat)
+            self.gpsdis_history.append(self.gps.gpsdis)
+            self.pre_Lon,self.pre_Lat=self.gps.Lon,self.gps.Lat
+        
+
+        if len(self.gpsdis_history)%10==0 and len(self.gpsdis_history)!=0:
+            distance=np.sum(self.gpsdis_history[-10:])
+            if distance<ct.const.TOTAL_DISTANCE_THRE:
                 #トルネード実施
                 print("stuck")
                 self.MotorR.go(ct.const.STUCK_MOTOR_VREF)
@@ -977,12 +1005,53 @@ class Cansat():
                 self.MotorL.stop()
                 self.countstuckLoop = 0
                 self.stuckTime = 0
+            else:
+                self.countstuckLoop = 0
+                self.stuckTime = 0
+        
+        
+        # # if enough_amount_of_gps_history:
+        #     total_difference=0
+        #     for i in range(10):
+        #         i+=1
+        #         total_difference+=np.sqrt((self.startgps_lon[-i]-self.startgps_lon[-i-1])**2+(self.startgps_lat[-i]-self.startgps_lat[-i-1])**2)
+        #     if total_difference<=total_difference_thre:
+        #         difference_small=True
+        #         #トルネード実施
+        #         print("stuck")
+        #         self.MotorR.go(ct.const.STUCK_MOTOR_VREF)
+        #         self.MotorL.back(ct.const.STUCK_MOTOR_VREF)
+        #         time.sleep(2)
+        #         self.MotorR.stop()
+        #         self.MotorL.stop()
+        #         self.countstuckLoop = 0
+        #         self.stuckTime = 0
+        #     else:
+        #         self.countstuckLoop = 0
+        #         self.stuckTime = 0
+        # else:
+        #     self.countstuckLoop = 0
+        #     self.stuckTime = 0
 
-            self.countstuckLoop+= 1
+        
+        # if (self.bno055.ax**2+self.bno055.ay**2) <= ct.const.STUCK_ACC_THRE**2:
+        #     if self.stuckTime == 0:
+        #         self.stuckTime = time.time()
+            
+        #     if self.countstuckLoop > ct.const.STUCK_COUNT_THRE: #加速度が閾値以下になるケースがある程度続いたらスタックと判定
+        #         #トルネード実施
+        #         print("stuck")
+        #         self.MotorR.go(ct.const.STUCK_MOTOR_VREF)
+        #         self.MotorL.back(ct.const.STUCK_MOTOR_VREF)
+        #         time.sleep(2)
+        #         self.MotorR.stop()
+        #         self.MotorL.stop()
+        #         self.countstuckLoop = 0
+        #         self.stuckTime = 0
 
-        else:
-            self.countstuckLoop = 0
-            self.stuckTime = 0
+        #     self.countstuckLoop+= 1
+        # elif enough_amount_of_gps_history and difference_small: # ここにGPS履歴経由のスタック検知を追記
+        
 
     def keyboardinterrupt(self): #キーボードインタラプト入れた場合に発動する関数
         self.MotorR.stop()

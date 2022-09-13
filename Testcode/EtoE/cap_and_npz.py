@@ -32,13 +32,17 @@ NPZ_COUNT = 50
 
 class Npz_maker():
     global NPZ_COUNT
+    dict_list = {}
+    GPIO.setwarnings(False)
+    MotorR = motor(ct.const.RIGHT_MOTOR_IN1_PIN,ct.const.RIGHT_MOTOR_IN2_PIN,ct.const.RIGHT_MOTOR_VREF_PIN)
+    MotorL = motor(ct.const.LEFT_MOTOR_IN1_PIN,ct.const.LEFT_MOTOR_IN2_PIN, ct.const.LEFT_MOTOR_VREF_PIN)
     
     def __init___(self):
         self.learn_state = True
     
-    def spm_first(self, PIC_COUNT:int=1, relearning:dict=dict(relearn_state=False,f1=ct.const.f1,f3=ct.const.f3)): #ステート4。スパースモデリング第一段階実施。
-        if self.spmfirstTime == 0: #時刻を取得してLEDをステートに合わせて光らせる
-            self.spmfirstTime = time.time()
+    def spm_first(self, PIC_COUNT:int=1, relearning:dict=dict(relearn_state=False,f1=ct.const.f1,f3=ct.const.f3), learn_state=True): #ステート4。スパースモデリング第一段階実施。
+#         if self.spmfirstTime == 0: #時刻を取得してLEDをステートに合わせて光らせる
+#             self.spmfirstTime = time.time()
             # self.RED_LED.led_on()
             # self.BLUE_LED.led_on()
             # self.GREEN_LED.led_off()
@@ -85,12 +89,12 @@ class Npz_maker():
         ksvd: any  # 最初に指定しないと怒られちゃうから
         feature_values = {}
 
-        if self.learn_state:
-            print(f"=====LEARNING PHASE{self.learncount}=====")
+        if learn_state:
+            print(f"=====LEARNING PHASE=====")
         else:
-            print(f"=====EVALUATING PHASE{self.learncount}=====")
+            print(f"=====EVALUATING PHASE=====")
         
-        if self.learn_state: #学習モデル獲得     
+        if learn_state: #学習モデル獲得     
             if relearning['relearn_state']:  # 再学習に用いる画像パスの指定
                 # 一つ前のlearncountファイルの-f3枚目を指定
                 try:
@@ -160,9 +164,9 @@ class Npz_maker():
                         ld = LearnDict(iw_list[win])
                         D, ksvd = ld.generate() #辞書獲得
                         self.dict_list[feature_name] = [D, ksvd]
-                        save_name = self.saveDir + f"../npz_maker/{self.T:.0f}/learnimg/{feature_name}_part_{win+1}_{now}.jpg"
+                        save_name = f"../npz_maker/{self.T:.0f}/learnimg/{feature_name}_part_{win+1}_{now}.jpg"
                         # cv2.imwrite(save_name, iw_list[win])
-            self.learn_state = False
+#             self.learn_state = False
 
         else:# PIC_COUNT枚撮影
             # if self.state == 4:  # 再学習時にステート操作が必要なら追記
@@ -195,16 +199,16 @@ class Npz_maker():
                 #     save_file = f"results/{self.startTime}/camera_result/planning/learn{self.learncount}/planning_pics/planningimg{time.time():.2f}.jpg"
 
                 cv2.imwrite(save_file,self.secondimg)
-                time.sleep(5)
+                time.sleep(3)
                 # self.firstevalimgcount += 1
                 
                 # if self.state == 4:
-                    # self.MotorR.go(74)#走行
-                    # self.MotorL.go(70)#走行
-                    # # self.stuck_detection()
-                    # time.sleep(0.1)
-                    # self.MotorR.stop()
-                    # self.MotorL.stop()
+#                 self.MotorR.go(73)#走行
+#                 self.MotorL.go(70)#走行
+#                     # # self.stuck_detection()
+#                 time.sleep(0.3)
+#                 self.MotorR.stop()
+#                 self.MotorL.stop()
                     # if i%10 == 0: #10枚撮影する毎にセンサの値取得
                     #     self.camerastate = "captured!"
                     #     self.sensor()
@@ -227,7 +231,8 @@ class Npz_maker():
         
             feature_values = {}
 
-            default_names = ["normalRGB","enphasis","edge","hsv","red","blue","green","purple","emerald","yellow"]
+
+            default_names = ["enphasis","rgbvi","ior","hsv","red","blue","green","purple","emerald","yellow"]  # 10特徴画像neo
             for keys in default_names:
                 feature_values[keys] = {}
             
@@ -280,7 +285,7 @@ class Npz_maker():
                        
             else: #第一段階評価モード。runningで使うための部 # ここ変える
                 # feature_list = ["normalRGB","enphasis","edge","vari","rgbvi","grvi","ior","hsv","red","blue","green","purple","emerald","yellow"]
-                feature_list = ["normalRGB","enphasis","edge","hsv","red","blue","green","purple","emerald","yellow"]
+                feature_list = ["enphasis","rgbvi","ior","hsv","red","blue","green","purple","emerald","yellow"]
                 features = []
                 
                 for feature in feature_names:# windowgoto
@@ -359,4 +364,4 @@ class Npz_maker():
 if __name__ == '__main__':
     mknpz = Npz_maker()
     mknpz.spm_first()
-    mknpz.spm_first()
+    mknpz.spm_first(learn_state=False)

@@ -5,7 +5,7 @@
 #1./etc/create_ap.conf
 sudo cat > /etc/create_ap.conf <<EOF
 CHANNEL=default
-GATEWAY=10.0.0.3
+GATEWAY=10.0.0.1
 WPA_VERSION=2
 ETC_HOSTS=0
 DHCP_DNS=gateway
@@ -29,7 +29,7 @@ DAEMONIZE=0
 NO_HAVEGED=0
 WIFI_IFACE=wlan0
 INTERNET_IFACE=lo
-SSID=wolvez2022_3
+SSID=wolvez2022_1
 PASSPHRASE=wolvez2022
 USE_PSK=0
 EOF

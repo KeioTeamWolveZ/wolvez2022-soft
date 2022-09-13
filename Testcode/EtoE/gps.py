@@ -35,18 +35,22 @@ class GPS(object):
     def gpsread(self):
         #while True:
         if self.mgps.clean_sentences > 20: # ちゃんとしたデーターがある程度たまったら出力する
-             h = str('%02d' % (self.mgps.timestamp[0])) if self.mgps.timestamp[0] < 24 else self.mgps.timestamp[0] - 24
-             m = str('%02d' % (self.mgps.timestamp[1]))
-             s = str('%02d' % (self.mgps.timestamp[2]))
-             self.Time = h + ":" + m + ":" + s
+            h = str('%02d' % (self.mgps.timestamp[0])) if self.mgps.timestamp[0] < 24 else self.mgps.timestamp[0] - 24
+            m = str('%02d' % (self.mgps.timestamp[1]))
+            s = str('%02d' % (self.mgps.timestamp[2]))
+            self.Time = h + ":" + m + ":" + s
          
-             self.Lat = str('%2.8f' % (self.mgps.latitude[0]))
-             self.Lon = str('%2.8f' % (self.mgps.longitude[0]))
- 
+            self.Lat = str('%2.8f' % (self.mgps.latitude[0]))
+            self.Lon = str('%2.8f' % (self.mgps.longitude[0]))
+            
              #print('時間：', self.Time, ",", end='')     #main.pyで格納を確認するため、最後は消す
              #print('緯度：', self.Lat, ",", end='')
              #print('経度：', self.Lon)
         #time.sleep(1.0) #ここ変える
+
+            return (self.Lat, self.Lon)
+
+
     def vincenty_inverse(self,lat1, lon1, lat2, lon2):
         ellipsoid=None
         # 楕円体
