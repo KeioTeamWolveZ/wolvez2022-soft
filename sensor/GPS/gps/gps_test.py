@@ -4,8 +4,8 @@ import gps
 class cansat(object):
     def __init__(self):
         self.gps = gps.GPS()
-        self.goallat = 35.5562825
-        self.goallon = 139.6532099
+        self.goallat = 40.900545
+        self.goallon = 119.079109
         self.state = 0
 
     def setup(self):

@@ -31,13 +31,13 @@ class ReadFeaturedImg():
         '''
         self.treat = Feature_img(self.imp_p, frame_num, self.sav_d)
         if feature_names == None:
-            self.treat.normalRGB()
+#             self.treat.normalRGB()
 #             self.treat.vari()
-#             self.treat.rgbvi()
+            self.treat.rgbvi()
 #             self.treat.grvi()
-#             self.treat.ior()
+            self.treat.ior()
             self.treat.enphasis()
-            self.treat.edge()
+#             self.treat.edge()
             self.treat.hsv()
             self.treat.r()
             self.treat.b()

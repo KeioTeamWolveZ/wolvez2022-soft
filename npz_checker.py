@@ -6,7 +6,7 @@ import sys
 
 
 # 読み込むフォルダを指定
-FOLDER = 'pre_data_new_8'
+FOLDER = 'pre_data_ARLISS_stuck1'
 
 class FetureValueHistory():
     global FOLDER
@@ -73,7 +73,8 @@ else:
 #     default_names = ["normalRGB","enphasis","edge","hsv","red","blue","green","purple","emerald","yellow"]
     # default_names = ["normalRGB","enphasis","edge","vari","rgbvi","grvi","ior","hsv","red","blue","green","purple","emerald","yellow"]
     # default_names = ["enphasis","rgbvi","grvi","ior","hsv","red","blue","green","purple","emerald","yellow"]  # 11特徴画像
-    default_names = ["enphasis","rgbvi","grvi","ior","hsv","red","blue","green"]  # 8特徴画像
+#     default_names = ["enphasis","rgbvi","grvi","ior","hsv","red","blue","green"]  # 8特徴画像
+    default_names = ["enphasis","rgbvi","ior","hsv","red","blue","green","purple","emerald","yellow"]  # 10特徴画像neo
     for name in default_names:
         for win in [4,5,6]:
             FVH = FetureValueHistory(FOLDER)
