@@ -1014,9 +1014,9 @@ class Cansat():
         #         self.stuckTime = 0
 
         #     self.countstuckLoop+= 1
+        # elif enough_amount_of_gps_history and difference_small: # ここにGPS履歴経由のスタック検知を追記
         
         if enough_amount_of_gps_history and difference_small: # ここにGPS履歴経由のスタック検知を追記
-        # elif enough_amount_of_gps_history and difference_small: # ここにGPS履歴経由のスタック検知を追記
             #トルネード実施
             print("stuck")
             self.MotorR.go(ct.const.STUCK_MOTOR_VREF)
