@@ -119,8 +119,6 @@ class Cansat():
         self.mvfile()
         self.time_f_eval = 1.0
 
-        # GPSによるスタック検知
-        self.gps_history=[]
 
     def mkdir(self): #フォルダ作成部分
         folder_paths =[f"results/{self.startTime}",
