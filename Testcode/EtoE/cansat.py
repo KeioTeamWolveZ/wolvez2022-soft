@@ -979,6 +979,11 @@ class Cansat():
                 self.stuckTime = 0
 
             self.countstuckLoop+= 1
+        
+        elif 1==0: # ここにGPS履歴経由のスタック検知を追記
+            
+            # アイデア：GPSのログを蓄積し、10秒間(仮)GPSの差が10m以内だったら、トルネードを実行、など
+            pass
 
         else:
             self.countstuckLoop = 0
