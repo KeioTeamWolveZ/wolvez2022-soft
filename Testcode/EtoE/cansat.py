@@ -980,7 +980,7 @@ class Cansat():
         
         if no_None_in_gps_history:
             total_difference=0
-            total_difference_thre=1
+            total_difference_thre=1e-10
             for gps_tuple in self.gps_history[-10:]:
                 total_difference+=np.sqrt((gps_tuple[0]-self.gps_history[-1][0])**2+(gps_tuple[1]-self.gps_history[-1][1]))
             if total_difference<=total_difference_thre:
