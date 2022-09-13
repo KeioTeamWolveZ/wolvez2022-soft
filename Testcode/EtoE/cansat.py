@@ -342,7 +342,13 @@ class Cansat():
 
                 self.stuck_detection()
 
+
                 if time.time()-self.pre_motorTime > ct.const.LANDING_MOTOR_TIME_THRE: #5秒間モータ回して分離シートから十分離れる
+                    for percentage in [0.9,0.8,0.7,0.6,0.5]:
+                        self.MotorR.go(ct.const.LANDING_MOTOR_VREF*percentage)
+                        self.MotorL.go(ct.const.LANDING_MOTOR_VREF*percentage)
+                        self.stuck_detection()
+                        time.sleep(0.5)
                     self.MotorR.stop()
                     self.MotorL.stop()
                     self.state = 4
