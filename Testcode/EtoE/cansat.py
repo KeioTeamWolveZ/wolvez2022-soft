@@ -118,6 +118,10 @@ class Cansat():
         self.mkfile()
         self.mvfile()
         self.time_f_eval = 1.0
+        
+        self.pre_Lon=0
+        self.pre_Lat=0
+        self.gpsdis_history=[]
 
 
     def mkdir(self): #フォルダ作成部分
@@ -980,20 +984,54 @@ class Cansat():
         ->スタックの回避方法自体は従来のものをコピペ
         ->スタックでなかった場合の対応はかつてのelseと同様
         """
-        if len(self.startgps_lon)>=15:
-            enough_amount_of_gps_history=True
-        else:
-            enough_amount_of_gps_history=False
         
-        total_difference=0
-        total_difference_thre=0.00005
-        for i in range(10):
-            i+=1
-            total_difference+=np.sqrt((self.startgps_lon[-i]-self.startgps_lon[-i-1])**2+(self.startgps_lat[-i]-self.startgps_lat[-i-1])**2)
-        if total_difference<=total_difference_thre:
-            difference_small=True
+        if self.pre_Lat==0:
+            self.pre_Lon,self.pre_Lat=self.gps.Lon,self.gps.Lat
         else:
-            difference_small=False
+            self.gps.vincenty_inverse(self.gps.Lon,self.gps.Lat,self.pre_Lon,self.pre_Lat)
+            self.gpsdis_history.append(self.gps.gpsdis)
+            self.pre_Lon,self.pre_Lat=self.gps.Lon,self.gps.Lat
+        
+
+        if len(self.gpsdis_history)%10==0 and len(self.gpsdis_history)!=0:
+            distance=np.sum(self.gpsdis_history[-10:])
+            if distance<ct.const.TOTAL_DISTANCE_THRE:
+                #トルネード実施
+                print("stuck")
+                self.MotorR.go(ct.const.STUCK_MOTOR_VREF)
+                self.MotorL.back(ct.const.STUCK_MOTOR_VREF)
+                time.sleep(2)
+                self.MotorR.stop()
+                self.MotorL.stop()
+                self.countstuckLoop = 0
+                self.stuckTime = 0
+            else:
+                self.countstuckLoop = 0
+                self.stuckTime = 0
+        
+        
+        # # if enough_amount_of_gps_history:
+        #     total_difference=0
+        #     for i in range(10):
+        #         i+=1
+        #         total_difference+=np.sqrt((self.startgps_lon[-i]-self.startgps_lon[-i-1])**2+(self.startgps_lat[-i]-self.startgps_lat[-i-1])**2)
+        #     if total_difference<=total_difference_thre:
+        #         difference_small=True
+        #         #トルネード実施
+        #         print("stuck")
+        #         self.MotorR.go(ct.const.STUCK_MOTOR_VREF)
+        #         self.MotorL.back(ct.const.STUCK_MOTOR_VREF)
+        #         time.sleep(2)
+        #         self.MotorR.stop()
+        #         self.MotorL.stop()
+        #         self.countstuckLoop = 0
+        #         self.stuckTime = 0
+        #     else:
+        #         self.countstuckLoop = 0
+        #         self.stuckTime = 0
+        # else:
+        #     self.countstuckLoop = 0
+        #     self.stuckTime = 0
 
         
         # if (self.bno055.ax**2+self.bno055.ay**2) <= ct.const.STUCK_ACC_THRE**2:
@@ -1014,23 +1052,6 @@ class Cansat():
         #     self.countstuckLoop+= 1
         # elif enough_amount_of_gps_history and difference_small: # ここにGPS履歴経由のスタック検知を追記
         
-        if enough_amount_of_gps_history and difference_small: # ここにGPS履歴経由のスタック検知を追記
-            #トルネード実施
-            print("stuck")
-            self.MotorR.go(ct.const.STUCK_MOTOR_VREF)
-            self.MotorL.back(ct.const.STUCK_MOTOR_VREF)
-            time.sleep(2)
-            self.MotorR.stop()
-            self.MotorL.stop()
-            self.countstuckLoop = 0
-            self.stuckTime = 0
-            # アイデア：GPSのログを蓄積し、10秒間(仮)GPSの差が10m以内だったら、トルネードを実行、など
-            # GPSの履歴が10周期以上 and　直近の10周期中にGPSの損失（Noneになってる）がない and 「直近の10周期と現時刻のGPSの値の差ノルム」の合計が一定値未満 -> スタックとして処理
-            # その他 -> 従来のelseと同じ処置
-
-        else:
-            self.countstuckLoop = 0
-            self.stuckTime = 0
 
     def keyboardinterrupt(self): #キーボードインタラプト入れた場合に発動する関数
         self.MotorR.stop()
