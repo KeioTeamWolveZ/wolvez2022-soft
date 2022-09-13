@@ -119,6 +119,9 @@ class Cansat():
         self.mvfile()
         self.time_f_eval = 1.0
 
+        # GPSによるスタック検知
+        self.gps_history=[]
+
     def mkdir(self): #フォルダ作成部分
         folder_paths =[f"results/{self.startTime}",
                        f"results/{self.startTime}/camera_result",
@@ -963,6 +966,29 @@ class Cansat():
         self.lora.sendData(datalog) #データを送信
         
     def stuck_detection(self):
+        # GPSの取得履歴をチェック
+        if len(self.gps_history)>=10:
+            enough_amount_of_gps_history=True
+        else:
+            enough_amount_of_gps_history=False
+        
+        no_None_in_gps_history=True
+        for gps_tuple in self.gps_history[-10:]:
+            if str(type(gps_tuple))=="<class 'NoneType'>":
+                no_None_in_gps_history=False
+                break
+        
+        if no_None_in_gps_history:
+            total_difference=0
+            total_difference_thre=1
+            for gps_tuple in self.gps_history[-10:]:
+                total_difference+=np.sqrt((gps_tuple[0]-self.gps_history[-1][0])**2+(gps_tuple[1]-self.gps_history[-1][1]))
+            if total_difference<=total_difference_thre:
+                difference_small=True
+            else:
+                difference_small=False
+
+        
         if (self.bno055.ax**2+self.bno055.ay**2) <= ct.const.STUCK_ACC_THRE**2:
             if self.stuckTime == 0:
                 self.stuckTime = time.time()
@@ -980,10 +1006,19 @@ class Cansat():
 
             self.countstuckLoop+= 1
         
-        elif 1==0: # ここにGPS履歴経由のスタック検知を追記
-            
+        elif enough_amount_of_gps_history and no_None_in_gps_history and difference_small: # ここにGPS履歴経由のスタック検知を追記
+            #トルネード実施
+            print("stuck")
+            self.MotorR.go(ct.const.STUCK_MOTOR_VREF)
+            self.MotorL.back(ct.const.STUCK_MOTOR_VREF)
+            time.sleep(2)
+            self.MotorR.stop()
+            self.MotorL.stop()
+            self.countstuckLoop = 0
+            self.stuckTime = 0
             # アイデア：GPSのログを蓄積し、10秒間(仮)GPSの差が10m以内だったら、トルネードを実行、など
-            pass
+            # GPSの履歴が10周期以上 and　直近の10周期中にGPSの損失（Noneになってる）がない and 「直近の10周期と現時刻のGPSの値の差ノルム」の合計が一定値未満 -> スタックとして処理
+            # その他 -> 従来のelseと同じ処置
 
         else:
             self.countstuckLoop = 0
