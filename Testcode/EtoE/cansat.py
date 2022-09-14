@@ -313,11 +313,12 @@ class Cansat():
             self.GREEN_LED.led_off()
       
         #加速度が小さくなったら着地判定
-        if (self.bno055.ax**2 + self.bno055.ay**2 + self.bno055.az**2) < ct.const.DROPPING_ACC_THRE**2: #加速度が閾値以下で着地判定
-            self.countDropLoop+=1            
-            if self.countDropLoop > ct.const.DROPPING_ACC_COUNT_THRE: #着地判定が複数回行われたらステート以降
-                self.state = 3
-                self.laststate = 3
+#         if (self.bno055.ax**2 + self.bno055.ay**2 + self.bno055.az**2) < ct.const.DROPPING_ACC_THRE**2: #加速度が閾値以下で着地判定
+        if (time.time()-self.droppingTime) > ct.const.DROPPING_TIME:     
+#             self.countDropLoop+=1            
+#             if self.countDropLoop > ct.const.DROPPING_ACC_COUNT_THRE: #着地判定が複数回行われたらステート以降
+            self.state = 3
+            self.laststate = 3
         else:
             self.countDropLoop = 0 #初期化の必要あり
 
@@ -346,11 +347,13 @@ class Cansat():
 
 
                 if time.time()-self.pre_motorTime > ct.const.LANDING_MOTOR_TIME_THRE: #5秒間モータ回して分離シートから十分離れる
-                    for percentage in [0.9,0.8,0.7,0.6,0.5]:
-                        self.MotorR.go(ct.const.LANDING_MOTOR_VREF*percentage)
-                        self.MotorL.go(ct.const.LANDING_MOTOR_VREF*percentage)
-                        self.stuck_detection()
-                        time.sleep(0.5)
+#                     self.MotorR.go(100)
+#                     self.MotorL.go(100)
+#                     for percentage in [0.9,0.8,0.7,0.6,0.5]:
+#                         self.MotorR.go(ct.const.LANDING_MOTOR_VREF*percentage)
+#                         self.MotorL.go(ct.const.LANDING_MOTOR_VREF*percentage)
+#                         self.stuck_detection()
+#                         time.sleep(0.5)
                     self.MotorR.stop()
                     self.MotorL.stop()
                     self.state = 4
@@ -511,7 +514,7 @@ class Cansat():
                     #     self.camerastate = 0
                     # state4の学習時にもBNOベースで走行
                     self.sensor()
-                    self.planning(np.array([0,0,0,0,0,0]))
+                    self.planning_no_risk()
                     self.stuck_detection()#ここは注意
 #                     print(f"{fmg_list.index(fmg)} fmg evaluated")
                 
@@ -646,7 +649,7 @@ class Cansat():
             now=str(datetime.now())[:21].replace(" ","_").replace(":","-")
 #             print("feature_values:",feature_values)
             # print("shape:",len(feature_values))
-            np.savez_compressed(self.savenpz_dir + now,array_1=np.array([feature_values])) #npzファイル作成
+            np.savez_compressed(self.savenpz_dir + str(time.time()),array_1=np.array([feature_values])) #npzファイル作成
             self.tempDir.cleanup()
         self.GREEN_LED.led_on()
         self.RED_LED.led_on()
@@ -912,7 +915,7 @@ class Cansat():
         answer_mtx=np.zeros(3)
         for i, risk_scaler in enumerate(lower_risk):
             # if risk_scaler >= self.threshold_risk or risk_scaler >= self.max_risk:
-            if risk_scaler >= self.threshold_risk[i]:  # max_riskの条件式を削除
+            if risk_scaler > self.threshold_risk[i]:  # max_riskの条件式を削除
                 answer_mtx[i]=1
         return answer_mtx
 
@@ -924,7 +927,7 @@ class Cansat():
         self.boolean_risk = list(self.safe_or_not(lower_risk))
         
         direction_goal = self.decide_direction(phi)
-        dir_run = 0
+        dir_run = 1
         if self.boolean_risk == [0, 0, 0]:
             self.plan_str = "to goal"
             dir_run = direction_goal
@@ -957,7 +960,7 @@ class Cansat():
         return dir_run
 
     def calc_dir_no_risk(self,phi):
-        
+        dir_run = 1
         self.boolean_risk = [0, 0, 0]
         self.plan_str = "to goal"
         direction_goal = self.decide_direction(phi)
@@ -986,15 +989,17 @@ class Cansat():
         """
         
         if self.pre_Lat==0:
-            self.pre_Lon,self.pre_Lat=self.gps.Lon,self.gps.Lat
+            self.pre_Lon,self.pre_Lat=float(self.gps.Lon),float(self.gps.Lat)
         else:
-            self.gps.vincenty_inverse(self.gps.Lon,self.gps.Lat,self.pre_Lon,self.pre_Lat)
+            self.gps.vincenty_inverse(float(self.gps.Lon),float(self.gps.Lat),float(self.pre_Lon),float(self.pre_Lat))
             self.gpsdis_history.append(self.gps.gpsdis)
-            self.pre_Lon,self.pre_Lat=self.gps.Lon,self.gps.Lat
+            self.gps.vincenty_inverse(float(self.gps.Lon),float(self.gps.Lat),float(ct.const.GPS_GOAL_LON),float(ct.const.GPS_GOAL_LAT))
+            
+            self.pre_Lon,self.pre_Lat=float(self.gps.Lon),float(self.gps.Lat)
         
 
-        if len(self.gpsdis_history)%10==0 and len(self.gpsdis_history)!=0:
-            distance=np.sum(self.gpsdis_history[-10:])
+        if len(self.gpsdis_history)%ct.const.STUCK_PERIOD==0 and len(self.gpsdis_history)>ct.const.STUCK_PERIOD:
+            distance=np.sum(self.gpsdis_history[-ct.const.STUCK_PERIOD:])
             if distance<ct.const.TOTAL_DISTANCE_THRE:
                 #トルネード実施
                 print("stuck")
