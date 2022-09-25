@@ -29,13 +29,10 @@ try:
     Motor2.stop()
 #     Motor2.go(100-(3*10/7))
 #     time.sleep(10)
-#     time.sleep(2)
 
     #Motor.back(100)
     #time.sleep(3)
     print("motor stop")
-    Motor1.stop()
-    Motor2.stop()
     time.sleep(1)
 except KeyboardInterrupt:
     Motor1.stop()

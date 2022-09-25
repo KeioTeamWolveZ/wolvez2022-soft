@@ -11,6 +11,8 @@ class GPS(object):
         self.Time = 0
         self.Lat = 0
         self.Lon = 0
+        self.gpsdis = 0
+        
         #self.gps_device = "dev/serial0"  # ES920LRデバイス名
         
         
@@ -48,7 +50,7 @@ class GPS(object):
              #print('経度：', self.Lon)
         #time.sleep(1.0) #ここ変える
 
-            # return (self.Lat, self.Lon)
+            return (self.Lat, self.Lon)
 
 
     def vincenty_inverse(self,lat1, lon1, lat2, lon2):
@@ -144,7 +146,10 @@ class GPS(object):
             α1 = α1 + math.pi * 2
 
         self.gpsdegrees=math.degrees(α1)
-    """
+
+
+
+"""
         return {
             'distance': self.gpsdis,           # 距離
             'azimuth1': degrees(α1), # 方位角(始点→終点)

@@ -103,7 +103,7 @@ class Cansat():
         self.countstuckLoop = 0
 
         # spm1用変数定義
-        self.pre_data_folder = "../../pre_data_new_10r/*"
+        self.pre_data_folder = "../../pre_data_ARLISS/*"
         # self.default_names = ["normalRGB","enphasis","edge","hsv","red","blue","green","purple","emerald","yellow"]  # 10特徴画像
         self.default_names = ["enphasis","rgbvi","ior","hsv","red","blue","green","purple","emerald","yellow"]  # 10特徴画像neo
         # self.default_names = ["normalRGB","enphasis","edge","vari","rgbvi","grvi","ior","hsv","red","blue","green","purple","emerald","yellow"]  # 14特徴画像
@@ -118,9 +118,11 @@ class Cansat():
         self.mkfile()
         self.mvfile()
         self.time_f_eval = 1.0
+        
+        self.pre_Lon=0
+        self.pre_Lat=0
+        self.gpsdis_history=[]
 
-        # GPSによるスタック検知
-        self.gps_history=[]
 
     def mkdir(self): #フォルダ作成部分
         folder_paths =[f"results/{self.startTime}",
@@ -311,11 +313,12 @@ class Cansat():
             self.GREEN_LED.led_off()
       
         #加速度が小さくなったら着地判定
-        if (self.bno055.ax**2 + self.bno055.ay**2 + self.bno055.az**2) < ct.const.DROPPING_ACC_THRE**2: #加速度が閾値以下で着地判定
-            self.countDropLoop+=1            
-            if self.countDropLoop > ct.const.DROPPING_ACC_COUNT_THRE: #着地判定が複数回行われたらステート以降
-                self.state = 3
-                self.laststate = 3
+#         if (self.bno055.ax**2 + self.bno055.ay**2 + self.bno055.az**2) < ct.const.DROPPING_ACC_THRE**2: #加速度が閾値以下で着地判定
+        if (time.time()-self.droppingTime) > ct.const.DROPPING_TIME:     
+#             self.countDropLoop+=1            
+#             if self.countDropLoop > ct.const.DROPPING_ACC_COUNT_THRE: #着地判定が複数回行われたらステート以降
+            self.state = 3
+            self.laststate = 3
         else:
             self.countDropLoop = 0 #初期化の必要あり
 
@@ -344,11 +347,13 @@ class Cansat():
 
 
                 if time.time()-self.pre_motorTime > ct.const.LANDING_MOTOR_TIME_THRE: #5秒間モータ回して分離シートから十分離れる
-                    for percentage in [0.9,0.8,0.7,0.6,0.5]:
-                        self.MotorR.go(ct.const.LANDING_MOTOR_VREF*percentage)
-                        self.MotorL.go(ct.const.LANDING_MOTOR_VREF*percentage)
-                        self.stuck_detection()
-                        time.sleep(0.5)
+#                     self.MotorR.go(100)
+#                     self.MotorL.go(100)
+#                     for percentage in [0.9,0.8,0.7,0.6,0.5]:
+#                         self.MotorR.go(ct.const.LANDING_MOTOR_VREF*percentage)
+#                         self.MotorL.go(ct.const.LANDING_MOTOR_VREF*percentage)
+#                         self.stuck_detection()
+#                         time.sleep(0.5)
                     self.MotorR.stop()
                     self.MotorL.stop()
                     self.state = 4
@@ -509,7 +514,7 @@ class Cansat():
                     #     self.camerastate = 0
                     # state4の学習時にもBNOベースで走行
                     self.sensor()
-                    self.planning(np.array([0,0,0,0,0,0]))
+                    self.planning_no_risk()
                     self.stuck_detection()#ここは注意
 #                     print(f"{fmg_list.index(fmg)} fmg evaluated")
                 
@@ -644,7 +649,7 @@ class Cansat():
             now=str(datetime.now())[:21].replace(" ","_").replace(":","-")
 #             print("feature_values:",feature_values)
             # print("shape:",len(feature_values))
-            np.savez_compressed(self.savenpz_dir + now,array_1=np.array([feature_values])) #npzファイル作成
+            np.savez_compressed(self.savenpz_dir + str(time.time()),array_1=np.array([feature_values])) #npzファイル作成
             self.tempDir.cleanup()
         self.GREEN_LED.led_on()
         self.RED_LED.led_on()
@@ -910,7 +915,7 @@ class Cansat():
         answer_mtx=np.zeros(3)
         for i, risk_scaler in enumerate(lower_risk):
             # if risk_scaler >= self.threshold_risk or risk_scaler >= self.max_risk:
-            if risk_scaler >= self.threshold_risk[i]:  # max_riskの条件式を削除
+            if risk_scaler > self.threshold_risk[i]:  # max_riskの条件式を削除
                 answer_mtx[i]=1
         return answer_mtx
 
@@ -922,7 +927,7 @@ class Cansat():
         self.boolean_risk = list(self.safe_or_not(lower_risk))
         
         direction_goal = self.decide_direction(phi)
-        dir_run = 0
+        dir_run = 1
         if self.boolean_risk == [0, 0, 0]:
             self.plan_str = "to goal"
             dir_run = direction_goal
@@ -955,7 +960,7 @@ class Cansat():
         return dir_run
 
     def calc_dir_no_risk(self,phi):
-        
+        dir_run = 1
         self.boolean_risk = [0, 0, 0]
         self.plan_str = "to goal"
         direction_goal = self.decide_direction(phi)
@@ -982,34 +987,20 @@ class Cansat():
         ->スタックの回避方法自体は従来のものをコピペ
         ->スタックでなかった場合の対応はかつてのelseと同様
         """
-        if len(self.gps_history)>=10:
-            enough_amount_of_gps_history=True
+        
+        if self.pre_Lat==0:
+            self.pre_Lon,self.pre_Lat=float(self.gps.Lon),float(self.gps.Lat)
         else:
-            enough_amount_of_gps_history=False
-        
-        no_None_in_gps_history=True
-        for gps_tuple in self.gps_history[-10:]:
-            if str(type(gps_tuple))=="<class 'NoneType'>":
-                no_None_in_gps_history=False
-                break
-        
-        if no_None_in_gps_history:
-            total_difference=0
-            total_difference_thre=0.00005
-            for i in range(10):
-                i+=1
-                total_difference+=np.sqrt((self.gps_history[-i][0]-self.gps_history[-i-1][0])**2+(self.gps_history[-i][1]-self.gps_history[-i-1][1])**2)
-            if total_difference<=total_difference_thre:
-                difference_small=True
-            else:
-                difference_small=False
-
-        
-        if (self.bno055.ax**2+self.bno055.ay**2) <= ct.const.STUCK_ACC_THRE**2:
-            if self.stuckTime == 0:
-                self.stuckTime = time.time()
+            self.gps.vincenty_inverse(float(self.gps.Lon),float(self.gps.Lat),float(self.pre_Lon),float(self.pre_Lat))
+            self.gpsdis_history.append(self.gps.gpsdis)
+            self.gps.vincenty_inverse(float(self.gps.Lon),float(self.gps.Lat),float(ct.const.GPS_GOAL_LON),float(ct.const.GPS_GOAL_LAT))
             
-            if self.countstuckLoop > ct.const.STUCK_COUNT_THRE: #加速度が閾値以下になるケースがある程度続いたらスタックと判定
+            self.pre_Lon,self.pre_Lat=float(self.gps.Lon),float(self.gps.Lat)
+        
+
+        if len(self.gpsdis_history)%ct.const.STUCK_PERIOD==0 and len(self.gpsdis_history)>ct.const.STUCK_PERIOD:
+            distance=np.sum(self.gpsdis_history[-ct.const.STUCK_PERIOD:])
+            if distance<ct.const.TOTAL_DISTANCE_THRE:
                 #トルネード実施
                 print("stuck")
                 self.MotorR.go(ct.const.STUCK_MOTOR_VREF)
@@ -1019,26 +1010,53 @@ class Cansat():
                 self.MotorL.stop()
                 self.countstuckLoop = 0
                 self.stuckTime = 0
-
-            self.countstuckLoop+= 1
+            else:
+                self.countstuckLoop = 0
+                self.stuckTime = 0
         
-        elif enough_amount_of_gps_history and no_None_in_gps_history and difference_small: # ここにGPS履歴経由のスタック検知を追記
-            #トルネード実施
-            print("stuck")
-            self.MotorR.go(ct.const.STUCK_MOTOR_VREF)
-            self.MotorL.back(ct.const.STUCK_MOTOR_VREF)
-            time.sleep(2)
-            self.MotorR.stop()
-            self.MotorL.stop()
-            self.countstuckLoop = 0
-            self.stuckTime = 0
-            # アイデア：GPSのログを蓄積し、10秒間(仮)GPSの差が10m以内だったら、トルネードを実行、など
-            # GPSの履歴が10周期以上 and　直近の10周期中にGPSの損失（Noneになってる）がない and 「直近の10周期と現時刻のGPSの値の差ノルム」の合計が一定値未満 -> スタックとして処理
-            # その他 -> 従来のelseと同じ処置
+        
+        # # if enough_amount_of_gps_history:
+        #     total_difference=0
+        #     for i in range(10):
+        #         i+=1
+        #         total_difference+=np.sqrt((self.startgps_lon[-i]-self.startgps_lon[-i-1])**2+(self.startgps_lat[-i]-self.startgps_lat[-i-1])**2)
+        #     if total_difference<=total_difference_thre:
+        #         difference_small=True
+        #         #トルネード実施
+        #         print("stuck")
+        #         self.MotorR.go(ct.const.STUCK_MOTOR_VREF)
+        #         self.MotorL.back(ct.const.STUCK_MOTOR_VREF)
+        #         time.sleep(2)
+        #         self.MotorR.stop()
+        #         self.MotorL.stop()
+        #         self.countstuckLoop = 0
+        #         self.stuckTime = 0
+        #     else:
+        #         self.countstuckLoop = 0
+        #         self.stuckTime = 0
+        # else:
+        #     self.countstuckLoop = 0
+        #     self.stuckTime = 0
 
-        else:
-            self.countstuckLoop = 0
-            self.stuckTime = 0
+        
+        # if (self.bno055.ax**2+self.bno055.ay**2) <= ct.const.STUCK_ACC_THRE**2:
+        #     if self.stuckTime == 0:
+        #         self.stuckTime = time.time()
+            
+        #     if self.countstuckLoop > ct.const.STUCK_COUNT_THRE: #加速度が閾値以下になるケースがある程度続いたらスタックと判定
+        #         #トルネード実施
+        #         print("stuck")
+        #         self.MotorR.go(ct.const.STUCK_MOTOR_VREF)
+        #         self.MotorL.back(ct.const.STUCK_MOTOR_VREF)
+        #         time.sleep(2)
+        #         self.MotorR.stop()
+        #         self.MotorL.stop()
+        #         self.countstuckLoop = 0
+        #         self.stuckTime = 0
+
+        #     self.countstuckLoop+= 1
+        # elif enough_amount_of_gps_history and difference_small: # ここにGPS履歴経由のスタック検知を追記
+        
 
     def keyboardinterrupt(self): #キーボードインタラプト入れた場合に発動する関数
         self.MotorR.stop()

@@ -35,8 +35,8 @@ const.RUNNING_MOTOR_VREF = 70
 const.STUCK_MOTOR_VREF = 100
 
 ## Variables
-const.GPS_GOAL_LAT = 35.5553391
-const.GPS_GOAL_LON = 139.6551065
+const.GPS_GOAL_LAT = 40.90050833
+const.GPS_GOAL_LON = 119.07912500
 const.f1 = 1 # 136
 const.f2 = 50 # 196
 const.f3 = 776
@@ -51,10 +51,11 @@ const.PREPARING_TIME_THRE = 10
 
 const.FLYING_FLIGHTPIN_COUNT_THRE = 10
 
-const.DROPPING_ACC_COUNT_THRE = 30
-const.DROPPING_ACC_THRE = 1 #加速度の値
+const.DROPPING_TIME = 20
+# const.DROPPING_ACC_COUNT_THRE = 30
+# const.DROPPING_ACC_THRE = 1 #加速度の値
 
-const.SEPARATION_TIME_THRE = 10 #焼き切り時間
+const.SEPARATION_TIME_THRE = 20 #焼き切り時間
 
 const.LANDING_MOTOR_TIME_THRE = 10 #分離シートから離れるためにモータを回転させる時間
 
@@ -66,3 +67,6 @@ const.FINISH_DIS_THRE = 1.5
 
 const.STUCK_ACC_THRE = 0.1
 const.STUCK_COUNT_THRE = 30
+
+const.TOTAL_DISTANCE_THRE=10
+const.STUCK_PERIOD=30
