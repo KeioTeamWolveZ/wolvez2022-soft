@@ -6,7 +6,7 @@ import sys
 
 
 # 読み込むフォルダを指定
-FOLDER = 'pre_data_ARLISS_stuck1'
+FOLDER = 'planning_npz'
 
 class FetureValueHistory():
     global FOLDER
@@ -28,9 +28,12 @@ class FetureValueHistory():
         return self.values_dict
     
     def load_file(self, path):
-        raw_data = np.load(path,allow_pickle=True)
-        all_data = raw_data['array_1'][0][self.feature_name][f'win_{self.win}']
-        return all_data
+        try:
+            raw_data = np.load(path,allow_pickle=True)
+            all_data = raw_data['array_1'][0][self.feature_name][f'win_{self.win}']
+            return all_data
+        except:
+            pass
     
     def get_data(self, data:dict):
         for key in self.keys:
@@ -41,10 +44,13 @@ class FetureValueHistory():
     def values_list(self):
         self.frame = [k for k in range(len(self.file_path))]
         for k, path in enumerate(self.file_path):
-            all_data = self.load_file(path=path)
-            if k == 0:
-                self.set_box(data=all_data)
-            self.get_data(data=all_data)
+            try:
+                all_data = self.load_file(path=path)
+                if k == 0:
+                    self.set_box(data=all_data)
+                self.get_data(data=all_data)
+            except:
+                self.frame.remove(self.frame[-1])
     
     def data_logger(self):
         self.values_list()
@@ -70,10 +76,10 @@ if len(sys.argv) >= 2:
 else:
     if not os.path.exists(f'npz_checker/{FOLDER}'):
         os.mkdir(f'npz_checker/{FOLDER}')
-#     default_names = ["normalRGB","enphasis","edge","hsv","red","blue","green","purple","emerald","yellow"]
+    # default_names = ["normalRGB","enphasis","edge","hsv","red","blue","green","purple","emerald","yellow"]
     # default_names = ["normalRGB","enphasis","edge","vari","rgbvi","grvi","ior","hsv","red","blue","green","purple","emerald","yellow"]
     # default_names = ["enphasis","rgbvi","grvi","ior","hsv","red","blue","green","purple","emerald","yellow"]  # 11特徴画像
-#     default_names = ["enphasis","rgbvi","grvi","ior","hsv","red","blue","green"]  # 8特徴画像
+    # default_names = ["enphasis","rgbvi","grvi","ior","hsv","red","blue","green"]  # 8特徴画像
     default_names = ["enphasis","rgbvi","ior","hsv","red","blue","green","purple","emerald","yellow"]  # 10特徴画像neo
     for name in default_names:
         for win in [4,5,6]:
